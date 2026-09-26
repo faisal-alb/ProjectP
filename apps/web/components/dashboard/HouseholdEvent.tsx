@@ -2,6 +2,7 @@
 
 import { Check, Info } from "lucide-react";
 import { primaryButton, secondaryButton } from "@/components/onboarding/controls";
+import { AskGridFlexButton } from "@/components/voice/AskButton";
 import { TxLink } from "./TxLink";
 
 /** Every state a flex event can be in, from the participant's point of view. */
@@ -176,6 +177,10 @@ export function HouseholdEvent({
       )}
 
       {STEP_AT[state] !== undefined && <Steps at={STEP_AT[state]!} />}
+
+      <div className="mt-5">
+        <AskGridFlexButton prompt="Why is there a grid event tonight, and what does it mean for me?" label="Ask about this event" />
+      </div>
 
       <div className="mt-6 flex gap-2.5 rounded-md border border-border bg-background-raised p-3 text-sm text-muted">
         <Info className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />

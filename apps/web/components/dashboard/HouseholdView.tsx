@@ -14,6 +14,7 @@ import {
 } from "@/lib/demo-data";
 import type { Emergency, ParticipantProfile } from "@/lib/profile";
 import { Segmented, SliderRow, Switch, secondaryButton } from "@/components/onboarding/controls";
+import { AskGridFlexButton } from "@/components/voice/AskButton";
 import { useHousehold } from "./HouseholdProvider";
 import { EVENT_STATE_LABEL, HouseholdEvent, type EventState } from "./HouseholdEvent";
 import { TxLink } from "./TxLink";
@@ -168,21 +169,24 @@ export function HouseholdView({ zone, feeder, profile }: { zone: string; feeder:
                 : "Connect or opt in a device to start earning."}
           </p>
         </div>
-        <label className="flex items-center gap-2 text-xs text-muted">
-          Preview state
-          <select
-            value={preview}
-            onChange={(e) => setPreview(e.target.value as EventState | "live")}
-            className="rounded-md border border-border bg-background-raised px-2 py-1 text-xs text-foreground"
-          >
-            <option value="live">Live (from your rules)</option>
-            {(Object.keys(EVENT_STATE_LABEL) as EventState[]).map((s) => (
-              <option key={s} value={s}>
-                {EVENT_STATE_LABEL[s]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-wrap items-center gap-4">
+          <AskGridFlexButton />
+          <label className="flex items-center gap-2 text-xs text-muted">
+            Preview state
+            <select
+              value={preview}
+              onChange={(e) => setPreview(e.target.value as EventState | "live")}
+              className="rounded-md border border-border bg-background-raised px-2 py-1 text-xs text-foreground"
+            >
+              <option value="live">Live (from your rules)</option>
+              {(Object.keys(EVENT_STATE_LABEL) as EventState[]).map((s) => (
+                <option key={s} value={s}>
+                  {EVENT_STATE_LABEL[s]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       {/* At a glance */}
@@ -374,9 +378,12 @@ export function HouseholdView({ zone, feeder, profile }: { zone: string; feeder:
 
           {/* Recent earnings */}
           <section id="voice-earnings" aria-labelledby="earnings-heading" className="panel h-fit rounded-lg p-5">
-            <h2 id="earnings-heading" className="tracked-caps text-xs font-medium text-muted">
-              Recent earnings
-            </h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="earnings-heading" className="tracked-caps text-xs font-medium text-muted">
+                Recent earnings
+              </h2>
+              <AskGridFlexButton prompt="How much have I earned this month, and where did it come from?" label="Ask" className="!px-3 !py-1.5 text-xs" />
+            </div>
             <ul className="mt-3 divide-y divide-border">
               {todayExtra > 0 && (
                 <Row title={`${zone} Flex Event`} sub="Today" amount={todayExtra} status="Paid" />

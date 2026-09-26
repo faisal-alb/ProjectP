@@ -26,6 +26,8 @@
   --solana-soft: rgba(163, 139, 224, 0.1);
 
   /* Chart series (validated for dark surface, CVD-safe with line-style + labels) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
   --chart-forecast: #b86f9c;
   --chart-flex: #4f92c3;
 }
@@ -252,4 +254,68 @@ input[type="range"]:disabled {
 .voice-highlight {
   outline: 2px solid var(--color-foreground);
   outline-offset: 4px;
+}
+
+/* Voice assistant meter. Bar heights while listening or speaking are driven per frame
+   from the audio levels (see VoiceMeter); CSS only handles colour and the connecting wave. */
+.voice-meter {
+  display: inline-flex;
+  align-items: center;
+}
+.voice-bar {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--muted-2);
+  transition: background-color 200ms var(--ease-out);
+}
+.voice-meter[data-state="connecting"] .voice-bar {
+  background: var(--muted);
+  animation: voice-wave 900ms ease-in-out infinite;
+}
+.voice-meter[data-state="listening"] .voice-bar {
+  background: var(--foreground);
+}
+.voice-meter[data-state="speaking"] .voice-bar {
+  background: var(--accent);
+}
+@keyframes voice-wave {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(0.7);
+  }
+}
+.voice-fab {
+  animation: voice-fab-in 220ms var(--ease-out) both;
+}
+@keyframes voice-fab-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .voice-fab {
+    animation-name: voice-fab-fade;
+  }
+  @keyframes voice-fab-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  .voice-meter[data-state="connecting"] .voice-bar {
+    animation: voice-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes voice-pulse {
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
 }

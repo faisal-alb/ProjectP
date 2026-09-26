@@ -1,14 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import {
-  ConversationProvider,
-  useConversationClientTool,
-  useConversationControls,
-  useConversationMode,
-  useConversationStatus,
-} from "@elevenlabs/react";
-import { Mic, X } from "lucide-react";
+import { useConversationClientTool } from "@elevenlabs/react";
 import { useVoiceSnapshotRef } from "@/lib/voice-snapshot";
 
 const money = (n: number) => `$${n.toFixed(2)}`;
@@ -16,21 +8,11 @@ const money = (n: number) => `$${n.toFixed(2)}`;
 /** Sections the agent may point at. Ids live on the dashboard sections. */
 const HIGHLIGHTABLE = { tonight: "voice-tonight", earnings: "voice-earnings", autoflex: "voice-autoflex" } as const;
 
-/** A voice agent for households: talk to it, and it reads (never changes) GridFlex data. */
-export function GridAssistant() {
-  return (
-    <ConversationProvider>
-      <AssistantTools />
-      <AssistantButton />
-    </ConversationProvider>
-  );
-}
-
 /**
  * Read-only tools. Names must match the client tools configured on the ElevenLabs
  * agent (see docs/voice-agent.md). Each returns a small JSON string, not the whole dashboard.
  */
-function AssistantTools() {
+export function VoiceTools() {
   const ref = useVoiceSnapshotRef();
   const read = () => {
     const s = ref.current;
@@ -114,47 +96,4 @@ function AssistantTools() {
   });
 
   return null;
-}
-
-function AssistantButton() {
-  const { startSession, endSession } = useConversationControls();
-  const { status } = useConversationStatus();
-  const { isSpeaking } = useConversationMode();
-  const [error, setError] = useState<string | null>(null);
-  const active = status === "connected" || status === "connecting";
-
-  const start = useCallback(async () => {
-    setError(null);
-    try {
-      const res = await fetch("/api/voice/session", { cache: "no-store" });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error ?? "Couldn't start the voice assistant.");
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      startSession({ signedUrl: json.signedUrl, connectionType: "websocket" });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't start the voice assistant.");
-    }
-  }, [startSession]);
-
-  const label =
-    status === "connecting" ? "Connecting…" : active ? (isSpeaking ? "Speaking…" : "Listening…") : "Ask GridFlex";
-
-  return (
-    <div className="fixed right-5 bottom-5 z-40 flex flex-col items-end gap-2 sm:right-8 sm:bottom-8">
-      {error && (
-        <p role="alert" className="panel max-w-64 rounded-md px-3 py-2 text-xs text-muted">
-          {error}
-        </p>
-      )}
-      <button
-        type="button"
-        onClick={active ? endSession : start}
-        aria-pressed={active}
-        className="flex items-center gap-2 rounded-full bg-foreground px-4 py-3 text-sm font-semibold text-background shadow-lg transition-colors hover:bg-white"
-      >
-        {active ? <X className="h-4 w-4" aria-hidden="true" /> : <Mic className="h-4 w-4" aria-hidden="true" />}
-        <span aria-live="polite">{label}</span>
-      </button>
-    </div>
-  );
 }
