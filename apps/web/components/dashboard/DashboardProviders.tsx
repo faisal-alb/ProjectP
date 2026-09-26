@@ -4,6 +4,7 @@ import type { ParticipantProfile, Role } from "@/lib/profile";
 import { VoiceAssistantProvider } from "@/components/voice/VoiceAssistantProvider";
 import { HouseholdProvider } from "./HouseholdProvider";
 import { HouseholdStateProvider } from "./HouseholdState";
+import { NotificationsProvider } from "./Notifications";
 import { OperatorWalletProvider } from "./OperatorWallet";
 import { SolanaProvider } from "./SolanaProvider";
 
@@ -18,15 +19,17 @@ export function DashboardProviders({
 }) {
   return (
     <SolanaProvider>
-      {role === "participant" && household ? (
-        <HouseholdProvider>
-          <VoiceAssistantProvider>
-            <HouseholdStateProvider {...household}>{children}</HouseholdStateProvider>
-          </VoiceAssistantProvider>
-        </HouseholdProvider>
-      ) : (
-        <OperatorWalletProvider>{children}</OperatorWalletProvider>
-      )}
+      <NotificationsProvider role={role}>
+        {role === "participant" && household ? (
+          <HouseholdProvider>
+            <VoiceAssistantProvider>
+              <HouseholdStateProvider {...household}>{children}</HouseholdStateProvider>
+            </VoiceAssistantProvider>
+          </HouseholdProvider>
+        ) : (
+          <OperatorWalletProvider>{children}</OperatorWalletProvider>
+        )}
+      </NotificationsProvider>
     </SolanaProvider>
   );
 }

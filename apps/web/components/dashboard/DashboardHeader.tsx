@@ -7,6 +7,7 @@ import type { Role } from "@/lib/profile";
 import { Logo, Wordmark } from "@/components/gridflex/Logo";
 import { DashboardNav } from "./DashboardNav";
 import { Dropdown } from "./Dropdown";
+import { NotificationBell } from "./Notifications";
 import { HouseholdWalletButton } from "./HouseholdWallet";
 import { OperatorWalletButton } from "./OperatorWallet";
 import { useSolana } from "./SolanaProvider";
@@ -31,6 +32,7 @@ export function DashboardHeader({ role, label }: { role: Role; label: string }) 
         <div className="flex items-center gap-2 sm:gap-3">
           <NetworkStatus />
           {role === "participant" ? <HouseholdWalletButton /> : <OperatorWalletButton />}
+          <NotificationBell />
           <AccountMenu role={role} label={label} />
         </div>
       </div>

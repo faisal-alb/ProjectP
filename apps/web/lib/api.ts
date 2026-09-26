@@ -102,6 +102,28 @@ export function useMarketEvents(onEvent: () => void, enabled: boolean) {
   }, [enabled]);
 }
 
+/** Like `useMarketEvents`, but hands over each event's type, market id and data. */
+export function useMarketStream(
+  onEvent: (event: { type: string; marketId: string; data?: unknown }) => void,
+  enabled: boolean,
+) {
+  const latest = useRef(onEvent);
+  useEffect(() => {
+    latest.current = onEvent;
+  });
+  useEffect(() => {
+    if (!enabled) return;
+    const source = new EventSource(`${API_URL}/stream`);
+    const handler = (e: MessageEvent<string>) => {
+      try {
+        latest.current(JSON.parse(e.data));
+      } catch {}
+    };
+    MARKET_EVENTS.forEach((type) => source.addEventListener(type, handler as EventListener));
+    return () => source.close();
+  }, [enabled]);
+}
+
 export type ApiStatus = "loading" | "online" | "offline";
 
 /** Whether the settlement API is reachable, and which cluster it's on. */
