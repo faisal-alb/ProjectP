@@ -81,3 +81,8 @@ Thumbs.db
 *.key
 *.p12
 *.pfx
+
+# ML generated data and model artifacts
+ml/data_cache/
+ml/artifacts/
+ml/__pycache__/
