@@ -1,26 +1,189 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #05070d;
+  --background-raised: #0a0e18;
+  --foreground: #eef1f6;
+  --muted: #9aa4b2;
+  --muted-2: #626c78;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --glass: rgba(13, 18, 32, 0.55);
+
+  --accent: #57d6ff;
+  --accent-dim: #1b6f8c;
+  --accent-soft: rgba(87, 214, 255, 0.12);
+
+  --risk: #ff6a4d;
+  --risk-soft: rgba(255, 106, 77, 0.14);
+  --watch: #ffb648;
+  --watch-soft: rgba(255, 182, 72, 0.14);
+  --normal: #34d399;
+  --normal-soft: rgba(52, 211, 153, 0.12);
+
+  --solana-purple: #9945ff;
+  --solana-green: #14f195;
+  --solana-soft: rgba(153, 69, 255, 0.14);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-raised: var(--background-raised);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-glass: var(--glass);
+
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-risk: var(--risk);
+  --color-risk-soft: var(--risk-soft);
+  --color-watch: var(--watch);
+  --color-watch-soft: var(--watch-soft);
+  --color-normal: var(--normal);
+  --color-normal-soft: var(--normal-soft);
+
+  --color-solana-purple: var(--solana-purple);
+  --color-solana-green: var(--solana-green);
+  --color-solana-soft: var(--solana-soft);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+  border: 2px solid var(--background);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dim);
+}
+* {
+  scrollbar-color: var(--border-strong) var(--background);
+  scrollbar-width: thin;
+}
+
+@layer utilities {
+  /* Scroll reveal: exponential ease-out, from an already-visible default */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(4px);
+    transition:
+      opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .fade-up.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+
+  /* Dark glass instrument panel */
+  .glass-panel {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 24px var(--accent-soft);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tracked-caps {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+}
+
+@keyframes arc-draw {
+  from {
+    stroke-dashoffset: var(--arc-length, 1000);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes arc-pulse {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes drift-slow {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-60px, -24px, 0);
+  }
+}
+
+@keyframes chase {
+  0% {
+    opacity: 0.25;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

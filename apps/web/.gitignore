@@ -36,6 +36,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# impeccable ephemeral build/review evidence (surface briefs & config are kept)
+.impeccable/review/
+.impeccable/build/
+.impeccable/mocks/
+.impeccable/hook.cache.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
