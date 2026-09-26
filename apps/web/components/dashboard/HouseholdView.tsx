@@ -1,388 +1,453 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Info } from "lucide-react";
-import { household } from "@/lib/demo-data";
+import { Check } from "lucide-react";
+import {
+  BATTERY_CHARGE_PERCENT,
+  BATTERY_KWH,
+  BATTERY_MAX_DISCHARGE_KW,
+  EV_SHIFTABLE_KW,
+  demoDevices,
+  household,
+  zones,
+  type ResourceKey,
+} from "@/lib/demo-data";
+import type { Emergency, ParticipantProfile } from "@/lib/profile";
+import { Segmented, SliderRow, Switch, secondaryButton } from "@/components/onboarding/controls";
 import { useHousehold } from "./HouseholdProvider";
-import { Switch, SliderRow } from "@/components/onboarding/controls";
+import { EVENT_STATE_LABEL, HouseholdEvent, type EventState } from "./HouseholdEvent";
 import { TxLink } from "./TxLink";
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 const price = (n: number) => `$${n.toFixed(2)}/kWh`;
+const EV_CHARGE_PERCENT = 72;
+/** Earned before this month; the demo has no ledger to sum. */
+const EARLIER_EARNINGS = 61.59;
 
-type Choice = "default" | "skipped" | "joined";
+type GridStatus = "NORMAL" | "WATCH" | "EVENT ACTIVE" | "EMERGENCY";
+const GRID_STYLE: Record<GridStatus, string> = {
+  NORMAL: "text-normal",
+  WATCH: "text-watch",
+  "EVENT ACTIVE": "text-accent",
+  EMERGENCY: "text-risk",
+};
+const EMERGENCY_LABEL: Record<Emergency, string> = { ask: "Manual approval", allow: "Automatic", never: "Never" };
+
+type ResourceStatus = "READY" | "IN USE" | "UNAVAILABLE" | "OFFLINE" | "NEEDS ATTENTION";
+const RESOURCE_STYLE: Record<ResourceStatus, string> = {
+  READY: "text-normal",
+  "IN USE": "text-accent",
+  UNAVAILABLE: "text-muted",
+  OFFLINE: "text-muted-2",
+  "NEEDS ATTENTION": "text-watch",
+};
 
 const shortDate = (iso?: string) =>
   iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Today";
 
-export function HouseholdView({
-  zone = household.zone,
-  hasBattery = true,
-  defaults = household.defaults,
-}: {
-  zone?: string;
-  hasBattery?: boolean;
-  defaults?: typeof household.defaults;
-}) {
+export function HouseholdView({ zone, feeder, profile }: { zone: string; feeder: string; profile: ParticipantProfile }) {
   const live = useHousehold();
-  const [autoFlex, setAutoFlex] = useState(defaults.autoFlex);
-  const [reserve, setReserve] = useState(defaults.reservePercent);
-  const [minPrice, setMinPrice] = useState(defaults.minPricePerKwh);
-  const [maxKwh, setMaxKwh] = useState(defaults.maxKwhPerEvent);
-  const [choice, setChoice] = useState<Choice>("default");
+  const [rules, setRules] = useState({
+    autoFlex: profile.autoFlex,
+    reserve: profile.reservePercent,
+    minRate: profile.minRate,
+    maxKwh: profile.maxKwhPerEvent,
+    maxEvents: profile.maxEventsPerDay,
+    emergency: profile.emergency,
+  });
+  const [managing, setManaging] = useState(false);
+  const [optedOut, setOptedOut] = useState<Partial<Record<ResourceKey, boolean>>>({});
+  const [choice, setChoice] = useState<"joined" | "declined" | null>(null);
+  // Demo control: lets you see every event state without waiting for one.
+  const [preview, setPreview] = useState<EventState | "live">("live");
 
-  const { batteryKwh, chargePercent, maxDischargeKw, eventPricePerKwh } = household;
-  const availableKwh = hasBattery ? Math.max(0, ((chargePercent - reserve) / 100) * batteryKwh) : 0;
-  const plannedKwh = Math.round(Math.min(maxKwh, availableKwh, maxDischargeKw) * 10) / 10;
-  const earnings = plannedKwh * eventPricePerKwh;
-  const afterPercent = Math.round(chargePercent - (plannedKwh / batteryKwh) * 100);
+  const has = (k: ResourceKey) => profile.resources.includes(k);
+  const batteryIn = has("battery") && !optedOut.battery;
+  const evIn = has("ev") && !optedOut.ev;
 
-  const priceOk = eventPricePerKwh >= minPrice;
-  const hasEnergy = plannedKwh > 0;
+  const rate = household.eventPricePerKwh;
+  const availableKwh = batteryIn
+    ? Math.max(0, ((BATTERY_CHARGE_PERCENT - rules.reserve) / 100) * BATTERY_KWH)
+    : 0;
+  const requestedKwh = Math.round(Math.min(rules.maxKwh, availableKwh, BATTERY_MAX_DISCHARGE_KW) * 10) / 10;
+  const batteryAfter = Math.round(BATTERY_CHARGE_PERCENT - (requestedKwh / BATTERY_KWH) * 100);
 
   const paidTonight = live?.tonight?.phase === "settled" ? live.tonight : null;
-  let state: "in" | "skipped" | "low-price" | "no-energy" | "manual" | "paid";
-  if (paidTonight) state = "paid";
-  else if (!hasEnergy) state = "no-energy";
-  else if (choice === "skipped") state = "skipped";
-  else if (choice === "joined") state = "in";
-  else if (!autoFlex) state = "manual";
-  else if (!priceOk) state = "low-price";
-  else state = "in";
+  const rateOk = rate >= rules.minRate;
 
-  const paid = household.history.filter((h) => h.status === "paid");
+  // What would happen tonight, from the rules alone.
+  let derived: EventState;
+  if (paidTonight) derived = "settled";
+  else if (requestedKwh <= 0) derived = "none";
+  else if (choice === "declined") derived = "declined";
+  else if (choice === "joined") derived = "accepted";
+  else if (rules.autoFlex && rateOk) derived = "accepted";
+  else derived = "awaiting";
+  const state = preview === "live" ? derived : preview;
+  const auto = choice !== "joined" && rules.autoFlex && rateOk;
+
+  // Figures for the states past "accepted" are illustrative.
+  const deliveredKwh =
+    state === "active" ? Math.round(requestedKwh * 0.6 * 10) / 10
+    : state === "partial" ? Math.round(requestedKwh * 0.7 * 10) / 10
+    : state === "verifying" || state === "settled" ? requestedKwh
+    : 0;
+  const settledLive = state === "settled" && paidTonight;
+  const eventEarned = deliveredKwh * rate;
+
+  const gridStatus: GridStatus =
+    state === "active" ? "EVENT ACTIVE" : state === "upcoming" || state === "awaiting" || state === "accepted" || state === "declined" ? "WATCH" : "NORMAL";
+  const z = zones.find((x) => x.name === zone) ?? zones[0];
+
+  const paidHistory = household.history.filter((h) => h.status === "paid");
   const livePayouts = live?.payouts ?? [];
-  const monthTotal =
-    paid.reduce((s, h) => s + h.kwh * h.pricePerKwh, 0) +
+  const monthBase =
+    paidHistory.reduce((s, h) => s + h.kwh * h.pricePerKwh, 0) +
     livePayouts.reduce((s, p) => s + Number(p.amount.base) / 1e6, 0);
+  // A settled preview counts toward today unless the live payout is already in the ledger.
+  const todayExtra = (state === "settled" || state === "partial") && !settledLive ? eventEarned : 0;
+  const today = settledLive ? Number(paidTonight!.payout?.base ?? 0) / 1e6 : todayExtra;
+  const month = monthBase + todayExtra;
+  const lifetime = month + EARLIER_EARNINGS;
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
+  const resources = profile.resources.map((key) => {
+    const d = demoDevices[key];
+    const out = !!optedOut[key];
+    const status: ResourceStatus = out ? "UNAVAILABLE" : state === "active" && key === "battery" ? "IN USE" : "READY";
+    let line1 = d.spec;
+    let line2 = "";
+    if (key === "battery") {
+      line1 = `${BATTERY_CHARGE_PERCENT}% charge`;
+      line2 = out ? "Not shared with GridFlex" : `${Math.max(0, ((BATTERY_CHARGE_PERCENT - rules.reserve) / 100) * BATTERY_KWH).toFixed(1)} kWh available`;
+    } else if (key === "ev") {
+      line1 = `${EV_CHARGE_PERCENT}% charge`;
+      line2 = out ? "Not shared with GridFlex" : `Charging can shift until ${formatTime(profile.ev.readyBy)}`;
+    } else if (key === "solar") line2 = "Adds to what your home can share";
+    else if (key === "hvac") line2 = `Can adjust ±${profile.hvac.maxAdjustF}°F for up to ${profile.hvac.maxMinutes} min`;
+    else if (key === "generator") line2 = "On standby";
+    else line2 = "Shiftable load";
+    return { key, name: d.device, status, line1, line2, out };
+  });
 
   return (
     <div>
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Your home</h1>
-        <p className="mt-1 text-sm text-muted">
-          {zone} zone{hasBattery ? ` · ${batteryKwh} kWh home battery` : " · no battery connected"}
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{greeting}</h1>
+          <p className="mt-1 text-sm text-muted">
+            {state === "active"
+              ? "Your energy is supporting the grid right now."
+              : batteryIn || evIn
+                ? "Your energy is ready to support the grid."
+                : "Connect or opt in a device to start earning."}
+          </p>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-muted">
+          Preview state
+          <select
+            value={preview}
+            onChange={(e) => setPreview(e.target.value as EventState | "live")}
+            className="rounded-md border border-border bg-background-raised px-2 py-1 text-xs text-foreground"
+          >
+            <option value="live">Live (from your rules)</option>
+            {(Object.keys(EVENT_STATE_LABEL) as EventState[]).map((s) => (
+              <option key={s} value={s}>
+                {EVENT_STATE_LABEL[s]}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div className="min-w-0 space-y-6">
-          {/* Tonight */}
-          <section aria-labelledby="tonight-heading" className="panel rounded-lg p-5 sm:p-6">
-            <StatusLine state={state} />
-            <h2 id="tonight-heading" className="mt-2 text-xl font-semibold tracking-tight text-balance text-foreground sm:text-2xl">
-              {state === "paid"
-                ? `You earned ${paidTonight!.payout?.formatted} tonight`
-                : state === "in"
-                  ? `Tonight, your battery will earn about ${money(earnings)}`
-                  : state === "no-energy"
-                    ? "Your battery has nothing to share tonight"
-                    : `Tonight's event could earn you about ${money(earnings)}`}
-            </h2>
-            {state === "paid" ? (
-              <div className="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-base">
-                <p>
-                  Your meter confirmed what your battery shared during the event, and the payment is in your GridFlex
-                  wallet.
-                </p>
-                <div className="mt-1">
-                  <TxLink href={paidTonight!.url} label="View payment" />
+      {/* At a glance */}
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <Tile label="Your available flex">
+          <p className="font-mono text-3xl font-semibold tabular text-foreground">{availableKwh.toFixed(1)} kWh</p>
+          <p className="mt-1 text-xs text-muted">
+            {evIn ? `+ ${EV_SHIFTABLE_KW} kW EV charging can shift` : batteryIn ? "From your battery, above your reserve" : "Nothing opted in"}
+          </p>
+        </Tile>
+        <Tile label="Earned this month">
+          <p className="font-mono text-3xl font-semibold tabular text-foreground">{money(month)}</p>
+          <p className="mt-1 text-xs text-muted">
+            Today {money(today)} · Lifetime {money(lifetime)}
+          </p>
+        </Tile>
+        <Tile label={`Grid status · ${zone} ${feeder}`}>
+          <p className={`text-3xl font-semibold tracking-tight ${GRID_STYLE[gridStatus]}`}>{gridStatus}</p>
+          <p className="mt-1 text-xs text-muted">
+            {gridStatus === "NORMAL"
+              ? "No flexibility needed right now."
+              : `Load ${z.currentMw.toFixed(1)} MW, peaking ${z.peakTime}`}
+          </p>
+        </Tile>
+      </div>
+
+      <div className="mt-6 space-y-6">
+        <HouseholdEvent
+          ev={{
+            state,
+            auto,
+            zone,
+            window: household.eventWindow,
+            requestedKwh,
+            deliveredKwh,
+            rate,
+            batteryAfter,
+            reserve: rules.reserve,
+            minutesLeft: 34,
+            reliefPercent: 62,
+            paidLabel: settledLive ? paidTonight!.payout?.formatted : undefined,
+            receiptUrl: settledLive ? paidTonight!.url : undefined,
+          }}
+          onParticipate={() => {
+            setPreview("live");
+            setChoice("joined");
+          }}
+          onDecline={() => {
+            setPreview("live");
+            setChoice("declined");
+          }}
+        />
+
+        {/* Resources */}
+        <section aria-labelledby="resources-heading">
+          <h2 id="resources-heading" className="tracked-caps text-xs font-medium text-muted">
+            My resources
+          </h2>
+          {resources.length === 0 ? (
+            <p className="panel mt-3 rounded-lg p-5 text-sm text-muted">
+              No devices connected yet. Add a battery or EV to start earning.
+            </p>
+          ) : (
+            <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {resources.map((r) => (
+                <div key={r.key} className="panel rounded-lg p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium text-foreground">{r.name}</p>
+                    <span className={`shrink-0 text-xs font-semibold ${RESOURCE_STYLE[r.status]}`}>{r.status}</span>
+                  </div>
+                  <p className="mt-3 font-mono text-2xl font-semibold tabular text-foreground">{r.line1}</p>
+                  <p className="mt-1 text-xs text-muted">{r.line2}</p>
+                  <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs text-muted">
+                    <span>{r.out ? "Opted out" : "Available to GridFlex"}</span>
+                    <Switch
+                      checked={!r.out}
+                      onChange={(v) => setOptedOut((o) => ({ ...o, [r.key]: !v }))}
+                      label={`Share ${r.name} with GridFlex`}
+                    />
+                  </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* AutoFlex and limits */}
+          <section aria-labelledby="autoflex-heading" className="panel h-fit rounded-lg p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="autoflex-heading" className="tracked-caps text-xs font-medium text-muted">
+                  AutoFlex &amp; your limits
+                </h2>
+                <p className="mt-2 flex items-center gap-1.5 text-lg font-semibold text-foreground">
+                  {rules.autoFlex ? (
+                    <>
+                      Enabled <Check className="h-4 w-4 text-normal" aria-hidden="true" />
+                    </>
+                  ) : (
+                    "Off"
+                  )}
+                </p>
+                <p className="mt-0.5 text-xs text-muted">
+                  {rules.autoFlex ? "Joins events for you when they match these rules." : "You decide on each event yourself."}
+                </p>
               </div>
-            ) : (
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-base">
-                <StateMessage state={state} plannedKwh={plannedKwh} reserve={reserve} minPrice={minPrice} />
-              </p>
-            )}
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              {state === "in" && (
-                <button
-                  type="button"
-                  onClick={() => setChoice("skipped")}
-                  className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-border-strong"
-                >
-                  Skip tonight&rsquo;s event
-                </button>
-              )}
-              {(state === "skipped" || state === "low-price" || state === "manual") && (
-                <button
-                  type="button"
-                  onClick={() => setChoice("joined")}
-                  className="rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-white"
-                >
-                  {state === "skipped" ? "Rejoin tonight's event" : "Join tonight's event"}
-                </button>
-              )}
+              <Switch checked={rules.autoFlex} onChange={(v) => setRules((r) => ({ ...r, autoFlex: v }))} label="AutoFlex" />
             </div>
 
-            <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-5 sm:grid-cols-4">
-              <Fact label="When" value={household.eventWindow} />
-              <Fact
-                label={state === "in" || state === "paid" ? "Energy shared" : "You could share"}
-                value={`${plannedKwh.toFixed(1)} kWh`}
-                mono
-              />
-              <Fact label="Rate" value={price(eventPricePerKwh)} mono />
-              <Fact
-                label="Battery afterwards"
-                value={state === "in" || state === "paid" ? `About ${afterPercent}%` : `${chargePercent}%, unused`}
-                mono
-              />
+            <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-4">
+              <Rule label="Battery reserve" value={`${rules.reserve}%`} />
+              <Rule label="Minimum payout" value={price(rules.minRate)} />
+              <Rule label="Maximum per event" value={`${rules.maxKwh.toFixed(1)} kWh`} />
+              <Rule label="Events per day" value={`${rules.maxEvents}`} />
+              <Rule label="Emergency dispatch" value={EMERGENCY_LABEL[rules.emergency]} />
             </dl>
+            <p className="mt-4 text-xs text-muted">
+              GridFlex never takes your battery below {rules.reserve}%.
+            </p>
 
-            <BatteryBar
-              charge={chargePercent}
-              after={state === "in" || state === "paid" ? afterPercent : chargePercent}
-              reserve={reserve}
-            />
+            <button
+              type="button"
+              onClick={() => setManaging((m) => !m)}
+              aria-expanded={managing}
+              className={`${secondaryButton} mt-4`}
+            >
+              {managing ? "Done" : "Manage"}
+            </button>
 
-            <div className="mt-6 flex gap-2.5 rounded-md border border-border bg-background-raised p-3 text-sm text-muted">
-              <Info className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-              <p>
-                <span className="font-medium text-foreground">Why tonight?</span> Downtown Miami&rsquo;s power lines are
-                expected to be overloaded around 7:20 PM. Energy from home batteries nearby helps avoid an outage. You
-                get paid once your meter confirms what you shared, and the payment is recorded on Solana.
-              </p>
-            </div>
+            {managing && (
+              <div className="mt-5 space-y-6 border-t border-border pt-5">
+                <SliderRow
+                  label="Always keep at least"
+                  value={rules.reserve}
+                  display={`${rules.reserve}%`}
+                  min={20}
+                  max={80}
+                  step={5}
+                  onChange={(v) => setRules((r) => ({ ...r, reserve: v }))}
+                  hint="Charge kept for your home, for example during an outage."
+                />
+                <SliderRow
+                  label="Only join when paid at least"
+                  value={rules.minRate}
+                  display={price(rules.minRate)}
+                  min={0.05}
+                  max={0.3}
+                  step={0.01}
+                  onChange={(v) => setRules((r) => ({ ...r, minRate: Math.round(v * 100) / 100 }))}
+                  hint={`Tonight pays ${price(rate)}.`}
+                />
+                <SliderRow
+                  label="Share at most"
+                  value={rules.maxKwh}
+                  display={`${rules.maxKwh.toFixed(1)} kWh`}
+                  min={1}
+                  max={6}
+                  step={0.5}
+                  onChange={(v) => setRules((r) => ({ ...r, maxKwh: v }))}
+                  hint="Per event."
+                />
+                <SliderRow
+                  label="Events per day"
+                  value={rules.maxEvents}
+                  display={`${rules.maxEvents}`}
+                  min={1}
+                  max={3}
+                  step={1}
+                  onChange={(v) => setRules((r) => ({ ...r, maxEvents: v }))}
+                />
+                <div>
+                  <p className="mb-2 text-sm font-medium text-foreground">Emergency dispatch</p>
+                  <Segmented
+                    label="Emergency dispatch"
+                    value={rules.emergency}
+                    options={[
+                      { value: "ask", label: "Ask me" },
+                      { value: "allow", label: "Automatic" },
+                      { value: "never", label: "Never" },
+                    ]}
+                    onChange={(v) => setRules((r) => ({ ...r, emergency: v }))}
+                  />
+                </div>
+                <p className="text-xs text-muted-2">Changes apply to tonight and future events.</p>
+              </div>
+            )}
           </section>
 
-          {/* Earnings */}
-          <section aria-labelledby="earnings-heading" className="panel rounded-lg p-5 sm:p-6">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 id="earnings-heading" className="text-lg font-semibold text-foreground">
-                Earnings
-              </h2>
-              <p className="text-sm text-muted">
-                September so far:{" "}
-                <span className="font-semibold text-foreground">{money(monthTotal)}</span> from{" "}
-                {paid.length + livePayouts.length} events
-              </p>
-            </div>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-muted">
-                    <th className="pb-2 pr-3 font-medium">Date</th>
-                    <th className="hidden pb-2 pr-3 font-medium sm:table-cell">Time</th>
-                    <th className="pb-2 pr-3 text-right font-medium">Shared</th>
-                    <th className="pb-2 pr-3 text-right font-medium">Earned</th>
-                    <th className="pb-2 pl-3 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {livePayouts.map((p) => (
-                    <tr key={p.marketId} className="border-t border-border">
-                      <td className="py-2.5 pr-3 font-medium whitespace-nowrap text-foreground">{shortDate(p.settledAt)}</td>
-                      <td className="hidden py-2.5 pr-3 text-muted sm:table-cell">{p.window}</td>
-                      <td className="py-2.5 pr-3 text-right font-mono whitespace-nowrap tabular text-foreground/85">
-                        {p.deliveredKw !== undefined ? `${p.deliveredKw.toFixed(1)} kWh` : "—"}
-                      </td>
-                      <td className="py-2.5 pr-3 text-right font-mono whitespace-nowrap tabular text-foreground">
-                        {p.amount.formatted}
-                      </td>
-                      <td className="py-2.5 pl-3 text-xs">
-                        <span className="inline-flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 font-medium text-normal">
-                            <Check className="h-3 w-3" aria-hidden="true" />
-                            Paid
-                          </span>
-                          <TxLink href={p.url} label="Receipt" />
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {household.history.map((h) => (
-                    <tr key={h.date} className="border-t border-border">
-                      <td className="py-2.5 pr-3 font-medium whitespace-nowrap text-foreground">{h.date}</td>
-                      <td className="hidden py-2.5 pr-3 text-muted sm:table-cell">{h.window}</td>
-                      <td className="py-2.5 pr-3 text-right font-mono whitespace-nowrap tabular text-foreground/85">
-                        {h.status === "paid" ? `${h.kwh.toFixed(1)} kWh` : "—"}
-                      </td>
-                      <td className="py-2.5 pr-3 text-right font-mono whitespace-nowrap tabular text-foreground">
-                        {h.status === "paid" ? money(h.kwh * h.pricePerKwh) : "—"}
-                      </td>
-                      <td className="py-2.5 pl-3 text-xs">
-                        {h.status === "paid" ? (
-                          <span className="inline-flex items-center gap-1 font-medium text-normal">
-                            <Check className="h-3 w-3" aria-hidden="true" />
-                            Paid
-                          </span>
-                        ) : (
-                          <span className="text-muted">Skipped, rate was {price(h.pricePerKwh)}</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* Recent earnings */}
+          <section aria-labelledby="earnings-heading" className="panel h-fit rounded-lg p-5">
+            <h2 id="earnings-heading" className="tracked-caps text-xs font-medium text-muted">
+              Recent earnings
+            </h2>
+            <ul className="mt-3 divide-y divide-border">
+              {todayExtra > 0 && (
+                <Row title={`${zone} Flex Event`} sub="Today" amount={todayExtra} status="Paid" />
+              )}
+              {livePayouts.map((p) => (
+                <Row
+                  key={p.marketId}
+                  title={`${zone} Flex Event`}
+                  sub={`${shortDate(p.settledAt)}${p.deliveredKw !== undefined ? ` · ${p.deliveredKw.toFixed(1)} kWh` : ""}`}
+                  amount={Number(p.amount.base) / 1e6}
+                  status="Paid"
+                  url={p.url}
+                />
+              ))}
+              {household.history.slice(0, 5).map((h) =>
+                h.status === "paid" ? (
+                  <Row
+                    key={h.date}
+                    title="Battery dispatch"
+                    sub={`${h.date} · ${h.kwh.toFixed(1)} kWh at ${price(h.pricePerKwh)}`}
+                    amount={h.kwh * h.pricePerKwh}
+                    status="Paid"
+                  />
+                ) : (
+                  <li key={h.date} className="flex items-baseline justify-between gap-3 py-3 text-sm text-muted">
+                    <span>
+                      Skipped
+                      <span className="block text-xs text-muted-2">
+                        {h.date} · rate was {price(h.pricePerKwh)}
+                      </span>
+                    </span>
+                    <span className="font-mono tabular">—</span>
+                  </li>
+                ),
+              )}
+            </ul>
           </section>
         </div>
-
-        {/* Settings */}
-        <section aria-labelledby="settings-heading" className="panel h-fit rounded-lg p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 id="settings-heading" className="text-lg font-semibold text-foreground">
-                AutoFlex
-              </h2>
-              <p className="mt-1 text-sm text-muted">
-                {autoFlex ? "Joins events for you when they match your rules." : "Off. You'll decide on each event yourself."}
-              </p>
-            </div>
-            <Switch
-              checked={autoFlex}
-              onChange={(v) => {
-                setAutoFlex(v);
-                setChoice("default");
-              }}
-              label="AutoFlex"
-            />
-          </div>
-
-          <div className="mt-6 space-y-6 border-t border-border pt-5">
-            <SliderRow
-              label="Always keep at least"
-              value={reserve}
-              display={`${reserve}%`}
-              min={20}
-              max={80}
-              step={5}
-              onChange={setReserve}
-              hint="Charge kept for your home, for example during an outage."
-            />
-            <SliderRow
-              label="Only join when paid at least"
-              value={minPrice}
-              display={price(minPrice)}
-              min={0.05}
-              max={0.3}
-              step={0.01}
-              onChange={(v) => setMinPrice(Math.round(v * 100) / 100)}
-              hint={`Tonight pays ${price(eventPricePerKwh)}.`}
-            />
-            <SliderRow
-              label="Share at most"
-              value={maxKwh}
-              display={`${maxKwh.toFixed(1)} kWh`}
-              min={1}
-              max={5}
-              step={0.5}
-              onChange={setMaxKwh}
-              hint={`Per event. Your battery can deliver up to ${maxDischargeKw} kWh in an hour.`}
-            />
-          </div>
-          <p className="mt-6 text-xs text-muted-2">Changes apply to tonight and future events.</p>
-        </section>
       </div>
     </div>
   );
 }
 
-function StatusLine({ state }: { state: string }) {
-  const map: Record<string, { label: string; dot: string; text: string }> = {
-    paid: { label: "Paid", dot: "bg-normal", text: "text-normal" },
-    in: { label: "You're taking part", dot: "bg-normal", text: "text-normal" },
-    skipped: { label: "You're sitting this one out", dot: "bg-muted-2", text: "text-muted" },
-    "low-price": { label: "Not joining automatically", dot: "bg-watch", text: "text-watch" },
-    manual: { label: "Waiting for your decision", dot: "bg-watch", text: "text-watch" },
-    "no-energy": { label: "Not taking part", dot: "bg-muted-2", text: "text-muted" },
-  };
-  const s = map[state];
+function formatTime(hhmm: string) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "AM" : "PM"}`;
+}
+
+function Tile({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <p className={`flex items-center gap-1.5 text-sm font-medium ${s.text}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} aria-hidden="true" />
-      {s.label}
-    </p>
+    <div className="panel rounded-lg p-5">
+      <p className="tracked-caps text-xs font-medium text-muted">{label}</p>
+      <div className="mt-3">{children}</div>
+    </div>
   );
 }
 
-function StateMessage({
-  state,
-  plannedKwh,
-  reserve,
-  minPrice,
-}: {
-  state: string;
-  plannedKwh: number;
-  reserve: number;
-  minPrice: number;
-}) {
-  const kwh = `${plannedKwh.toFixed(1)} kWh`;
-  switch (state) {
-    case "in":
-      return (
-        <>
-          Between {household.eventWindow.replace(" – ", " and ")}, your battery will share {kwh} with the local grid
-          while demand peaks. It won&rsquo;t go below your {reserve}% reserve.
-        </>
-      );
-    case "skipped":
-      return <>Your battery won&rsquo;t be used tonight. You can rejoin any time before 7:00 PM.</>;
-    case "low-price":
-      return (
-        <>
-          This event pays {price(household.eventPricePerKwh)}, below your minimum of {price(minPrice)}, so AutoFlex
-          won&rsquo;t join it. You can still join tonight&rsquo;s event yourself.
-        </>
-      );
-    case "manual":
-      return <>AutoFlex is off, so nothing happens unless you join. Joining shares {kwh} from your battery.</>;
-    default:
-      return (
-        <>
-          Your battery is at {household.chargePercent}%, and you&rsquo;ve asked to keep at least {reserve}%. Lower your
-          reserve if you&rsquo;d like to take part.
-        </>
-      );
-  }
-}
-
-function Fact({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+function Rule({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-xs text-muted">{label}</dt>
-      <dd className={`mt-1 text-sm font-semibold text-foreground ${mono ? "font-mono tabular" : ""}`}>{value}</dd>
+      <dd className="mt-1 font-mono text-sm font-semibold tabular text-foreground">{value}</dd>
     </div>
   );
 }
 
-function BatteryBar({ charge, after, reserve }: { charge: number; after: number; reserve: number }) {
+function Row({
+  title,
+  sub,
+  amount,
+  status,
+  url,
+}: {
+  title: string;
+  sub: string;
+  amount: number;
+  status: string;
+  url?: string;
+}) {
   return (
-    <div className="mt-6">
-      <div className="flex items-baseline justify-between text-xs text-muted">
-        <span>Battery</span>
-        <span>
-          <span className="font-mono tabular text-foreground">{charge}%</span> now
+    <li className="flex items-baseline justify-between gap-3 py-3 text-sm">
+      <span className="min-w-0">
+        <span className="block font-medium text-foreground">{title}</span>
+        <span className="block text-xs text-muted">
+          {sub} · <span className="text-normal">{status}</span>
+          {url && (
+            <>
+              {" · "}
+              <TxLink href={url} label="Receipt" />
+            </>
+          )}
         </span>
-      </div>
-      <div
-        className="relative mt-2 h-3 rounded-sm bg-white/[0.06]"
-        role="img"
-        aria-label={`Battery at ${charge}%. After tonight about ${after}%. Reserve kept at ${reserve}%.`}
-      >
-        <div className="absolute inset-y-0 left-0 rounded-sm bg-foreground/70" style={{ width: `${after}%` }} />
-        {after < charge && (
-          <div
-            className="absolute inset-y-0 rounded-r-sm bg-chart-flex"
-            style={{ left: `${after}%`, width: `${charge - after}%` }}
-          />
-        )}
-        <span className="absolute -top-1 -bottom-1 w-px bg-watch" style={{ left: `${reserve}%` }} />
-      </div>
-      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
-        {after < charge && (
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-3 rounded-sm bg-chart-flex" aria-hidden="true" />
-            Shared tonight
-          </span>
-        )}
-        <span className="flex items-center gap-1.5">
-          <span className="h-3 w-px bg-watch" aria-hidden="true" />
-          Your reserve ({reserve}%)
-        </span>
-      </div>
-    </div>
+      </span>
+      <span className="shrink-0 font-mono font-semibold tabular text-normal">+{money(amount)}</span>
+    </li>
   );
 }
