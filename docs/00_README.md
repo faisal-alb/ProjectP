@@ -110,6 +110,16 @@ The simulator can live inside the API unless separating it is genuinely helpful.
 
 ---
 
+## Additional design docs
+
+- [Architecture overview](02_ARCHITECTURE.md)
+- [36-hour build plan](03_BUILD_PLAN_36H.md)
+- [API and data model](04_API_AND_DATA.md)
+- [Solana program scope](05_SOLANA_PROGRAM.md)
+- [Model orchestration spec](08_MODEL_ORCHESTRATION.md)
+
+---
+
 ## Team rule
 
 If a feature does not improve the 2-minute demo, it is probably not worth building during the hackathon.
