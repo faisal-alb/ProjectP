@@ -18,7 +18,7 @@ export async function GET() {
     { headers: { "xi-api-key": apiKey }, cache: "no-store" },
   );
   if (!res.ok) {
-    console.error("ElevenLabs signed URL failed", res.status);
+    console.error("ElevenLabs signed URL failed", res.status, await res.text().catch(() => ""));
     return Response.json({ error: "Couldn't start the voice assistant." }, { status: 502 });
   }
   const { signed_url } = (await res.json()) as { signed_url: string };
