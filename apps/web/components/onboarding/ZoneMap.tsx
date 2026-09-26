@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FeatureCollection, Geometry } from "geojson";
-import type { Map as MapboxMap, Marker } from "mapbox-gl";
+import type { Map as MapboxMap } from "mapbox-gl";
 import { resolveZip } from "@gridflex/shared";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -20,7 +20,6 @@ export default function ZoneMap({ zip }: { zip: string }) {
     if (!token || !container.current || !selected) return;
     let disposed = false;
     let map: MapboxMap | undefined;
-    let marker: Marker | undefined;
     let resize: ResizeObserver | undefined;
     const controller = new AbortController();
     const timeout = window.setTimeout(() => {
@@ -63,10 +62,6 @@ export default function ZoneMap({ zip }: { zip: string }) {
           if (disposed || !map) return;
           map.addSource("zone", { type: "geojson", data: feature });
           map.addLayer({
-            id: "zone-fill", type: "fill", source: "zone",
-            paint: { "fill-color": "#7fb4cc", "fill-opacity": 0.12 },
-          });
-          map.addLayer({
             id: "zone-outline", type: "line", source: "zone",
             paint: { "line-color": "#7fb4cc", "line-width": 2 },
           });
@@ -76,11 +71,6 @@ export default function ZoneMap({ zip }: { zip: string }) {
             : feature.geometry.type === "MultiPolygon" ? feature.geometry.coordinates.flat(2) : [];
           for (const position of positions) bounds.extend([position[0], position[1]]);
           map.fitBounds(bounds, { padding: 42, maxZoom: 13, duration: 0 });
-          marker = new mapboxgl.Marker({ color: "#ececee" })
-            .setLngLat(selected.coordinates)
-            .addTo(map);
-          marker.getElement().setAttribute("role", "img");
-          marker.getElement().setAttribute("aria-label", `ZIP ${zip} approximate location`);
           resize = new ResizeObserver(() => {
             map?.resize();
             map?.fitBounds(bounds, { padding: 42, maxZoom: 13, duration: 0 });
@@ -100,7 +90,6 @@ export default function ZoneMap({ zip }: { zip: string }) {
       controller.abort();
       window.clearTimeout(timeout);
       resize?.disconnect();
-      marker?.remove();
       map?.remove();
     };
   }, [zip, attempt]);
@@ -127,7 +116,7 @@ export default function ZoneMap({ zip }: { zip: string }) {
       </div>
       <figcaption className="border-t border-border px-4 py-3 text-xs text-muted">
         <p><span className="font-medium text-foreground">{location.zone}</span> · ZIP <span className="font-mono tabular">{zip}</span></p>
-        <p className="mt-1">Outline groups Census ZIP areas; marker shows an approximate ZIP location. Grid assignments are illustrative.</p>
+        <p className="mt-1">Outline groups Census ZIP areas. Grid assignments are illustrative.</p>
       </figcaption>
     </figure>
   );

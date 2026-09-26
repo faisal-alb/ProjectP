@@ -5,7 +5,7 @@ This document records the narrow boundary for the onboarding location map. It is
 ## Runtime contract
 
 - `apps/web/components/onboarding/ZoneMap.tsx` reads `NEXT_PUBLIC_MAPBOX_TOKEN`, loads Mapbox style `mapbox://styles/mapbox/dark-v11`, and fetches `/maps/south-florida-zones.geojson`.
-- The selected feature is matched by its `zone` property from `resolveZip()` in `packages/shared/src/onboarding.ts`. The marker uses the 2020 Census ZCTA representative point stored there; it is an approximate ZIP location, not a street address.
+- The selected feature is matched by its `zone` property from `resolveZip()` in `packages/shared/src/onboarding.ts`. The map shows only the zone outline, with no ZIP marker or polygon fill.
 - Without a token, or when Mapbox/GeoJSON loading fails, onboarding keeps the zone details visible and shows the map fallback. The map is non-rotating and disables scroll zoom.
 
 ## Local setup

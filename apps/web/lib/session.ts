@@ -1,5 +1,6 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { auth, authReady } from "./auth";
 import {
   PROFILE_COOKIE,
   ROLE_COOKIE,
@@ -12,7 +13,14 @@ import {
   type Role,
 } from "./profile";
 
+/** The signed-in anonymous session, or null. */
+export async function getSession() {
+  await authReady;
+  return auth.api.getSession({ headers: await headers() });
+}
+
 export async function getRole(): Promise<Role | null> {
+  if (!(await getSession())) return null;
   const value = (await cookies()).get(ROLE_COOKIE)?.value;
   return value === "participant" || value === "operator" ? value : null;
 }

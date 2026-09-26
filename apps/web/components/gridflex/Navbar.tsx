@@ -31,12 +31,6 @@ export function Navbar() {
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/dashboard"
-            className="hidden rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground/90 transition-colors hover:border-border-strong hover:text-foreground sm:inline-flex"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/dashboard"
             className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-white"
           >
             Get Started
