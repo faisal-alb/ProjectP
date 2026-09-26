@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { PLAN_PREFERENCES, type PlanAction, type PlanPreference, type PowerPlan as Plan } from "@gridflex/shared";
-import { Switch } from "@/components/onboarding/controls";
 import { AskGridFlexButton } from "@/components/voice/AskButton";
 
 const money = (n: number) => `$${n.toFixed(2)}`;
@@ -16,12 +15,10 @@ export function PowerPlan({
   plan,
   window,
   onPreference,
-  onStorm,
 }: {
   plan: Plan;
   window: string;
   onPreference: (p: PlanPreference) => void;
-  onStorm: (v: boolean) => void;
 }) {
   return (
     <section id="voice-plan" aria-labelledby="plan-heading" className="panel rounded-lg p-5 sm:p-6">
@@ -60,10 +57,6 @@ export function PowerPlan({
             ))}
           </select>
         </label>
-        <div className="flex items-center gap-2 text-xs text-muted">
-          <Switch checked={plan.stormExpected} onChange={onStorm} label="Storm expected tonight (demo)" />
-          Storm expected tonight <span className="text-muted-2">(demo)</span>
-        </div>
       </div>
 
       <ol className="mt-2 divide-y divide-border">

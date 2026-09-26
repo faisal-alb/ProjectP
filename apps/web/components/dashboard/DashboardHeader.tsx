@@ -10,11 +10,13 @@ import { Dropdown } from "./Dropdown";
 import { NotificationBell } from "./Notifications";
 import { HouseholdWalletButton } from "./HouseholdWallet";
 import { OperatorWalletButton } from "./OperatorWallet";
+import { useSecretTap } from "./Simulator";
 import { useSolana } from "./SolanaProvider";
 
 const ROLE_DESCRIPTION: Record<Role, string> = { participant: "Flexibility provider", operator: "Grid operator" };
 
 export function DashboardHeader({ role, label }: { role: Role; label: string }) {
+  const onLabelTap = useSecretTap();
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background">
       <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between gap-3 px-5 sm:px-8">
@@ -26,7 +28,9 @@ export function DashboardHeader({ role, label }: { role: Role; label: string }) 
             <Logo className="h-6 w-6 text-foreground sm:hidden" />
           </Link>
           <span className="hidden h-4 w-px bg-border sm:block" aria-hidden="true" />
-          <span className="truncate text-sm text-muted">{label}</span>
+          <span className="select-none truncate text-sm text-muted" onClick={onLabelTap}>
+            {label}
+          </span>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">

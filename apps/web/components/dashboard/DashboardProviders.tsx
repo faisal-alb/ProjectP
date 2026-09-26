@@ -6,6 +6,7 @@ import { HouseholdProvider } from "./HouseholdProvider";
 import { HouseholdStateProvider } from "./HouseholdState";
 import { NotificationsProvider } from "./Notifications";
 import { OperatorWalletProvider } from "./OperatorWallet";
+import { SimulatorPanel, SimulatorProvider } from "./Simulator";
 import { SolanaProvider } from "./SolanaProvider";
 
 export function DashboardProviders({
@@ -20,15 +21,20 @@ export function DashboardProviders({
   return (
     <SolanaProvider>
       <NotificationsProvider role={role}>
+        <SimulatorProvider>
         {role === "participant" && household ? (
           <HouseholdProvider>
             <VoiceAssistantProvider>
-              <HouseholdStateProvider {...household}>{children}</HouseholdStateProvider>
+              <HouseholdStateProvider {...household}>
+                {children}
+                <SimulatorPanel />
+              </HouseholdStateProvider>
             </VoiceAssistantProvider>
           </HouseholdProvider>
         ) : (
           <OperatorWalletProvider>{children}</OperatorWalletProvider>
         )}
+        </SimulatorProvider>
       </NotificationsProvider>
     </SolanaProvider>
   );

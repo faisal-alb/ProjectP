@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 import { EV_SHIFTABLE_KW, household, zones } from "@/lib/demo-data";
 import { AskGridFlexButton } from "@/components/voice/AskButton";
 import { useHouseholdState } from "./HouseholdState";
-import { EVENT_STATE_LABEL, HouseholdEvent, type EventState } from "./HouseholdEvent";
+import { HouseholdEvent } from "./HouseholdEvent";
 import { PageHeader } from "./PageHeader";
 import { PowerPlan } from "./PowerPlan";
 
@@ -44,21 +44,6 @@ export function HouseholdView() {
         }
       >
         <AskGridFlexButton />
-        <label className="flex items-center gap-2 text-xs text-muted">
-          Preview state
-          <select
-            value={s.preview}
-            onChange={(e) => s.setPreview(e.target.value as EventState | "live")}
-            className="rounded-md border border-border bg-background-raised px-2 py-1 text-xs text-foreground"
-          >
-            <option value="live">Live (from your rules)</option>
-            {(Object.keys(EVENT_STATE_LABEL) as EventState[]).map((st) => (
-              <option key={st} value={st}>
-                {EVENT_STATE_LABEL[st]}
-              </option>
-            ))}
-          </select>
-        </label>
       </PageHeader>
 
       {/* At a glance */}
@@ -112,7 +97,7 @@ export function HouseholdView() {
           }}
         />
 
-        <PowerPlan plan={s.plan} window={household.eventWindow} onPreference={s.setPlanPreference} onStorm={s.setStorm} />
+        <PowerPlan plan={s.plan} window={household.eventWindow} onPreference={s.setPlanPreference} />
 
         <p className="text-sm text-muted">
           AutoFlex is <span className="font-medium text-foreground">{s.rules.autoFlex ? "on" : "off"}</span> and keeps
