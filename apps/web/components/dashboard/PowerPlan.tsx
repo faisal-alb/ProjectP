@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, Coins, Leaf, Scale, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { PLAN_PREFERENCES, type PlanAction, type PlanPreference, type PowerPlan as Plan } from "@gridflex/shared";
+import { ChoiceTile } from "@/components/onboarding/controls";
 import { AskGridFlexButton } from "@/components/voice/AskButton";
 
 const money = (n: number) => `$${n.toFixed(2)}`;
+
+const GOAL_ICON = { balanced: Scale, earnings: Coins, backup: ShieldCheck, emissions: Leaf, grid: Zap };
 
 /**
  * Tonight's ranked plan. The ranking comes from the optimizer (`buildPowerPlan`); this card
@@ -42,21 +45,34 @@ export function PowerPlan({
         />
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-border pt-4">
-        <label className="flex items-center gap-2 text-xs text-muted">
-          Optimize for
-          <select
-            value={plan.preference}
-            onChange={(e) => onPreference(e.target.value as PlanPreference)}
-            className="rounded-md border border-border bg-background-raised px-2 py-1 text-xs text-foreground"
-          >
-            {PLAN_PREFERENCES.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="mt-5 border-t border-border pt-4">
+        <p id="goal-heading" className="text-sm font-medium text-foreground">
+          What matters most tonight?
+        </p>
+        <p className="mt-0.5 text-xs text-muted">This changes how the actions below are ranked.</p>
+        <div
+          role="radiogroup"
+          aria-labelledby="goal-heading"
+          className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {PLAN_PREFERENCES.map((p) => (
+            <ChoiceTile
+              key={p.value}
+              radio
+              icon={GOAL_ICON[p.value]}
+              title={p.short}
+              description={p.description}
+              selected={plan.preference === p.value}
+              onClick={() => onPreference(p.value)}
+            />
+          ))}
+        </div>
+        {plan.stormExpected && (
+          <p className="mt-3 text-xs text-muted">
+            A storm is expected, so backup power comes first no matter what you pick. Your battery stays at{" "}
+            {plan.reservePercent}% or more.
+          </p>
+        )}
       </div>
 
       <ol className="mt-2 divide-y divide-border">

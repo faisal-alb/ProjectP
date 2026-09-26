@@ -62,6 +62,6 @@ All return small JSON and change nothing. Names must match `apps/web/components/
 store excess solar, discharge the battery, shift household load, run a generator, or do nothing.
 It's a pure function (tested in `power-plan.test.ts`): the optimizer decides, the card shows it,
 and the voice agent only explains it. Each action is scored on financial value, grid relief,
-reliability and emissions, weighted by the household's "Optimize for" setting; a storm multiplies
+reliability and emissions, weighted by the household's goal ("What matters most tonight?": balanced, earn the most, keep backup power, cleanest energy, or help the grid most); a storm multiplies
 the reliability weight and raises the protected reserve to 80%. Solar surplus, generator fuel cost
 and shiftable load are demo constants for now.

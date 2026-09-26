@@ -6,12 +6,38 @@
 export type PlanPreference = "balanced" | "earnings" | "backup" | "emissions" | "grid";
 export type PlanActionKind = "STORE_SOLAR" | "DISCHARGE_BATTERY" | "SHIFT_LOAD" | "RUN_GENERATOR" | "NO_ACTION";
 
-export const PLAN_PREFERENCES: { value: PlanPreference; label: string }[] = [
-  { value: "balanced", label: "Balanced" },
-  { value: "earnings", label: "Maximum earnings" },
-  { value: "backup", label: "Maximum backup protection" },
-  { value: "emissions", label: "Lowest emissions" },
-  { value: "grid", label: "Maximum grid support" },
+/** `label` is the full name (used in the plan's explanation); `short` and `description` are for the picker. */
+export const PLAN_PREFERENCES: { value: PlanPreference; label: string; short: string; description: string }[] = [
+  {
+    value: "balanced",
+    label: "Balanced",
+    short: "Balanced",
+    description: "A mix of earnings, helping the grid, backup power and clean energy.",
+  },
+  {
+    value: "earnings",
+    label: "Maximum earnings",
+    short: "Earn the most",
+    description: "Picks whatever pays you the most tonight.",
+  },
+  {
+    value: "backup",
+    label: "Maximum backup protection",
+    short: "Keep backup power",
+    description: "Keeps your battery well charged in case the power goes out. Holds at least 80% in reserve.",
+  },
+  {
+    value: "emissions",
+    label: "Lowest emissions",
+    short: "Cleanest energy",
+    description: "Prefers solar and battery power and avoids running your generator.",
+  },
+  {
+    value: "grid",
+    label: "Maximum grid support",
+    short: "Help the grid most",
+    description: "Gives your neighborhood the most relief, even if it pays a little less.",
+  },
 ];
 
 /** Illustrative inputs the demo has no live source for. */
