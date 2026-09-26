@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { getRole } from "@/lib/session";
 
 export const metadata = {
-  title: "Get started — GridFlex",
+  title: "Get started | GridFlex",
 };
 
 export default async function OnboardingPage() {

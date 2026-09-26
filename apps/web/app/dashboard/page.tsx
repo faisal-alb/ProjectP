@@ -4,7 +4,7 @@ import { OperatorDashboard } from "@/components/dashboard/OperatorDashboard";
 import { getOperatorProfile, getRole } from "@/lib/session";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: (await getRole()) === "operator" ? "Grid overview — GridFlex" : "My energy — GridFlex" };
+  return { title: (await getRole()) === "operator" ? "Grid overview | GridFlex" : "My energy | GridFlex" };
 }
 
 /** One dashboard per account: the role is chosen at onboarding, not toggled here. */

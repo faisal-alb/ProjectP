@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GridFlex — Grid Flexibility Infrastructure",
+  title: "GridFlex | Grid Flexibility Infrastructure",
   description:
     "GridFlex predicts local grid congestion and coordinates batteries, EVs, buildings, solar, and generators to deliver flexibility exactly where the grid needs it. Settlement is recorded transparently on Solana.",
 };

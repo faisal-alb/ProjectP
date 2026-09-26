@@ -116,7 +116,7 @@ function Action({ action: a, best }: { action: PlanAction; best: boolean }) {
           {a.earnings > 0 ? (
             <p className="font-mono text-sm font-semibold tabular text-foreground">+{money(a.earnings)}</p>
           ) : (
-            <p className="text-sm text-muted-2">{a.kind === "STORE_SOLAR" ? "$0 cost" : "—"}</p>
+            <p className="text-sm text-muted-2">{a.kind === "STORE_SOLAR" ? "$0 cost" : "$0.00"}</p>
           )}
           {a.recommended && <p className="mt-0.5 font-mono text-[11px] tabular text-muted-2">{a.score}</p>}
         </div>
