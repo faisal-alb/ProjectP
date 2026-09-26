@@ -5,6 +5,7 @@ import { ChevronDown, UserRound } from "lucide-react";
 import { signOut } from "@/app/actions";
 import type { Role } from "@/lib/profile";
 import { Logo, Wordmark } from "@/components/gridflex/Logo";
+import { DashboardNav } from "./DashboardNav";
 import { Dropdown } from "./Dropdown";
 import { HouseholdWalletButton } from "./HouseholdWallet";
 import { OperatorWalletButton } from "./OperatorWallet";
@@ -32,6 +33,9 @@ export function DashboardHeader({ role, label }: { role: Role; label: string }) 
           {role === "participant" ? <HouseholdWalletButton /> : <OperatorWalletButton />}
           <AccountMenu role={role} label={label} />
         </div>
+      </div>
+      <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
+        <DashboardNav role={role} />
       </div>
     </header>
   );

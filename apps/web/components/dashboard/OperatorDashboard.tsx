@@ -1,6 +1,7 @@
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { forecastUpdatedAt, zones } from "@/lib/demo-data";
 import { DowntownEvent } from "./DowntownEvent";
-import { ZoneTable } from "./ZoneTable";
 
 export function OperatorDashboard({ initialCap }: { initialCap: number }) {
   const counts = {
@@ -16,16 +17,21 @@ export function OperatorDashboard({ initialCap }: { initialCap: number }) {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Miami grid</h1>
           <p className="mt-1 text-sm text-muted">Tonight&rsquo;s outlook · Forecast updated {forecastUpdatedAt}</p>
         </div>
-        <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm" aria-label="Zone summary">
-          <SummaryItem dot="bg-risk" count={counts.high} label="needs flexibility" plural="need flexibility" />
-          <SummaryItem dot="bg-watch" count={counts.watch} label="close to limit" />
-          <SummaryItem dot="bg-normal" count={counts.normal} label="normal" />
-        </ul>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+          <ul className="flex flex-wrap gap-x-5 gap-y-1" aria-label="Zone summary">
+            <SummaryItem dot="bg-risk" count={counts.high} label="needs flexibility" plural="need flexibility" />
+            <SummaryItem dot="bg-watch" count={counts.watch} label="close to limit" />
+            <SummaryItem dot="bg-normal" count={counts.normal} label="normal" />
+          </ul>
+          <Link href="/dashboard/zones" className="inline-flex items-center gap-0.5 text-muted transition-colors hover:text-foreground">
+            All zones
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-6 space-y-6">
+      <div className="mt-6">
         <DowntownEvent initialCap={initialCap} />
-        <ZoneTable zones={zones} />
       </div>
     </div>
   );

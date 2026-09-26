@@ -33,7 +33,7 @@ All return small JSON and change nothing. Names must match `components/voice/Gri
 | `get_earnings` | none | month total, event count |
 | `get_autoflex_settings` | none | AutoFlex on/off, reserve, min price, max kWh |
 | `get_power_plan` | none | Tonight's ranked Power Plan: each action's rank, kWh, earnings, reasons, caveat, plus a one-line "why" |
-| `highlight_element` | `element`: `tonight` \| `earnings` \| `autoflex` \| `plan` (enum) | scrolls to and rings that section |
+| `highlight_element` | `element`: `tonight` \| `earnings` \| `autoflex` \| `plan` (enum) | opens that section's dashboard page if needed, then scrolls to and rings it |
 
 ## System prompt (starting point)
 
