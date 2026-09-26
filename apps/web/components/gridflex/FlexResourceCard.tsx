@@ -14,12 +14,10 @@ export interface FlexResourceEntry {
  */
 export function FlexInstrumentPanel({ items }: { items: FlexResourceEntry[] }) {
   return (
-    <div className="grid grid-cols-1 divide-y divide-border rounded-2xl glass-panel sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+    <div className="grid grid-cols-1 divide-y divide-border rounded-lg panel sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
       {items.map(({ icon: Icon, title, examples, description }) => (
         <div key={title} className="p-6">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-accent/25 bg-accent-soft text-accent">
-            <Icon className="h-4 w-4" aria-hidden="true" />
-          </span>
+          <Icon className="h-5 w-5 text-muted" strokeWidth={1.5} aria-hidden="true" />
           <h3 className="mt-4 text-base font-semibold text-foreground">
             {title}
           </h3>

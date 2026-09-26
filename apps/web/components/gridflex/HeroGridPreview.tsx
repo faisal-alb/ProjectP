@@ -21,7 +21,7 @@ export function HeroGridPreview() {
   }, []);
 
   return (
-    <div className="w-full max-w-md rounded-2xl glass-panel p-5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.7)]">
+    <div className="w-full max-w-md rounded-lg panel p-5">
       <div className="flex items-center justify-between">
         <div>
           <p className="tracked-caps text-[11px] font-medium text-muted">
@@ -33,10 +33,7 @@ export function HeroGridPreview() {
         </div>
         <div className="text-right">
           <div className="flex items-center justify-end gap-1.5">
-            <span className="relative flex h-2 w-2" aria-hidden="true">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/60" />
-              <span className="relative h-2 w-2 rounded-full bg-accent" />
-            </span>
+            <span className="h-1.5 w-1.5 rounded-full bg-normal" aria-hidden="true" />
             <span className="font-mono text-2xl font-semibold tabular text-foreground">
               {load.toFixed(1)}
               <span className="text-sm text-muted">%</span>
@@ -62,7 +59,7 @@ export function HeroGridPreview() {
               <tr
                 key={zone.name}
                 className={`border-t border-border ${
-                  zone.status === "high" ? "bg-risk-soft/60" : ""
+                  zone.status === "high" ? "bg-white/[0.03]" : ""
                 }`}
               >
                 <td className="py-2 pr-1.5 font-medium text-foreground">
@@ -95,11 +92,11 @@ export function HeroGridPreview() {
         <CongestionAlert />
       </div>
 
-      <div className="mt-3 flex items-center justify-between rounded-xl border border-accent/20 bg-accent-soft px-4 py-3">
-        <span className="text-xs font-medium text-accent">
+      <div className="mt-3 flex items-center justify-between rounded-md border border-border bg-background-raised px-4 py-3">
+        <span className="text-xs font-medium text-muted">
           Available local flexibility
         </span>
-        <span className="font-mono text-sm font-semibold text-accent tabular">
+        <span className="font-mono text-sm font-semibold text-foreground tabular">
           1.4 MW
         </span>
       </div>

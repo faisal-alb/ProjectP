@@ -10,8 +10,8 @@ function SegmentedGauge({ percent }: { percent: number }) {
           key={i}
           className={`h-2.5 flex-1 rounded-[2px] ${
             i < filled
-              ? "bg-accent shadow-[0_0_6px_1px_rgba(87,214,255,0.6)]"
-              : "bg-white/[0.07]"
+              ? "bg-accent"
+              : "bg-white/[0.06]"
           }`}
         />
       ))}
@@ -21,12 +21,12 @@ function SegmentedGauge({ percent }: { percent: number }) {
 
 export function ParticipantEnergyCard() {
   return (
-    <div className="rounded-2xl glass-panel p-5">
+    <div className="rounded-lg panel p-5">
       <div className="flex items-center justify-between">
         <p className="tracked-caps text-xs font-medium text-muted">
           Home Energy
         </p>
-        <BatteryMedium className="h-4 w-4 text-accent" aria-hidden="true" />
+        <BatteryMedium className="h-4 w-4 text-muted" aria-hidden="true" />
       </div>
 
       <div className="mt-4 flex items-center justify-between">
@@ -65,7 +65,7 @@ export function ParticipantEnergyCard() {
 
       <button
         type="button"
-        className="mt-5 w-full rounded-full bg-accent py-2.5 text-sm font-semibold text-background transition-transform hover:scale-[1.01]"
+        className="mt-5 w-full rounded-md bg-foreground py-2.5 text-sm font-semibold text-background transition-colors hover:bg-white"
       >
         Participate
       </button>
@@ -75,11 +75,11 @@ export function ParticipantEnergyCard() {
 
 export function AutoFlexCard() {
   return (
-    <div className="rounded-2xl glass-panel p-5">
+    <div className="rounded-lg panel p-5">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-foreground">AutoFlex</p>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+        <span className="inline-flex items-center gap-1.5 rounded border border-border px-2 py-0.5 text-xs font-medium text-foreground/85">
+          <span className="h-1.5 w-1.5 rounded-full bg-normal" />
           Enabled
         </span>
       </div>

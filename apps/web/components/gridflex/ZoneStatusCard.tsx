@@ -12,8 +12,8 @@ export function ZoneStatusCard({
 
   return (
     <div
-      className={`rounded-xl border p-4 transition-colors ${
-        highlighted ? "border-risk/40 bg-risk-soft" : "border-border glass-panel"
+      className={`rounded-md border p-4 transition-colors ${
+        highlighted ? "border-risk/50 bg-surface" : "border-border bg-surface"
       }`}
     >
       <div className="flex items-center justify-between gap-2">
@@ -46,9 +46,9 @@ export function ZoneStatusCard({
           </dd>
         </div>
       </dl>
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.07]">
+      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-sm bg-white/[0.06]">
         <div
-          className={`h-full rounded-full ${
+          className={`h-full ${
             zone.status === "high"
               ? "bg-risk"
               : zone.status === "watch"

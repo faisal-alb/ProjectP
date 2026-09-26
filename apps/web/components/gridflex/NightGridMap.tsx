@@ -28,7 +28,7 @@ export function NightGridMap({ className = "" }: { className?: string }) {
       viewBox="0 0 640 420"
       className={className}
       role="img"
-      aria-label="Night map of the local grid, showing a glowing arc of committed power flowing into the constrained Downtown zone"
+      aria-label="Map of the local grid, showing an arc of committed power flowing into the constrained Downtown zone"
     >
       {/* faint transmission lines connecting zones */}
       <g stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none">
@@ -42,21 +42,19 @@ export function NightGridMap({ className = "" }: { className?: string }) {
         d={`M${RESOURCE.x},${RESOURCE.y} Q262,44 ${POSITIONS.Downtown.x},${POSITIONS.Downtown.y}`}
         fill="none"
         stroke="var(--accent)"
-        strokeWidth="2"
+        strokeWidth="1.5"
         strokeLinecap="round"
         pathLength={100}
         style={{
           strokeDasharray: 100,
           strokeDashoffset: 100,
           animation: "arc-draw 1.8s 0.3s cubic-bezier(0.16,1,0.3,1) forwards",
-          filter: "drop-shadow(0 0 6px rgba(87,214,255,0.8))",
         }}
       />
 
       {/* resource origin point */}
       <g transform={`translate(${RESOURCE.x}, ${RESOURCE.y})`}>
-        <circle r="14" fill="var(--accent)" opacity="0.12" />
-        <circle r="4.5" fill="var(--accent)" />
+                <circle r="4.5" fill="var(--accent)" />
         <foreignObject x={-9} y={-34} width={18} height={18}>
           <BatteryCharging className="h-[18px] w-[18px] text-accent" aria-hidden="true" />
         </foreignObject>
@@ -74,7 +72,7 @@ export function NightGridMap({ className = "" }: { className?: string }) {
             <circle
               r={haloRadius}
               fill={color}
-              opacity="0.14"
+              opacity="0.08"
               style={
                 isDowntown
                   ? { animation: "arc-pulse 2.4s ease-in-out infinite" }

@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react";
 import { downtown, dispatchStack } from "@/lib/demo-data";
 
 const drivers = [
@@ -10,13 +9,10 @@ const drivers = [
 
 export function GridIntelligencePanel() {
   return (
-    <div className="rounded-2xl glass-panel p-6">
-      <div className="flex items-center gap-2 text-accent">
-        <Sparkles className="h-4 w-4" aria-hidden="true" />
-        <span className="tracked-caps text-xs font-medium">
-          Grid Intelligence
-        </span>
-      </div>
+    <div className="rounded-lg panel p-6">
+      <p className="tracked-caps text-xs font-medium text-muted">
+        Grid Intelligence
+      </p>
 
       <p className="mt-3 text-lg font-semibold text-foreground">
         {downtown.zone} congestion likely
@@ -45,7 +41,7 @@ export function GridIntelligencePanel() {
             >
               <span className="text-foreground/85">{driver.label}</span>
               <span
-                className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                className={`rounded px-2 py-0.5 text-[11px] font-medium ${
                   driver.weight === "HIGH"
                     ? "bg-watch-soft text-watch"
                     : "bg-white/[0.06] text-muted-2"
@@ -63,19 +59,12 @@ export function GridIntelligencePanel() {
           Recommended dispatch
         </p>
         <ul className="mt-3 space-y-2">
-          {dispatchStack.map((item, i) => (
+          {dispatchStack.map((item) => (
             <li
               key={item.label}
               className="flex items-center justify-between text-sm"
             >
-              <span className="flex items-center gap-2 text-foreground/85">
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_6px_1px_rgba(87,214,255,0.8)]"
-                  style={{ animation: `chase 3s ${i * 0.35}s ease-in-out infinite` }}
-                  aria-hidden="true"
-                />
-                {item.label}
-              </span>
+              <span className="text-foreground/85">{item.label}</span>
               <span className="font-mono tabular text-foreground">{item.kw} kW</span>
             </li>
           ))}

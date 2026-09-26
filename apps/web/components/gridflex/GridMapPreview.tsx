@@ -18,19 +18,15 @@ const resources = [
 
 export function GridMapPreview() {
   return (
-    <div className="relative overflow-hidden rounded-2xl glass-panel p-6 sm:p-8">
-      {/* radar range rings */}
-      <div className="pointer-events-none absolute top-1/2 left-1/2 h-[540px] w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/10" />
-      <div className="pointer-events-none absolute top-1/2 left-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/10" />
-
+    <div className="relative overflow-hidden rounded-lg panel p-6 sm:p-8">
       <div className="relative grid grid-cols-3 items-center gap-3 text-center sm:gap-4">
         <div />
         <NodeDot label={satellites[0].label} status={satellites[0].status} />
         <div />
 
         <NodeDot label={satellites[1].label} status={satellites[1].status} />
-        <div className="relative rounded-xl border border-risk/35 bg-risk-soft px-3 py-4 shadow-[0_0_40px_-8px_rgba(255,106,77,0.5)]">
-          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-risk px-2 py-0.5 text-[10px] font-medium text-background">
+        <div className="relative rounded-md border border-risk/50 bg-background-raised px-3 py-4">
+          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded border border-risk/50 bg-background-raised px-2 py-0.5 text-[10px] font-medium text-risk">
             Downtown
           </span>
           <p className="mt-1 text-xs text-muted">Forecast utilization</p>
@@ -40,7 +36,7 @@ export function GridMapPreview() {
             {downtown.requiredFlexKw} kW
           </p>
           <p className="mt-2 text-[11px] text-muted">Nearby capacity</p>
-          <p className="font-mono text-sm font-semibold tabular text-accent">
+          <p className="font-mono text-sm font-semibold tabular text-foreground">
             {downtown.flexAvailableMw} MW
           </p>
         </div>
@@ -55,9 +51,9 @@ export function GridMapPreview() {
         {resources.map(({ icon: Icon, kw, label }) => (
           <div
             key={label}
-            className="flex items-center gap-2 rounded-full border border-border bg-background-raised px-3 py-2"
+            className="flex items-center gap-2 rounded-md border border-border bg-background-raised px-3 py-2"
           >
-            <Icon className="h-4 w-4 text-accent" aria-hidden="true" />
+            <Icon className="h-4 w-4 text-muted" strokeWidth={1.5} aria-hidden="true" />
             <span className="font-mono text-xs font-medium tabular text-foreground">{kw}</span>
             <span className="text-xs text-muted">{label}</span>
           </div>

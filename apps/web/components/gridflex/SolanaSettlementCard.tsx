@@ -25,21 +25,18 @@ const points: { icon: LucideIcon; title: string; description: string }[] = [
 ];
 
 /**
- * Solana's own purple/green duotone is reserved for this section only,
- * marking the boundary the product itself draws: cyan is GridFlex's
- * off-chain intelligence, purple/green is the on-chain settlement layer.
+ * Solana purple is reserved for this section's icons only, marking the
+ * boundary the product itself draws: off-chain intelligence vs. the
+ * on-chain settlement layer.
  */
 export function SolanaSettlementCard() {
   return (
     <div
-      className="grid grid-cols-1 divide-y divide-solana-purple/15 rounded-2xl border p-0 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4"
-      style={{ borderColor: "rgba(153,69,255,0.22)", background: "rgba(153,69,255,0.04)" }}
+      className="panel grid grid-cols-1 divide-y divide-border rounded-lg sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4"
     >
       {points.map(({ icon: Icon, title, description }) => (
         <div key={title} className="p-5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-solana-purple/30 bg-solana-soft text-solana-purple">
-            <Icon className="h-4 w-4" aria-hidden="true" />
-          </span>
+          <Icon className="h-5 w-5 text-solana-purple" strokeWidth={1.5} aria-hidden="true" />
           <p className="mt-3 text-sm font-semibold text-foreground">
             {title}
           </p>
@@ -55,28 +52,15 @@ export function SolanaSettlementCard() {
 export function SettlementFlow() {
   const steps = ["Grid systems", "GridFlex", "Solana", "Settlement"];
   return (
-    <div
-      className="rounded-2xl border p-6"
-      style={{ borderColor: "rgba(153,69,255,0.22)", background: "rgba(153,69,255,0.04)" }}
-    >
+    <div className="panel rounded-lg p-6">
       <div className="flex flex-col items-center">
         {steps.map((step, i) => (
           <div key={step} className="flex flex-col items-center">
-            <span
-              className="rounded-full border px-4 py-2 text-sm font-medium text-foreground"
-              style={{ borderColor: "rgba(153,69,255,0.3)" }}
-            >
+            <span className="rounded-md border border-border-strong px-4 py-2 text-sm font-medium text-foreground">
               {step}
             </span>
             {i < steps.length - 1 && (
-              <span
-                className="h-5 w-px"
-                style={{
-                  background:
-                    "linear-gradient(to bottom, var(--solana-purple), var(--solana-green))",
-                }}
-                aria-hidden="true"
-              />
+              <span className="h-5 w-px bg-border-strong" aria-hidden="true" />
             )}
           </div>
         ))}

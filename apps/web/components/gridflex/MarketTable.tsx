@@ -32,7 +32,7 @@ export function MarketTable() {
     .reduce((sum, r) => sum + r.kw, 0);
 
   return (
-    <div className="rounded-2xl glass-panel p-5 sm:p-6">
+    <div className="rounded-lg panel p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <p className="tracked-caps text-xs font-medium text-muted">
@@ -84,10 +84,10 @@ export function MarketTable() {
                 </td>
                 <td className="py-2.5">
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors duration-500 ${
+                    className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors duration-500 ${
                       statuses[i] === "accepted"
-                        ? "bg-accent-soft text-accent"
-                        : "bg-white/[0.06] text-muted"
+                        ? "text-normal"
+                        : "text-muted-2"
                     }`}
                   >
                     {statuses[i] === "accepted" ? (
@@ -104,18 +104,18 @@ export function MarketTable() {
         </table>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/20 bg-accent-soft px-4 py-3">
-        <span className="text-sm font-medium text-accent">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+        <span className="text-sm font-medium text-foreground">
           {marketTotals.committedKw} kW committed
         </span>
-        <span className="text-sm text-accent/80">
+        <span className="text-sm text-muted">
           Estimated cost{" "}
-          <span className="font-mono font-semibold tabular text-accent">
+          <span className="font-mono font-semibold tabular text-foreground">
             ${marketTotals.estimatedCost.toFixed(2)}
           </span>
         </span>
-        <span className="text-sm text-accent/80">
-          Settlement <span className="font-medium text-accent">Solana</span>
+        <span className="text-sm text-muted">
+          Settlement <span className="font-medium text-foreground">Solana</span>
         </span>
       </div>
     </div>

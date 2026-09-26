@@ -16,7 +16,6 @@ import {
 import { Navbar } from "@/components/gridflex/Navbar";
 import { HeroGridPreview } from "@/components/gridflex/HeroGridPreview";
 import { NightGridMap } from "@/components/gridflex/NightGridMap";
-import { StarField } from "@/components/gridflex/StarField";
 import { SectionHeader } from "@/components/gridflex/SectionHeader";
 import { WorkflowRail, WorkflowReadout } from "@/components/gridflex/WorkflowStep";
 import { FlexInstrumentPanel } from "@/components/gridflex/FlexResourceCard";
@@ -103,8 +102,8 @@ const workflowSteps = [
     description:
       "Verified commitments and payments are recorded through Solana for transparent, programmable settlement.",
     readout: (
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-background-raised px-3 py-2.5 text-xs font-medium text-accent">
-        <Zap className="h-3.5 w-3.5" aria-hidden="true" />
+      <div className="flex items-center gap-2 rounded-md border border-border bg-background-raised px-3 py-2.5 text-xs font-medium text-foreground/85">
+        <Zap className="h-3.5 w-3.5 text-solana-purple" aria-hidden="true" />
         Recorded on Solana
       </div>
     ),
@@ -118,15 +117,6 @@ export default function Home() {
 
       {/* HERO */}
       <section className="relative overflow-hidden pt-14 pb-28 sm:pt-20 sm:pb-36">
-        <StarField />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(900px circle at 78% 18%, rgba(87,214,255,0.14), transparent 60%)",
-          }}
-          aria-hidden="true"
-        />
         <div className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
           <div className="grid min-w-0 items-center gap-12 lg:grid-cols-[3fr_2fr] lg:gap-10">
             <div className="min-w-0">
@@ -143,14 +133,14 @@ export default function Home() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-background shadow-[0_8px_28px_-8px_rgba(87,214,255,0.7)] transition-transform hover:scale-[1.02]"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-5 py-3 text-sm font-semibold text-background transition-colors hover:bg-white"
                 >
                   Launch Grid Demo
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
                 <a
                   href="#how-it-works"
-                  className="inline-flex items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-border-strong"
+                  className="inline-flex items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-border-strong"
                 >
                   See How It Works
                 </a>
@@ -158,15 +148,15 @@ export default function Home() {
 
               <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-xs text-muted-2">
                 <span className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span className="h-1 w-1 bg-muted-2" />
                   Predictive grid intelligence
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  <span className="h-1 w-1 bg-muted-2" />
                   Local flexibility markets
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-solana-purple" />
+                  <span className="h-1 w-1 bg-muted-2" />
                   Solana settlement
                 </span>
               </div>
@@ -193,7 +183,7 @@ export default function Home() {
               (item) => (
                 <span
                   key={item}
-                  className="rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground/80"
+                  className="rounded border border-border px-3 py-1.5 text-sm font-medium text-foreground/80"
                 >
                   {item}
                 </span>
@@ -201,8 +191,7 @@ export default function Home() {
             )}
           </div>
           <p className="flex items-center gap-1.5 text-xs text-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-solana-purple" aria-hidden="true" />
-            Powered by Solana
+                        Powered by Solana
           </p>
         </div>
       </section>
@@ -252,14 +241,6 @@ export default function Home() {
         id="flexibility"
         className="relative scroll-mt-20 overflow-hidden py-20 sm:py-28"
       >
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(800px circle at 10% 0%, rgba(87,214,255,0.13), transparent 65%)",
-          }}
-          aria-hidden="true"
-        />
         <div className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
         <FadeIn>
           <SectionHeader title="The grid doesn't only need more generation. It needs flexibility." />
@@ -302,14 +283,6 @@ export default function Home() {
         id="technology"
         className="relative scroll-mt-20 overflow-hidden border-y border-border bg-background-raised py-20 sm:py-28"
       >
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(800px circle at 90% 15%, rgba(87,214,255,0.14), transparent 65%)",
-          }}
-          aria-hidden="true"
-        />
         <div className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
           <FadeIn>
             <SectionHeader
@@ -341,14 +314,6 @@ export default function Home() {
 
       {/* WHY SOLANA */}
       <section id="settlement" className="relative scroll-mt-20 overflow-hidden py-20 sm:py-28">
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(800px circle at 50% 0%, rgba(153,69,255,0.16), transparent 65%)",
-          }}
-          aria-hidden="true"
-        />
         <div className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
         <FadeIn>
           <SectionHeader

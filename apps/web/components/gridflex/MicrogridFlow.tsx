@@ -4,7 +4,7 @@ const priorities = ["Solar", "Stored energy", "Grid supply", "Generator backup"]
 
 export function MicrogridFlow() {
   return (
-    <div className="rounded-2xl glass-panel p-6 sm:p-8">
+    <div className="rounded-lg panel p-6 sm:p-8">
       <div className="grid grid-cols-3 items-center gap-3 text-center">
         <SourceNode icon={Sun} label="Solar" />
         <div />
@@ -15,7 +15,7 @@ export function MicrogridFlow() {
         <div />
 
         <div />
-        <span className="rounded-full border border-accent/30 bg-accent-soft px-3 py-2 text-xs font-semibold text-accent sm:text-sm">
+        <span className="rounded-md border border-border-strong bg-background-raised px-3 py-2 text-xs font-semibold text-foreground sm:text-sm">
           GridFlex Coordination
         </span>
         <div />
@@ -37,9 +37,9 @@ export function MicrogridFlow() {
           {priorities.map((label, i) => (
             <li
               key={label}
-              className="flex items-center gap-1.5 rounded-full border border-border bg-background-raised px-3 py-1.5 text-xs font-medium text-foreground"
+              className="flex items-center gap-1.5 rounded border border-border bg-background-raised px-3 py-1.5 text-xs font-medium text-foreground"
             >
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-semibold text-background">
+              <span className="font-mono text-[10px] tabular text-muted-2">
                 {i + 1}
               </span>
               {label}
@@ -58,8 +58,8 @@ export function MicrogridFlow() {
 function SourceNode({ icon: Icon, label }: { icon: typeof Sun; label: string }) {
   return (
     <div className="flex flex-col items-center gap-1.5 text-xs font-medium text-foreground">
-      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-accent/25 bg-accent-soft text-accent">
-        <Icon className="h-4 w-4" aria-hidden="true" />
+      <span className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background-raised text-muted">
+        <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
       </span>
       {label}
     </div>

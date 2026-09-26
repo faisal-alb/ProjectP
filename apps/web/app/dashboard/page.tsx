@@ -15,7 +15,7 @@ export const metadata = {
 export default function DashboardPage() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-50 border-b border-border glass-panel">
+      <header className="sticky top-0 z-50 border-b border-border bg-background">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-5 sm:px-8">
           <div className="flex items-center gap-6">
             <Link href="/">
@@ -28,15 +28,12 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-2 text-xs font-medium text-muted">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/60" />
-                <span className="relative h-2 w-2 rounded-full bg-accent" />
-              </span>
+              <span className="h-1.5 w-1.5 rounded-full bg-normal" />
               Live
             </span>
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium text-foreground/90 transition-colors hover:border-border-strong"
+              className="inline-flex items-center gap-1.5 rounded border border-border px-3.5 py-1.5 text-sm font-medium text-foreground/90 transition-colors hover:border-border-strong"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
               Back to site

@@ -24,10 +24,7 @@ export function Logo({ className = "" }: { className?: string }) {
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
-      <span className="relative flex h-6 w-6 items-center justify-center">
-        <span className="absolute inset-0 rounded-full bg-accent/20 blur-[6px]" aria-hidden="true" />
-        <Logo className="relative h-6 w-6 text-accent" />
-      </span>
+      <Logo className="h-6 w-6 text-foreground" />
       <span className="tracked-caps text-[14px] font-semibold text-foreground">
         GridFlex
       </span>

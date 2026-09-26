@@ -10,7 +10,7 @@ const links = [
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-border glass-panel">
+    <header className="sticky top-0 z-50 border-b border-border bg-background">
       <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between px-5 sm:px-8">
         <Link href="/" className="shrink-0">
           <Wordmark />
@@ -31,13 +31,13 @@ export function Navbar() {
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/dashboard"
-            className="hidden rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground/90 transition-colors hover:border-border-strong hover:text-foreground sm:inline-flex"
+            className="hidden rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground/90 transition-colors hover:border-border-strong hover:text-foreground sm:inline-flex"
           >
             Dashboard
           </Link>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-background shadow-[0_0_0_1px_rgba(87,214,255,0.4),0_8px_24px_-8px_rgba(87,214,255,0.65)] transition-transform hover:scale-[1.03]"
+            className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-white"
           >
             Launch Demo
           </Link>
