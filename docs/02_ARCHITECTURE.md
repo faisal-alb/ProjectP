@@ -96,7 +96,11 @@ The intelligence service should:
 - estimate required flexibility
 - optionally generate feature importance/reason codes
 
+For the VPP orchestration version of the project, this service becomes a Python forecasting and optimization layer that runs a simulated 15-minute clock, builds point-in-time feature rows, evaluates spike/price/capacity/baseline models, locks event terms, and dispatches home batteries/HVAC actions before handing the event to the chain worker.
+
 The LLM is optional and should not determine the actual numeric forecast.
+
+See [08_MODEL_ORCHESTRATION.md](08_MODEL_ORCHESTRATION.md) for the detailed Python model, valuation, dispatch, and event lifecycle spec.
 
 ---
 
