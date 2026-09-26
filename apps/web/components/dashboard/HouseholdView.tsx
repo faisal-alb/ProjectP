@@ -6,6 +6,7 @@ import { household } from "@/lib/demo-data";
 import { useHousehold } from "./HouseholdProvider";
 import { Switch, SliderRow } from "@/components/onboarding/controls";
 import { TxLink } from "./TxLink";
+import { usePublishVoiceSnapshot } from "@/lib/voice-snapshot";
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 const price = (n: number) => `$${n.toFixed(2)}/kWh`;
@@ -56,6 +57,28 @@ export function HouseholdView({
     paid.reduce((s, h) => s + h.kwh * h.pricePerKwh, 0) +
     livePayouts.reduce((s, p) => s + Number(p.amount.base) / 1e6, 0);
 
+  usePublishVoiceSnapshot({
+    zone,
+    hasBattery,
+    batteryKwh,
+    chargePercent,
+    maxDischargeKw,
+    autoFlex,
+    reservePercent: reserve,
+    minPricePerKwh: minPrice,
+    maxKwhPerEvent: maxKwh,
+    availableKwh,
+    event: {
+      window: household.eventWindow,
+      pricePerKwh: eventPricePerKwh,
+      plannedKwh,
+      estimatedEarnings: earnings,
+      status: state,
+      paid: paidTonight?.payout?.formatted,
+    },
+    earnings: { monthTotal, eventCount: paid.length + livePayouts.length },
+  });
+
   return (
     <div>
       <div>
@@ -68,7 +91,7 @@ export function HouseholdView({
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-6">
           {/* Tonight */}
-          <section aria-labelledby="tonight-heading" className="panel rounded-lg p-5 sm:p-6">
+          <section id="voice-tonight" aria-labelledby="tonight-heading"className="panel rounded-lg p-5 sm:p-6">
             <StatusLine state={state} />
             <h2 id="tonight-heading" className="mt-2 text-xl font-semibold tracking-tight text-balance text-foreground sm:text-2xl">
               {state === "paid"
@@ -148,7 +171,7 @@ export function HouseholdView({
           </section>
 
           {/* Earnings */}
-          <section aria-labelledby="earnings-heading" className="panel rounded-lg p-5 sm:p-6">
+          <section id="voice-earnings" aria-labelledby="earnings-heading"className="panel rounded-lg p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="earnings-heading" className="text-lg font-semibold text-foreground">
                 Earnings
@@ -221,7 +244,7 @@ export function HouseholdView({
         </div>
 
         {/* Settings */}
-        <section aria-labelledby="settings-heading" className="panel h-fit rounded-lg p-5 sm:p-6">
+        <section id="voice-autoflex" aria-labelledby="settings-heading"className="panel h-fit rounded-lg p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 id="settings-heading" className="text-lg font-semibold text-foreground">

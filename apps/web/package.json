@@ -10,6 +10,7 @@
     "e2e": "tsx e2e/settlement.mts"
   },
   "dependencies": {
+    "@elevenlabs/react": "^1.15.2",
     "@gridflex/shared": "*",
     "@solana/kit": "^8.3.0",
     "@solana/react": "^8.3.0",

@@ -247,3 +247,9 @@ input[type="range"]:disabled {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Ring a section the voice assistant is pointing at. */
+.voice-highlight {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 4px;
+}
