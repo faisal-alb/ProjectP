@@ -245,6 +245,7 @@ export function ChoiceTile({
   icon: Icon,
   title,
   description,
+  meta,
   radio = false,
   disabled = false,
 }: {
@@ -253,6 +254,8 @@ export function ChoiceTile({
   icon?: React.ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean | "true" }>;
   title: string;
   description?: string;
+  /** Extra line under the description, e.g. tags. */
+  meta?: React.ReactNode;
   radio?: boolean;
   disabled?: boolean;
 }) {
@@ -274,6 +277,7 @@ export function ChoiceTile({
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-foreground">{title}</span>
         {description && <span className="mt-0.5 block text-xs leading-relaxed text-muted">{description}</span>}
+        {meta && <span className="mt-2 block">{meta}</span>}
       </span>
       <span
         className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${

@@ -6,18 +6,13 @@ import dynamic from "next/dynamic";
 import {
   ArrowLeft,
   ArrowRight,
-  Battery,
-  Building2,
-  Car,
   Check,
   CircleHelp,
   Loader2,
-  Snowflake,
-  Sun,
   Wallet,
-  Zap,
 } from "lucide-react";
-import { DEMO_HOUSEHOLD_RESOURCE_ID, demoDevices, estimateFlex, resolveZip, type ResourceKey } from "@gridflex/shared";
+import { DEMO_HOUSEHOLD_RESOURCE_ID, estimateFlex, resolveZip, resourceCatalog, type ResourceKey } from "@gridflex/shared";
+import { ResourcePicker, RoleLegend } from "@/components/resources/ResourcePicker";
 import { completeOnboarding } from "@/app/actions";
 import { api, clusterLabel, shortAddress, useApiHealth, type HouseholdDto } from "@/lib/api";
 import { defaultParticipantProfile, type Emergency, type ParticipantProfile } from "@/lib/profile";
@@ -39,15 +34,6 @@ const ZoneMap = dynamic(() => import("./ZoneMap"), {
 });
 
 const STEPS = ["Resources", "Location", "Limits", "Payout"] as const;
-
-const RESOURCE_TILES: { key: ResourceKey; icon: typeof Battery; title: string; description: string }[] = [
-  { key: "battery", icon: Battery, title: "Home battery", description: "Powerwall, Enphase, or similar" },
-  { key: "ev", icon: Car, title: "EV / EV charger", description: "Charging that can wait" },
-  { key: "solar", icon: Sun, title: "Solar", description: "Rooftop or ground-mounted" },
-  { key: "hvac", icon: Snowflake, title: "HVAC / thermostat", description: "Cooling that can ease off" },
-  { key: "generator", icon: Zap, title: "Generator", description: "Backup power" },
-  { key: "building", icon: Building2, title: "Flexible building load", description: "Pumps, lighting, equipment" },
-];
 
 const READY_BY = ["05:00", "06:00", "06:30", "07:00", "07:30", "08:00", "09:00"].map((v) => {
   const [h, m] = v.split(":").map(Number);
@@ -171,28 +157,27 @@ function ResourcesStep({ profile, patch, heading }: StepProps) {
       <h1 id="resources-heading" ref={heading} tabIndex={-1} className="text-2xl font-semibold tracking-tight text-foreground outline-none">
         What energy resources do you have?
       </h1>
-      <p className="mt-2 text-sm text-muted">Pick everything that could help the grid. You can change this later.</p>
+      <p className="mt-2 text-sm text-muted">
+        Pick everything that could help the grid. Each one uses, makes or stores power, and some do more than one.
+        You can change this later.
+      </p>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2" role="group" aria-label="Energy resources">
-        {RESOURCE_TILES.map(({ key, icon, title, description }) => (
-          <ChoiceTile
-            key={key}
-            icon={icon}
-            title={title}
-            description={description}
-            selected={profile.resources.includes(key)}
-            onClick={() => toggle(key)}
-          />
-        ))}
-        <div className="sm:col-span-2">
-          <ChoiceTile
-            icon={CircleHelp}
-            title="Not sure yet"
-            description="We'll connect your address now and help you add devices later."
-            selected={profile.notSure}
-            onClick={() => patch({ notSure: !profile.notSure, resources: [] })}
-          />
-        </div>
+      <div className="mt-6">
+        <RoleLegend />
+      </div>
+
+      <div className="mt-8">
+        <ResourcePicker selected={profile.resources} onToggle={toggle} />
+      </div>
+
+      <div className="mt-8 border-t border-border pt-6">
+        <ChoiceTile
+          icon={CircleHelp}
+          title="Not sure yet"
+          description="We'll connect your address now and help you add devices later."
+          selected={profile.notSure}
+          onClick={() => patch({ notSure: !profile.notSure, resources: [] })}
+        />
       </div>
     </section>
   );
@@ -280,8 +265,8 @@ function LimitsStep({ profile, patch, heading }: StepProps) {
             {profile.resources.map((key) => (
               <li key={key} className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 rounded-md border border-border px-3 py-2 text-sm">
                 <Check className="h-4 w-4 shrink-0 text-normal" aria-hidden="true" />
-                <span className="font-medium text-foreground">{demoDevices[key].device}</span>
-                <span className="text-xs text-muted">{demoDevices[key].spec}</span>
+                <span className="font-medium text-foreground">{resourceCatalog[key].device}</span>
+                <span className="text-xs text-muted">{resourceCatalog[key].spec}</span>
               </li>
             ))}
           </ul>

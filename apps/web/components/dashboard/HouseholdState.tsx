@@ -43,6 +43,10 @@ function useHouseholdModel(zone: string, feeder: string, profile: ParticipantPro
     maxEvents: profile.maxEventsPerDay,
     emergency: profile.emergency,
   });
+  // Starts from onboarding; added to or trimmed on the Devices page. Kept for this visit only, like the rules.
+  const [resources, setResources] = useState<ResourceKey[]>(profile.resources);
+  const toggleResource = (key: ResourceKey) =>
+    setResources((rs) => (rs.includes(key) ? rs.filter((k) => k !== key) : [...rs, key]));
   const [optedOut, setOptedOut] = useState<Partial<Record<ResourceKey, boolean>>>({});
   const [choice, setChoice] = useState<"joined" | "declined" | null>(null);
   // Demo control: lets you see every event state without waiting for one.
@@ -51,7 +55,7 @@ function useHouseholdModel(zone: string, feeder: string, profile: ParticipantPro
   const [planPreference, setPlanPreference] = useState<PlanPreference>("balanced");
   const [storm, setStorm] = useState(false);
 
-  const has = (k: ResourceKey) => profile.resources.includes(k);
+  const has = (k: ResourceKey) => resources.includes(k);
   const batteryIn = has("battery") && !optedOut.battery;
   const evIn = has("ev") && !optedOut.ev;
 
@@ -146,6 +150,8 @@ function useHouseholdModel(zone: string, feeder: string, profile: ParticipantPro
     profile,
     rules,
     setRules,
+    resources,
+    toggleResource,
     optedOut,
     setOptedOut,
     setChoice,

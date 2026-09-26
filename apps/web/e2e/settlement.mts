@@ -184,6 +184,14 @@ try {
   await page.waitForURL(/\/onboarding\/participant$/);
 
   await expectText(page, "What energy resources do you have?");
+  // A common resource from the tiles, and one found by search.
+  await page.getByRole("button", { name: "EV / EV charger" }).click();
+  await page.getByLabel("Search resources").fill("pool");
+  await page.getByRole("button", { name: "Add Pool pump" }).click();
+  await page.getByRole("button", { name: "Remove Pool pump" }).first().waitFor();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expectText(page, "Where are they connected?");
   // An unsupported ZIP blocks the step; the demo ZIP resolves the grid zone.
   await page.getByLabel("ZIP code").fill("10001");
   await expectText(page, "GridFlex isn't available at this ZIP yet");
@@ -192,7 +200,6 @@ try {
   }
   await page.getByLabel("ZIP code").fill("33132");
   await expectText(page, "Eligible for local GridFlex events");
-  await page.getByRole("button", { name: "EV / EV charger" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
 
   await expectText(page, "When can GridFlex use your flexibility?");
@@ -209,15 +216,24 @@ try {
   await expectText(page, "EV charging");
   await page.getByRole("link", { name: "Go to My Energy" }).click();
   await page.waitForURL(/\/dashboard$/);
-  // The limit set in onboarding is what the dashboard starts from.
-  await expectText(page, "Always keep at least");
-  await page.getByText("50%").first().waitFor();
   await expectText(page, "You earned $0.70 tonight");
   await page.getByRole("link", { name: "View payment" }).waitFor();
   await page.getByRole("button", { name: "Your wallet" }).click();
   await expectText(page, "Your GridFlex wallet");
-  console.log("participant onboarded: 50% reserve carried over, $0.70 payout, header wallet open");
+  await page.keyboard.press("Escape");
   await page.screenshot({ path: `${OUT}/household-paid.png` });
+
+  const nav = page.getByRole("navigation", { name: "Dashboard" });
+  // Devices from onboarding, including the one found by search.
+  await nav.getByRole("link", { name: "Devices" }).click();
+  await page.waitForURL(/\/dashboard\/devices$/);
+  await expectText(page, "Pool pump");
+  // The limit set in onboarding is what the dashboard starts from.
+  await nav.getByRole("link", { name: "Settings" }).click();
+  await page.waitForURL(/\/dashboard\/settings$/);
+  await expectText(page, "Always keep at least");
+  await page.getByText("50%").first().waitFor();
+  console.log("participant onboarded: searched resource added, 50% reserve carried over, $0.70 payout, header wallet open");
 
   if (errors.length) throw new Error(`page errors:\n${errors.join("\n")}`);
   console.log(`✔ e2e settlement OK (screenshots in ${path.relative(process.cwd(), OUT)})`);

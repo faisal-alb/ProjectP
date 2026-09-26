@@ -1,14 +1,12 @@
 // Account profiles captured at onboarding. Stored in a cookie for the demo;
 // real auth and a database replace this later. Parsers clamp every value, so a
 // tampered or stale cookie can never put the dashboards in a broken state.
-import { defaultZip, localUtility, type ResourceKey } from "@gridflex/shared";
+import { RESOURCE_KEYS, defaultZip, localUtility, type ResourceKey } from "@gridflex/shared";
 
 export type Role = "participant" | "operator";
 
 export const ROLE_COOKIE = "gridflex_role";
 export const PROFILE_COOKIE = "gridflex_profile";
-
-export const RESOURCE_KEYS: ResourceKey[] = ["battery", "ev", "solar", "hvac", "generator", "building"];
 
 export type Emergency = "ask" | "allow" | "never";
 
