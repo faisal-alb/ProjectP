@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-26T00:00:00.000Z",
+  "title": "Design System: GridFlex",
+  "extensions": {
+    "colorMeta": {
+      "background": { "role": "neutral", "displayName": "Graphite Canvas", "canonical": "#05070d", "tonalRamp": ["#020306", "#05070d", "#0a0e18", "#141a26", "#232b3a", "#3a4456", "#626c78", "#9aa4b2"] },
+      "background-raised": { "role": "neutral", "displayName": "Raised Graphite", "canonical": "#0a0e18", "tonalRamp": ["#05070d", "#0a0e18", "#141a26", "#1c2331", "#2a3242", "#414c5f", "#6b7686", "#9aa4b2"] },
+      "foreground": { "role": "neutral", "displayName": "Off-White Foreground", "canonical": "#eef1f6", "tonalRamp": ["#626c78", "#7c8794", "#9aa4b2", "#b6bec8", "#cfd5dc", "#e2e6eb", "#eef1f6", "#f8f9fb"] },
+      "accent": { "role": "primary", "displayName": "Signal Cyan", "canonical": "#57d6ff", "tonalRamp": ["#0b3542", "#124a5c", "#1b6f8c", "#278fb3", "#3bb2d9", "#57d6ff", "#8ce4ff", "#c4f2ff"] },
+      "solana-purple": { "role": "secondary", "displayName": "Solana Purple", "canonical": "#9945ff", "tonalRamp": ["#2c0d66", "#411485", "#5c1fa8", "#7830c9", "#9945ff", "#b26fff", "#c99aff", "#e2c6ff"] },
+      "solana-green": { "role": "secondary", "displayName": "Solana Green", "canonical": "#14f195", "tonalRamp": ["#053b26", "#095536", "#0e7a4d", "#11a86a", "#14f195", "#4ff5b3", "#8bf9cf", "#c4fce7"] },
+      "risk": { "role": "tertiary", "displayName": "Risk Orange-Red", "canonical": "#ff6a4d", "tonalRamp": ["#4d1509", "#701f0d", "#a12e13", "#d3401c", "#ff6a4d", "#ff8f79", "#ffb5a6", "#ffdad2"] },
+      "watch": { "role": "tertiary", "displayName": "Watch Amber", "canonical": "#ffb648", "tonalRamp": ["#4d2f04", "#704406", "#a1620a", "#d3820e", "#ffb648", "#ffc770", "#ffd898", "#ffecc4"] },
+      "normal": { "role": "tertiary", "displayName": "Normal Green", "canonical": "#34d399", "tonalRamp": ["#0a3d2a", "#0f593c", "#167a53", "#1fa06d", "#34d399", "#63ddb1", "#93e7c8", "#c6f3e0"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Single H1 on the marketing hero only." },
+      "headline": { "displayName": "Headline", "purpose": "Section H2s via SectionHeader, always with body subtitle, never a kicker." },
+      "title": { "displayName": "Title", "purpose": "Panel and card titles inside glass panels." },
+      "body": { "displayName": "Body", "purpose": "Section subtitles and descriptive copy." },
+      "label": { "displayName": "Label", "purpose": "Nav links and panel micro-headers; tracked uppercase, never above H1/H2." },
+      "telemetry": { "displayName": "Telemetry Mono", "purpose": "Every MW/kW/%/$ numeric readout, tabular figures." }
+    },
+    "shadows": [
+      { "name": "accent-glow-cta", "value": "0 8px 28px -8px rgba(87,214,255,0.7)", "purpose": "Primary CTA buttons." },
+      { "name": "accent-glow-nav-pill", "value": "0 0 0 1px rgba(87,214,255,0.4), 0 8px 24px -8px rgba(87,214,255,0.65)", "purpose": "Navbar glowing-pill CTA." },
+      { "name": "accent-glow-dot", "value": "0 0 6px 1px rgba(87,214,255,0.8)", "purpose": "Live/active telemetry indicator dots." },
+      { "name": "accent-glow-chase", "value": "0 0 8px 2px rgba(87,214,255,0.8)", "purpose": "Workflow rail connector chase-light." },
+      { "name": "risk-glow", "value": "0 0 40px -8px rgba(255,106,77,0.5)", "purpose": "Constrained-zone halo on GridMapPreview." },
+      { "name": "panel-lift", "value": "0 30px 80px -30px rgba(0,0,0,0.7)", "purpose": "Hero telemetry card floating over the night-grid map." }
+    ],
+    "motion": [
+      { "name": "arc-draw", "value": "stroke-dashoffset 1.8s 0.3s cubic-bezier(0.16,1,0.3,1) forwards", "purpose": "Signature power-flow arc drawing on mount (NightGridMap)." },
+      { "name": "arc-pulse", "value": "opacity 2.4s ease-in-out infinite (0.12 to 0.3)", "purpose": "Settled halo pulse on the constrained zone after the arc completes." },
+      { "name": "chase", "value": "opacity 2.4s ease-in-out infinite, staggered delay per index (0.25 to 1 to 0.25)", "purpose": "Sequential step-illumination chase-light on the workflow rail and dispatch stack." },
+      { "name": "drift-slow", "value": "transform 3D translate infinite, -60px/-24px", "purpose": "Background star/grid-dust field parallax drift (StarField)." },
+      { "name": "fade-up", "value": "opacity/transform/filter 0.7s cubic-bezier(0.16,1,0.3,1)", "purpose": "Scroll-reveal for section content, respects prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "container-max", "value": "1240px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Accent-filled pill CTA, e.g. 'Launch Grid Demo'.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\">Launch Grid Demo</a>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #57d6ff; color: #05070d; font-weight: 600; font-size: 14px; padding: 12px 20px; border-radius: 9999px; box-shadow: 0 8px 28px -8px rgba(87,214,255,0.7); transition: transform 0.2s; } .ds-btn-primary:hover { transform: scale(1.02); } .ds-btn-primary:focus-visible { outline: 2px solid #57d6ff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Hairline-border secondary action, e.g. 'See How It Works'.",
+      "html": "<a class=\"ds-btn-ghost\" href=\"#\">See How It Works</a>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #eef1f6; font-weight: 500; font-size: 14px; padding: 12px 20px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); transition: border-color 0.2s; } .ds-btn-ghost:hover { border-color: rgba(255,255,255,0.2); }"
+    },
+    {
+      "name": "Glass Panel",
+      "kind": "card",
+      "refersTo": "glass-panel",
+      "description": "Dark translucent instrument panel replacing a white bordered card.",
+      "html": "<div class=\"ds-glass-panel\"><p class=\"ds-glass-title\">Downtown congestion likely</p><p class=\"ds-glass-body\">Forecast load 12.8 MW against 12 MW capacity.</p></div>",
+      "css": ".ds-glass-panel { background: rgba(13,18,32,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; } .ds-glass-title { color: #eef1f6; font-weight: 600; font-size: 18px; } .ds-glass-body { margin-top: 12px; color: #9aa4b2; font-size: 14px; line-height: 1.7; }"
+    },
+    {
+      "name": "Status Badge — High Risk",
+      "kind": "chip",
+      "refersTo": "status-badge-risk",
+      "description": "Pill status indicator for a zone at high congestion risk, pulsing dot.",
+      "html": "<span class=\"ds-badge ds-badge-risk\"><span class=\"ds-badge-dot\"></span>High</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; padding: 4px 10px; font-size: 12px; font-weight: 500; } .ds-badge-risk { background: rgba(255,106,77,0.14); color: #ff6a4d; } .ds-badge-dot { width: 6px; height: 6px; border-radius: 9999px; background: #ff6a4d; animation: ds-pulse 2s ease-in-out infinite; } @keyframes ds-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }"
+    },
+    {
+      "name": "Navbar",
+      "kind": "nav",
+      "refersTo": "navbar",
+      "description": "Sticky glass-panel header: wordmark left, tracked-caps links, ghost + glowing-pill CTAs right.",
+      "html": "<header class=\"ds-navbar\"><span class=\"ds-wordmark\">GridFlex</span><nav class=\"ds-navlinks\"><a href=\"#\">How it works</a><a href=\"#\">Flexibility</a><a href=\"#\">Settlement</a></nav><a class=\"ds-btn-primary\" href=\"#\">Launch Demo</a></header>",
+      "css": ".ds-navbar { display: flex; align-items: center; justify-content: space-between; height: 64px; padding: 0 32px; background: rgba(13,18,32,0.55); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.1); } .ds-wordmark { font-weight: 600; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: #eef1f6; } .ds-navlinks { display: flex; gap: 32px; } .ds-navlinks a { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #9aa4b2; transition: color 0.2s; } .ds-navlinks a:hover { color: #eef1f6; }"
+    },
+    {
+      "name": "Instrument Panel",
+      "kind": "custom",
+      "refersTo": "flex-instrument-panel",
+      "description": "Hairline-divided single console grouping parallel categories, replacing a grid of separate icon cards.",
+      "html": "<div class=\"ds-instrument-panel\"><div class=\"ds-instrument-item\"><span class=\"ds-instrument-icon\">&#9679;</span><p class=\"ds-instrument-title\">Generate</p><p class=\"ds-instrument-desc\">Export additional power during constrained periods.</p></div><div class=\"ds-instrument-item\"><span class=\"ds-instrument-icon\">&#9679;</span><p class=\"ds-instrument-title\">Store</p><p class=\"ds-instrument-desc\">Release stored energy when local demand is highest.</p></div></div>",
+      "css": ".ds-instrument-panel { display: grid; grid-template-columns: repeat(2, 1fr); background: rgba(13,18,32,0.55); backdrop-filter: blur(20px); border-radius: 16px; } .ds-instrument-item { padding: 24px; border-left: 1px solid rgba(255,255,255,0.1); } .ds-instrument-item:first-child { border-left: none; } .ds-instrument-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9999px; border: 1px solid rgba(87,214,255,0.25); background: rgba(87,214,255,0.12); color: #57d6ff; } .ds-instrument-title { margin-top: 16px; font-weight: 600; color: #eef1f6; } .ds-instrument-desc { margin-top: 12px; font-size: 14px; color: #9aa4b2; }"
+    },
+    {
+      "name": "Workflow Rail Station",
+      "kind": "custom",
+      "refersTo": "workflow-rail",
+      "description": "One station on the connected, chase-lit Predict-to-Settle rail; sequence carries meaning instead of repeated identical cards.",
+      "html": "<div class=\"ds-rail-station\"><span class=\"ds-rail-icon\">1</span><h3 class=\"ds-rail-title\">Predict</h3><p class=\"ds-rail-desc\">GridFlex analyzes load, weather, and distributed capacity.</p><span class=\"ds-rail-connector\"><span class=\"ds-rail-chase\"></span></span></div>",
+      "css": ".ds-rail-station { display: flex; flex-direction: column; gap: 16px; flex: 1; } .ds-rail-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 9999px; border: 1px solid rgba(87,214,255,0.3); background: rgba(87,214,255,0.12); color: #57d6ff; } .ds-rail-title { color: #eef1f6; font-weight: 600; } .ds-rail-desc { color: #9aa4b2; font-size: 14px; line-height: 1.7; } .ds-rail-connector { position: relative; height: 1px; background: rgba(255,255,255,0.1); display: block; } .ds-rail-chase { position: absolute; top: 50%; left: 0; width: 6px; height: 6px; border-radius: 9999px; background: #57d6ff; box-shadow: 0 0 8px 2px rgba(87,214,255,0.8); transform: translateY(-50%); animation: ds-chase 2.4s ease-in-out infinite; } @keyframes ds-chase { 0% { opacity: 0.25; } 12% { opacity: 1; } 100% { opacity: 0.25; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Orbital Night-Grid Mission Control",
+    "overview": "GridFlex reads as a satellite operator's console for a grid at night, not a sustainability brochure. The canvas is near-black graphite; every surface is a dark glass instrument panel rather than a white bordered card; the one signal color, electric cyan, is spent almost entirely on glow washes, live-data accents, and the signature power-flow arc rather than on flat fills. The system explicitly refuses the category default it was built against: warm sun/leaf-green 'clean energy' marketing, rounded friendly icon-card grids, and stock renewable-energy photography. It also refuses kickers/eyebrows above headings and hard, offset 'sticker' shadows; every shadow observed in the build is a soft, colored ambient glow. The same world runs unmodified across both shipped surfaces: the Persuade marketing page and the Operate dashboard, which drops the large expressive hero for a denser control-room grid while keeping identical tokens and panel language.",
+    "keyCharacteristics": [
+      "Near-black graphite canvas (#05070d) with dark glass panels (rgba(13,18,32,0.55), blur(20px)) standing in for bordered white cards.",
+      "One electric-cyan signal color (#57d6ff) carried almost exclusively through radial glow washes, glowing pills, and the animated arc motif — never as large flat fills.",
+      "Solana's own purple/green (#9945ff / #14f195) is switched in only inside the settlement section, marking the off-chain/on-chain boundary the product itself draws.",
+      "Geist Sans for all display and body type, Geist Mono for every numeric/telemetry readout (tabular figures throughout).",
+      "Status is color-coded consistently everywhere: risk (orange-red), watch (amber), normal (green) — the same three colors on the hero map, the dashboard radar, and every zone card.",
+      "Parallel categories render as one hairline-divided instrument panel, not repeated icon-card grids; the five-step workflow renders as one chase-lit connected rail, not five identical cards."
+    ],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "Cyan is the only free-roaming accent color. It is spent on glow, motion, and live data — not on large fills — so its rarity keeps it legible as \"this is live/important.\"", "section": "colors" },
+      { "name": "The Quarantined Duotone Rule", "body": "Solana purple/green never leaves the settlement section. If a future surface needs an on-chain reference outside settlement, it still borrows this pairing only in that same restrained (badge/border/soft-fill) register, never as a general-purpose accent.", "section": "colors" },
+      { "name": "The Status-Color Consistency Rule", "body": "Risk/watch/normal always map to the same three hexes across every surface (hero map, dashboard radar, zone cards, driver-weight chips) — a color never gets reassigned to a different status per component.", "section": "colors" },
+      { "name": "The No-Kicker Rule", "body": "Tracked-uppercase micro-labels are reserved for navigation and status strips. No heading in the built system is preceded by an eyebrow/kicker line; SectionHeader is title + optional subtitle only.", "section": "typography" },
+      { "name": "The Mono-For-Numbers Rule", "body": "Any numeric value that represents live or telemetry-like data (MW, kW, %, $, timestamps) renders in Geist Mono with tabular figures; prose numbers do not.", "section": "typography" },
+      { "name": "The Glow-Not-Sticker Rule", "body": "Every shadow in the system is a soft, color-tinted ambient glow keyed to a status or accent color; there are no hard-offset, uncolored \"sticker\" drop shadows anywhere in the build.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do spend cyan (#57d6ff) as glow, stroke, live-data, and small-badge fill — never as a large flat color block.",
+      "Do keep Solana purple/green (#9945ff/#14f195) confined to the settlement section only.",
+      "Do render numeric/telemetry values in Geist Mono with tabular figures (.tabular).",
+      "Do use .glass-panel (translucent graphite + hairline border + blur) for any card-equivalent surface instead of a white bordered card.",
+      "Do group parallel categories into one hairline-divided instrument panel rather than a grid of separate icon cards.",
+      "Do reuse the night-grid arc motif (NightGridMap) at any scale where a \"resource relieves a constrained zone\" moment is being shown; do not invent a second signature animation."
+    ],
+    "donts": [
+      "Don't place a tracked-uppercase kicker/eyebrow directly above an H1 or H2; tracked-caps labels are for nav and status strips only.",
+      "Don't use hard-offset, uncolored drop shadows; every shadow in this system is a soft, color-tinted ambient glow.",
+      "Don't use flat sun/leaf-green \"clean energy\" color language or stock renewable-energy photography; all imagery is CSS/SVG-authored.",
+      "Don't reassign risk/watch/normal to different colors between surfaces — the mapping is fixed system-wide.",
+      "Don't present the demo zone/market data (lib/demo-data.ts) as real evidence in new copy; it is illustrative only (per PRODUCT.md)."
+    ]
+  }
+}

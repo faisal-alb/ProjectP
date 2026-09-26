@@ -15,9 +15,11 @@ import {
 
 import { Navbar } from "@/components/gridflex/Navbar";
 import { HeroGridPreview } from "@/components/gridflex/HeroGridPreview";
+import { NightGridMap } from "@/components/gridflex/NightGridMap";
+import { StarField } from "@/components/gridflex/StarField";
 import { SectionHeader } from "@/components/gridflex/SectionHeader";
-import { WorkflowStep } from "@/components/gridflex/WorkflowStep";
-import { FlexResourceCard } from "@/components/gridflex/FlexResourceCard";
+import { WorkflowRail, WorkflowReadout } from "@/components/gridflex/WorkflowStep";
+import { FlexInstrumentPanel } from "@/components/gridflex/FlexResourceCard";
 import { GridIntelligencePanel } from "@/components/gridflex/GridIntelligencePanel";
 import { GridMapPreview } from "@/components/gridflex/GridMapPreview";
 import { MarketTable } from "@/components/gridflex/MarketTable";
@@ -35,88 +37,178 @@ import { CTASection } from "@/components/gridflex/CTASection";
 import { Footer } from "@/components/gridflex/Footer";
 import { FadeIn } from "@/components/gridflex/FadeIn";
 
+const workflowSteps = [
+  {
+    icon: TrendingUp,
+    title: "Predict",
+    description:
+      "GridFlex analyzes load, weather, time-of-day, events, and distributed capacity to identify upcoming grid constraints.",
+    readout: (
+      <WorkflowReadout
+        rows={[
+          { label: "Forecast", value: "12.8 MW" },
+          { label: "Capacity", value: "12.0 MW" },
+          { label: "Risk", value: "91%", accent: true },
+        ]}
+      />
+    ),
+  },
+  {
+    icon: ClipboardList,
+    title: "Procure",
+    description:
+      "The utility opens a local flexibility request for the amount of grid relief required.",
+    readout: (
+      <WorkflowReadout
+        rows={[
+          { label: "Zone", value: "Downtown" },
+          { label: "Need", value: "800 kW", accent: true },
+          { label: "Window", value: "7:00–8:00 PM" },
+        ]}
+      />
+    ),
+  },
+  {
+    icon: Workflow,
+    title: "Coordinate",
+    description:
+      "GridFlex selects nearby batteries, EVs, buildings, solar systems, and generators based on availability, location, and price.",
+    readout: (
+      <WorkflowReadout
+        rows={[
+          { label: "Battery", value: "300 kW" },
+          { label: "EV shift", value: "180 kW" },
+          { label: "HVAC", value: "170 kW" },
+        ]}
+      />
+    ),
+  },
+  {
+    icon: ShieldCheck,
+    title: "Verify",
+    description:
+      "Meter or device data confirms how much flexibility each participant actually delivered.",
+    readout: (
+      <WorkflowReadout
+        rows={[
+          { label: "Committed", value: "800 kW" },
+          { label: "Delivered", value: "806 kW", accent: true },
+        ]}
+      />
+    ),
+  },
+  {
+    icon: HandCoins,
+    title: "Settle",
+    description:
+      "Verified commitments and payments are recorded through Solana for transparent, programmable settlement.",
+    readout: (
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-background-raised px-3 py-2.5 text-xs font-medium text-accent">
+        <Zap className="h-3.5 w-3.5" aria-hidden="true" />
+        Recorded on Solana
+      </div>
+    ),
+  },
+];
+
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
       <Navbar />
 
       {/* HERO */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 pt-14 pb-20 sm:px-8 sm:pt-20 sm:pb-28">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5 text-xs font-medium text-muted">
-              <span className="h-1.5 w-1.5 rounded-full bg-bright" />
-              AI-assisted grid flexibility infrastructure
-            </span>
+      <section className="relative overflow-hidden pt-14 pb-28 sm:pt-20 sm:pb-36">
+        <StarField />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(900px circle at 78% 18%, rgba(87,214,255,0.14), transparent 60%)",
+          }}
+          aria-hidden="true"
+        />
+        <div className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
+          <div className="grid min-w-0 items-center gap-12 lg:grid-cols-[3fr_2fr] lg:gap-10">
+            <div className="min-w-0">
+              <h1 className="text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl lg:text-[2.75rem] lg:leading-[1.12]">
+                Prevent grid congestion before it becomes an outage.
+              </h1>
 
-            <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
-              Prevent grid congestion
-              <br />
-              before it becomes an outage.
-            </h1>
+              <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted">
+                GridFlex predicts local electricity constraints and coordinates
+                batteries, EVs, buildings, solar, and generators to provide
+                flexibility exactly where the grid needs it.
+              </p>
 
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted">
-              GridFlex predicts local electricity constraints and coordinates
-              batteries, EVs, buildings, solar, and generators to provide
-              flexibility exactly where the grid needs it.
-            </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-background shadow-[0_8px_28px_-8px_rgba(87,214,255,0.7)] transition-transform hover:scale-[1.02]"
+                >
+                  Launch Grid Demo
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+                <a
+                  href="#how-it-works"
+                  className="inline-flex items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-border-strong"
+                >
+                  See How It Works
+                </a>
+              </div>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-primary/90"
-              >
-                Launch Grid Demo
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center justify-center rounded-lg border border-border px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-black/[.03]"
-              >
-                See How It Works
-              </a>
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-xs text-muted-2">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  Predictive grid intelligence
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  Local flexibility markets
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-solana-purple" />
+                  Solana settlement
+                </span>
+              </div>
             </div>
 
-            <p className="mt-6 text-sm text-muted">
-              Predictive grid intelligence · Local flexibility markets ·
-              Solana settlement
-            </p>
-          </div>
-
-          <div className="flex justify-center lg:justify-end">
-            <HeroGridPreview />
+            <div className="mx-auto w-full min-w-0 max-w-lg lg:mx-0">
+              <NightGridMap className="w-full h-auto" />
+              <div className="relative z-10 mx-auto -mt-10 w-full sm:-mt-16">
+                <HeroGridPreview />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CATEGORY STRIP */}
-      <section className="border-y border-border bg-white/60">
-        <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-4 px-5 py-8 sm:px-8">
-          <p className="text-xs font-medium tracking-wide text-muted uppercase">
+      <section className="relative border-y border-border">
+        <div className="mx-auto flex max-w-[1240px] flex-col items-center gap-4 px-5 py-8 sm:px-8">
+          <p className="tracked-caps text-xs font-medium text-muted">
             Built for
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-            {[
-              "Utilities",
-              "Microgrids",
-              "Cities",
-              "EV fleets",
-              "Energy communities",
-            ].map((item) => (
-              <span
-                key={item}
-                className="text-sm font-medium text-foreground/70"
-              >
-                {item}
-              </span>
-            ))}
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-3">
+            {["Utilities", "Microgrids", "Cities", "EV fleets", "Energy communities"].map(
+              (item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground/80"
+                >
+                  {item}
+                </span>
+              ),
+            )}
           </div>
-          <p className="text-xs text-muted">Powered by Solana</p>
+          <p className="flex items-center gap-1.5 text-xs text-muted">
+            <span className="h-1.5 w-1.5 rounded-full bg-solana-purple" aria-hidden="true" />
+            Powered by Solana
+          </p>
         </div>
       </section>
 
       {/* PROBLEM */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-20 sm:px-8 sm:py-28">
+      <section className="mx-auto w-full max-w-[1240px] px-5 py-20 sm:px-8 sm:py-28">
         <FadeIn>
           <SectionHeader
             title="The grid has capacity. It just isn't coordinated."
@@ -141,145 +233,86 @@ export default function Home() {
       {/* HOW IT WORKS */}
       <section
         id="how-it-works"
-        className="mx-auto w-full max-w-[1200px] scroll-mt-20 px-5 py-20 sm:px-8 sm:py-28"
+        className="mx-auto w-full max-w-[1240px] scroll-mt-20 px-5 py-20 sm:px-8 sm:py-28"
       >
         <FadeIn>
           <SectionHeader
-            eyebrow="Workflow"
-            title="From prediction to settlement."
+            title="From prediction to settlement, five steps apart."
             subtitle="GridFlex turns a forecasted grid constraint into coordinated local action."
           />
         </FadeIn>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-          <FadeIn>
-            <WorkflowStep
-              index={1}
-              icon={TrendingUp}
-              title="Predict"
-              description="GridFlex analyzes load, weather, time-of-day, events, and distributed capacity to identify upcoming grid constraints."
-            >
-              <dl className="space-y-1.5 rounded-lg bg-soft px-3 py-2.5 text-xs">
-                <Row label="Forecast" value="12.8 MW" />
-                <Row label="Capacity" value="12.0 MW" />
-                <Row label="Risk" value="91%" accent />
-              </dl>
-            </WorkflowStep>
-          </FadeIn>
-
-          <FadeIn delay={80}>
-            <WorkflowStep
-              index={2}
-              icon={ClipboardList}
-              title="Procure"
-              description="The utility opens a local flexibility request for the amount of grid relief required."
-            >
-              <dl className="space-y-1.5 rounded-lg bg-soft px-3 py-2.5 text-xs">
-                <Row label="Zone" value="Downtown" />
-                <Row label="Need" value="800 kW" accent />
-                <Row label="Window" value="7:00–8:00 PM" />
-              </dl>
-            </WorkflowStep>
-          </FadeIn>
-
-          <FadeIn delay={160}>
-            <WorkflowStep
-              index={3}
-              icon={Workflow}
-              title="Coordinate"
-              description="GridFlex selects nearby batteries, EVs, buildings, solar systems, and generators based on availability, location, and price."
-            >
-              <dl className="space-y-1.5 rounded-lg bg-soft px-3 py-2.5 text-xs">
-                <Row label="Battery" value="300 kW" />
-                <Row label="EV shift" value="180 kW" />
-                <Row label="HVAC" value="170 kW" />
-              </dl>
-            </WorkflowStep>
-          </FadeIn>
-
-          <FadeIn delay={240}>
-            <WorkflowStep
-              index={4}
-              icon={ShieldCheck}
-              title="Verify"
-              description="Meter or device data confirms how much flexibility each participant actually delivered."
-            >
-              <dl className="space-y-1.5 rounded-lg bg-soft px-3 py-2.5 text-xs">
-                <Row label="Committed" value="800 kW" />
-                <Row label="Delivered" value="806 kW" accent />
-              </dl>
-            </WorkflowStep>
-          </FadeIn>
-
-          <FadeIn delay={320}>
-            <WorkflowStep
-              index={5}
-              icon={HandCoins}
-              title="Settle"
-              description="Verified commitments and payments are recorded through Solana for transparent, programmable settlement."
-            >
-              <div className="flex items-center gap-2 rounded-lg bg-soft px-3 py-2.5 text-xs font-medium text-primary">
-                <Zap className="h-3.5 w-3.5" aria-hidden="true" />
-                Recorded on Solana
-              </div>
-            </WorkflowStep>
-          </FadeIn>
-        </div>
+        <FadeIn delay={100} className="mt-14">
+          <WorkflowRail steps={workflowSteps} />
+        </FadeIn>
       </section>
 
       {/* WHAT COUNTS AS FLEXIBILITY */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-20 sm:px-8 sm:py-28">
+      <section
+        id="flexibility"
+        className="relative scroll-mt-20 overflow-hidden py-20 sm:py-28"
+      >
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(800px circle at 10% 0%, rgba(87,214,255,0.13), transparent 65%)",
+          }}
+          aria-hidden="true"
+        />
+        <div className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
         <FadeIn>
-          <SectionHeader
-            title="The grid doesn't only need more generation. It needs flexibility."
+          <SectionHeader title="The grid doesn't only need more generation. It needs flexibility." />
+        </FadeIn>
+        <FadeIn delay={100} className="mt-10">
+          <FlexInstrumentPanel
+            items={[
+              {
+                icon: Sun,
+                title: "Generate",
+                examples: ["Solar", "Generators", "Microgrids"],
+                description: "Export additional power during constrained periods.",
+              },
+              {
+                icon: Battery,
+                title: "Store",
+                examples: ["Home batteries", "Commercial storage", "Vehicle-to-grid"],
+                description: "Release stored energy when local demand is highest.",
+              },
+              {
+                icon: Clock,
+                title: "Shift",
+                examples: ["EV charging", "HVAC", "Water heating", "Industrial demand"],
+                description: "Move electricity use away from congested periods.",
+              },
+              {
+                icon: TrendingDown,
+                title: "Reduce",
+                examples: ["Commercial loads", "Buildings", "Industrial equipment"],
+                description: "Temporarily reduce consumption in exchange for compensation.",
+              },
+            ]}
           />
         </FadeIn>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <FadeIn>
-            <FlexResourceCard
-              icon={Sun}
-              title="Generate"
-              examples={["Solar", "Generators", "Microgrids"]}
-              description="Export additional power during constrained periods."
-            />
-          </FadeIn>
-          <FadeIn delay={80}>
-            <FlexResourceCard
-              icon={Battery}
-              title="Store"
-              examples={["Home batteries", "Commercial storage", "Vehicle-to-grid"]}
-              description="Release stored energy when local demand is highest."
-            />
-          </FadeIn>
-          <FadeIn delay={160}>
-            <FlexResourceCard
-              icon={Clock}
-              title="Shift"
-              examples={["EV charging", "HVAC", "Water heating", "Industrial demand"]}
-              description="Move electricity use away from congested periods."
-            />
-          </FadeIn>
-          <FadeIn delay={240}>
-            <FlexResourceCard
-              icon={TrendingDown}
-              title="Reduce"
-              examples={["Commercial loads", "Buildings", "Industrial equipment"]}
-              description="Temporarily reduce consumption in exchange for compensation."
-            />
-          </FadeIn>
         </div>
       </section>
 
-      {/* GRID INTELLIGENCE (dark) */}
+      {/* GRID INTELLIGENCE */}
       <section
         id="technology"
-        className="scroll-mt-20 bg-dark py-20 sm:py-28"
+        className="relative scroll-mt-20 overflow-hidden border-y border-border bg-background-raised py-20 sm:py-28"
       >
-        <div className="mx-auto w-full max-w-[1200px] px-5 sm:px-8">
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(800px circle at 90% 15%, rgba(87,214,255,0.14), transparent 65%)",
+          }}
+          aria-hidden="true"
+        />
+        <div className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
           <FadeIn>
             <SectionHeader
-              dark
-              eyebrow="Forecasting + operational intelligence"
               title="Grid intelligence that explains what happens next."
               subtitle="GridFlex combines operational signals with contextual data to identify where local capacity may become constrained and how much flexibility is required."
             />
@@ -293,11 +326,10 @@ export default function Home() {
       {/* LOCAL MARKETS */}
       <section
         id="network"
-        className="mx-auto w-full max-w-[1200px] scroll-mt-20 px-5 py-20 sm:px-8 sm:py-28"
+        className="mx-auto w-full max-w-[1240px] scroll-mt-20 px-5 py-20 sm:px-8 sm:py-28"
       >
         <FadeIn>
           <SectionHeader
-            eyebrow="Local markets"
             title="Grid constraints are local. Flexibility should be too."
             subtitle="A battery hundreds of miles away cannot relieve an overloaded neighborhood feeder. GridFlex matches flexibility to the specific zone where capacity is needed."
           />
@@ -308,10 +340,18 @@ export default function Home() {
       </section>
 
       {/* WHY SOLANA */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-20 sm:px-8 sm:py-28">
+      <section id="settlement" className="relative scroll-mt-20 overflow-hidden py-20 sm:py-28">
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(800px circle at 50% 0%, rgba(153,69,255,0.16), transparent 65%)",
+          }}
+          aria-hidden="true"
+        />
+        <div className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
         <FadeIn>
           <SectionHeader
-            eyebrow="Settlement layer"
             title="Transparent settlement for a distributed grid."
             subtitle="GridFlex keeps high-frequency grid telemetry and forecasting off-chain while using Solana for the parts that benefit from a shared, auditable ledger."
           />
@@ -322,17 +362,17 @@ export default function Home() {
         <FadeIn delay={160} className="mx-auto mt-8 max-w-sm">
           <SettlementFlow />
         </FadeIn>
+        </div>
       </section>
 
       {/* MICROGRID USE CASE */}
       <section
         id="about"
-        className="mx-auto w-full max-w-[1200px] scroll-mt-20 px-5 py-20 sm:px-8 sm:py-28"
+        className="mx-auto w-full max-w-[1240px] scroll-mt-20 px-5 py-20 sm:px-8 sm:py-28"
       >
         <FadeIn>
           <SectionHeader
-            eyebrow="Beyond the grid edge"
-            title="Useful wherever electricity is fragmented."
+            title="Useful beyond the grid edge, wherever electricity is fragmented."
             subtitle="In regions with unreliable utility supply, electricity may come from a mixture of the grid, rooftop solar, batteries, diesel generators, and neighborhood microgrids. GridFlex can coordinate those resources instead of treating each one as an isolated backup system."
           />
         </FadeIn>
@@ -342,7 +382,7 @@ export default function Home() {
       </section>
 
       {/* PARTICIPANT EXPERIENCE */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-20 sm:px-8 sm:py-28">
+      <section className="mx-auto w-full max-w-[1240px] px-5 py-20 sm:px-8 sm:py-28">
         <FadeIn>
           <SectionHeader title="Anyone with flexible energy can participate." />
         </FadeIn>
@@ -357,7 +397,7 @@ export default function Home() {
       </section>
 
       {/* LIVE MARKET */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-20 sm:px-8 sm:py-28">
+      <section className="mx-auto w-full max-w-[1240px] px-5 py-20 sm:px-8 sm:py-28">
         <FadeIn>
           <SectionHeader title="When the grid needs help, the market responds." />
         </FadeIn>
@@ -367,34 +407,13 @@ export default function Home() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 pb-20 sm:px-8 sm:pb-28">
+      <section className="mx-auto w-full max-w-[1240px] px-5 pb-20 sm:px-8 sm:pb-28">
         <FadeIn>
           <CTASection />
         </FadeIn>
       </section>
 
       <Footer />
-    </div>
-  );
-}
-
-function Row({
-  label,
-  value,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <dt className="text-muted">{label}</dt>
-      <dd
-        className={`font-mono font-medium ${accent ? "text-primary" : "text-foreground"}`}
-      >
-        {value}
-      </dd>
     </div>
   );
 }

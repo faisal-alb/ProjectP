@@ -21,10 +21,10 @@ export function HeroGridPreview() {
   }, []);
 
   return (
-    <div className="w-full max-w-md rounded-2xl border border-border bg-white p-5 shadow-[0_20px_60px_-24px_rgba(17,23,20,0.25)]">
+    <div className="w-full max-w-md rounded-2xl glass-panel p-5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.7)]">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[11px] font-medium tracking-wide text-muted uppercase">
+          <p className="tracked-caps text-[11px] font-medium text-muted">
             Miami Grid
           </p>
           <p className="mt-0.5 text-sm font-semibold text-foreground">
@@ -33,13 +33,11 @@ export function HeroGridPreview() {
         </div>
         <div className="text-right">
           <div className="flex items-center justify-end gap-1.5">
-            <span
-              className="h-2 w-2 rounded-full bg-bright"
-              aria-hidden="true"
-            >
-              <span className="block h-2 w-2 animate-ping rounded-full bg-bright/60" />
+            <span className="relative flex h-2 w-2" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/60" />
+              <span className="relative h-2 w-2 rounded-full bg-accent" />
             </span>
-            <span className="text-2xl font-semibold tabular-nums text-foreground">
+            <span className="font-mono text-2xl font-semibold tabular text-foreground">
               {load.toFixed(1)}
               <span className="text-sm text-muted">%</span>
             </span>
@@ -49,13 +47,13 @@ export function HeroGridPreview() {
       </div>
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[360px] border-collapse text-xs">
+        <table className="w-full border-collapse text-xs">
           <thead>
             <tr className="text-left text-muted">
-              <th className="pb-2 font-medium">Zone</th>
-              <th className="pb-2 font-medium">Capacity</th>
-              <th className="pb-2 font-medium">Current</th>
-              <th className="pb-2 font-medium">Forecast</th>
+              <th className="pb-2 pr-1.5 font-medium">Zone</th>
+              <th className="pb-2 pr-1.5 font-medium">Capacity</th>
+              <th className="pb-2 pr-1.5 font-medium">Current</th>
+              <th className="pb-2 pr-1.5 font-medium">Forecast</th>
               <th className="pb-2 font-medium">Status</th>
             </tr>
           </thead>
@@ -64,23 +62,28 @@ export function HeroGridPreview() {
               <tr
                 key={zone.name}
                 className={`border-t border-border ${
-                  zone.status === "high" ? "bg-danger-soft/70" : ""
+                  zone.status === "high" ? "bg-risk-soft/60" : ""
                 }`}
               >
-                <td className="py-2 pr-2 font-medium text-foreground">
+                <td className="py-2 pr-1.5 font-medium text-foreground">
                   {zone.name}
                 </td>
-                <td className="py-2 pr-2 font-mono text-foreground/80">
+                <td className="py-2 pr-1.5 font-mono tabular text-foreground/80">
                   {zone.capacityMw.toFixed(1)} MW
                 </td>
-                <td className="py-2 pr-2 font-mono text-foreground/80">
+                <td className="py-2 pr-1.5 font-mono tabular text-foreground/80">
                   {zone.currentMw.toFixed(1)} MW
                 </td>
-                <td className="py-2 pr-2 font-mono text-foreground/80">
+                <td className="py-2 pr-1.5 font-mono tabular text-foreground/80">
                   {zone.forecastMw.toFixed(1)} MW
                 </td>
                 <td className="py-2">
-                  <GridStatusBadge status={zone.status} />
+                  <span className="block sm:hidden">
+                    <GridStatusBadge status={zone.status} compact />
+                  </span>
+                  <span className="hidden sm:block">
+                    <GridStatusBadge status={zone.status} />
+                  </span>
                 </td>
               </tr>
             ))}
@@ -92,11 +95,11 @@ export function HeroGridPreview() {
         <CongestionAlert />
       </div>
 
-      <div className="mt-3 flex items-center justify-between rounded-xl bg-soft px-4 py-3">
-        <span className="text-xs font-medium text-primary">
+      <div className="mt-3 flex items-center justify-between rounded-xl border border-accent/20 bg-accent-soft px-4 py-3">
+        <span className="text-xs font-medium text-accent">
           Available local flexibility
         </span>
-        <span className="font-mono text-sm font-semibold text-primary">
+        <span className="font-mono text-sm font-semibold text-accent tabular">
           1.4 MW
         </span>
       </div>

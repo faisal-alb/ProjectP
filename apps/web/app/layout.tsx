@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   title: "GridFlex — Grid Flexibility Infrastructure",
   description:
     "GridFlex predicts local grid congestion and coordinates batteries, EVs, buildings, solar, and generators to deliver flexibility exactly where the grid needs it. Settlement is recorded transparently on Solana.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#05070d",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

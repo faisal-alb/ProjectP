@@ -32,10 +32,10 @@ export function MarketTable() {
     .reduce((sum, r) => sum + r.kw, 0);
 
   return (
-    <div className="rounded-2xl border border-border bg-white p-5 sm:p-6">
+    <div className="rounded-2xl glass-panel p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <p className="text-xs font-medium tracking-wide text-muted uppercase">
+          <p className="tracked-caps text-xs font-medium text-muted">
             Active Flex Market
           </p>
           <p className="mt-1 text-lg font-semibold text-foreground">
@@ -45,13 +45,13 @@ export function MarketTable() {
         <div className="flex gap-6 text-right">
           <div>
             <p className="text-xs text-muted">Requested</p>
-            <p className="font-mono text-lg font-semibold text-foreground">
+            <p className="font-mono text-lg font-semibold tabular text-foreground">
               {marketTotals.requestedKw} kW
             </p>
           </div>
           <div>
             <p className="text-xs text-muted">Committed</p>
-            <p className="font-mono text-lg font-semibold text-bright">
+            <p className="font-mono text-lg font-semibold tabular text-accent">
               {committed} kW
             </p>
           </div>
@@ -76,18 +76,18 @@ export function MarketTable() {
                   {resource.label}
                 </td>
                 <td className="py-2.5 pr-2 text-muted">{resource.type}</td>
-                <td className="py-2.5 pr-2 font-mono text-foreground/80">
+                <td className="py-2.5 pr-2 font-mono tabular text-foreground/80">
                   {resource.kw} kW
                 </td>
-                <td className="py-2.5 pr-2 font-mono text-foreground/80">
+                <td className="py-2.5 pr-2 font-mono tabular text-foreground/80">
                   ${resource.pricePerKwh.toFixed(2)}
                 </td>
                 <td className="py-2.5">
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors duration-500 ${
                       statuses[i] === "accepted"
-                        ? "bg-soft text-primary"
-                        : "bg-border/60 text-muted"
+                        ? "bg-accent-soft text-accent"
+                        : "bg-white/[0.06] text-muted"
                     }`}
                   >
                     {statuses[i] === "accepted" ? (
@@ -104,18 +104,18 @@ export function MarketTable() {
         </table>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-soft px-4 py-3">
-        <span className="text-sm font-medium text-primary">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/20 bg-accent-soft px-4 py-3">
+        <span className="text-sm font-medium text-accent">
           {marketTotals.committedKw} kW committed
         </span>
-        <span className="text-sm text-primary/80">
+        <span className="text-sm text-accent/80">
           Estimated cost{" "}
-          <span className="font-mono font-semibold text-primary">
+          <span className="font-mono font-semibold tabular text-accent">
             ${marketTotals.estimatedCost.toFixed(2)}
           </span>
         </span>
-        <span className="text-sm text-primary/80">
-          Settlement <span className="font-medium text-primary">Solana</span>
+        <span className="text-sm text-accent/80">
+          Settlement <span className="font-medium text-accent">Solana</span>
         </span>
       </div>
     </div>
