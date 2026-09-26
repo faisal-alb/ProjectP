@@ -1,0 +1,9 @@
+{
+  "enabledPlugins": {
+    "impeccable@impeccable": true
+  },
+  "worktree": {
+    "baseRef": "head",
+    "bgIsolation": "none"
+  }
+}

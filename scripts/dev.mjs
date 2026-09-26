@@ -43,10 +43,16 @@ if (services.length === 0) {
 }
 
 const npmCli = process.env.npm_execpath;
+// Bun (and some other package managers) point npm_execpath at their own
+// compiled binary rather than a Node-runnable JS CLI, so it must be
+// executed directly instead of wrapped with `node <npmCli>`.
+const npmCliIsBinary = Boolean(process.versions.bun) || (npmCli ?? "").includes("/bun");
 const detached = process.platform !== "win32";
 const children = services.map(({ name, path: cwd }) => {
   const child = npmCli
-    ? spawn(process.execPath, [npmCli, "run", "dev"], { cwd, detached })
+    ? npmCliIsBinary
+      ? spawn(npmCli, ["run", "dev"], { cwd, detached })
+      : spawn(process.execPath, [npmCli, "run", "dev"], { cwd, detached })
     : spawn("npm", ["run", "dev"], { cwd, detached });
 
   for (const stream of [child.stdout, child.stderr]) {
