@@ -8,10 +8,10 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const POSITIONS: Record<string, { x: number; y: number; r: number }> = {
-  Downtown: { x: 392, y: 214, r: 11 },
-  North: { x: 392, y: 92, r: 6 },
-  West: { x: 226, y: 236, r: 6 },
-  South: { x: 414, y: 342, r: 6 },
+  "Downtown Miami": { x: 392, y: 214, r: 11 },
+  "Miami Beach": { x: 522, y: 170, r: 6 },
+  "Fort Lauderdale": { x: 392, y: 62, r: 6 },
+  "Coral Gables": { x: 242, y: 342, r: 6 },
 };
 
 const RESOURCE = { x: 108, y: 96 };
@@ -21,25 +21,25 @@ const RESOURCE = { x: 108, y: 96 };
  * highest-risk zone once, on mount, then settles into a quiet pulse.
  */
 export function NightGridMap({ className = "" }: { className?: string }) {
-  const downtown = zones.find((z) => z.name === "Downtown");
+  const downtown = zones.find((z) => z.name === "Downtown Miami");
 
   return (
     <svg
       viewBox="0 0 640 420"
       className={className}
       role="img"
-      aria-label="Map of the local grid, showing an arc of committed power flowing into the constrained Downtown zone"
+      aria-label="Map of the local grid, showing an arc of committed power flowing into the constrained Downtown Miami zone"
     >
       {/* faint transmission lines connecting zones */}
       <g stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none">
-        <path d="M392,92 L392,214" />
-        <path d="M226,236 L392,214" />
-        <path d="M414,342 L392,214" />
+        <path d="M522,170 L392,214" />
+        <path d="M392,62 L392,214" />
+        <path d="M242,342 L392,214" />
       </g>
 
       {/* signature arc: resource -> constrained zone */}
       <path
-        d={`M${RESOURCE.x},${RESOURCE.y} Q262,44 ${POSITIONS.Downtown.x},${POSITIONS.Downtown.y}`}
+        d={`M${RESOURCE.x},${RESOURCE.y} Q262,44 ${POSITIONS["Downtown Miami"].x},${POSITIONS["Downtown Miami"].y}`}
         fill="none"
         stroke="var(--accent)"
         strokeWidth="1.5"
@@ -65,7 +65,7 @@ export function NightGridMap({ className = "" }: { className?: string }) {
         const pos = POSITIONS[zone.name];
         if (!pos) return null;
         const color = STATUS_COLOR[zone.status];
-        const isDowntown = zone.name === "Downtown";
+        const isDowntown = zone.name === "Downtown Miami";
         const haloRadius = pos.r * 2.4;
         return (
           <g key={zone.name} transform={`translate(${pos.x}, ${pos.y})`}>

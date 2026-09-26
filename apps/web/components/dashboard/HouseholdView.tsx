@@ -140,7 +140,7 @@ export function HouseholdView({
             <div className="mt-6 flex gap-2.5 rounded-md border border-border bg-background-raised p-3 text-sm text-muted">
               <Info className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
               <p>
-                <span className="font-medium text-foreground">Why tonight?</span> Downtown&rsquo;s power lines are
+                <span className="font-medium text-foreground">Why tonight?</span> Downtown Miami&rsquo;s power lines are
                 expected to be overloaded around 7:20 PM. Energy from home batteries nearby helps avoid an outage. You
                 get paid once your meter confirms what you shared, and the payment is recorded on Solana.
               </p>

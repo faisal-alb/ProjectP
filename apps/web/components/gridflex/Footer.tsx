@@ -6,7 +6,7 @@ const links = [
   { label: "Technology", href: "#technology" },
   { label: "About", href: "#about" },
   { label: "GitHub", href: "https://github.com" },
-  { label: "Demo", href: "/dashboard" },
+  { label: "Dashboard", href: "/dashboard" },
 ];
 
 export function Footer() {

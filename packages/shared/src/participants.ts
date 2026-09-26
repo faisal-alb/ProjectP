@@ -44,7 +44,7 @@ export function participantCommitments(
         const remaining = r.acceptedKw - i * household.maxDischargeKw;
         return {
           resourceId,
-          label: `Home ${i + 1} (Downtown home batteries)`,
+          label: `Home ${i + 1} (Downtown Miami home batteries)`,
           type: r.offer.type,
           kw: Math.min(household.maxDischargeKw, remaining),
           pricePerKwh: r.offer.pricePerKwh,

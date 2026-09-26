@@ -177,6 +177,9 @@ Tight, consistent radii: `rounded-lg` (8px) for panels, `rounded-md` (6px) for b
 - **Ghost:** transparent, `border-border`, strengthens to `border-border-strong` on hover.
 - **Focus:** global `:focus-visible` outline in the accent.
 
+### Sliders
+- Native `input[type=range]`, restyled in `globals.css`: a 4px track that fills with the foreground color up to the value, and a 10×20px rectangular handle (3px radius). The fill comes from a `--range-pct` CSS variable that components set with `rangeFill()` (`components/onboarding/controls.tsx`). Hover lightens the handle, pressing it turns it accent-colored, keyboard focus adds a 2px accent ring around it, and disabled dims the whole control. The input is 28px tall so the touch target is larger than the visible track.
+
 ### Panels
 - `.panel` utility: opaque `surface` fill + 1px hairline border, `rounded-lg`, `p-5`–`p-6`.
 - A highlighted panel (e.g. the at-risk zone) swaps the border to `border-risk/50`; the fill stays neutral.

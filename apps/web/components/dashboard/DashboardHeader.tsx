@@ -66,7 +66,7 @@ function AccountMenu({ role, label }: { role: Role; label: string }) {
       {() => (
         <div>
           <p className="text-xs text-muted">Signed in as</p>
-          <p className="mt-0.5 text-sm font-medium text-foreground">{label} (demo account)</p>
+          <p className="mt-0.5 text-sm font-medium text-foreground">{label}</p>
           <p className="mt-0.5 text-xs text-muted">{ROLE_DESCRIPTION[role]}</p>
           <p className="mt-2 text-xs text-muted-2">All figures on this dashboard are illustrative.</p>
           <div className="mt-4 space-y-2 border-t border-border pt-3">

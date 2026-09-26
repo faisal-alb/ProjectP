@@ -60,7 +60,7 @@ const workflowSteps = [
     readout: (
       <WorkflowReadout
         rows={[
-          { label: "Zone", value: "Downtown" },
+          { label: "Zone", value: "Downtown Miami" },
           { label: "Need", value: "800 kW", accent: true },
           { label: "Window", value: "7:00–8:00 PM" },
         ]}
@@ -135,7 +135,7 @@ export default function Home() {
                   href="/dashboard"
                   className="inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-5 py-3 text-sm font-semibold text-background transition-colors hover:bg-white"
                 >
-                  Launch Grid Demo
+                  Get Started
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
                 <a

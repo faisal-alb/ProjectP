@@ -60,10 +60,11 @@ test("zip lookup resolves demo addresses and rejects others", async () => {
   const { resolveZip, estimateFlex } = await import("./index");
   assert.deepEqual(resolveZip("33132"), {
     zip: "33132",
-    utility: "Demo Energy",
-    zone: "Downtown",
-    substation: "Downtown Substation",
+    utility: "Florida Power & Light",
+    zone: "Downtown Miami",
+    substation: "Downtown Miami Substation",
     feeder: "DT-A",
+    coordinates: [-80.172412, 25.777404],
   });
   assert.equal(resolveZip("10001"), null);
   // 78% charge, 40% reserve: 5.13 kWh above the reserve, capped by the per-event limit.

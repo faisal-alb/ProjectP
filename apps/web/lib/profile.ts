@@ -1,7 +1,7 @@
 // Account profiles captured at onboarding. Stored in a cookie for the demo;
 // real auth and a database replace this later. Parsers clamp every value, so a
 // tampered or stale cookie can never put the dashboards in a broken state.
-import { defaultZip, type ResourceKey } from "@gridflex/shared";
+import { defaultZip, localUtility, type ResourceKey } from "@gridflex/shared";
 
 export type Role = "participant" | "operator";
 
@@ -58,7 +58,7 @@ export const defaultParticipantProfile: ParticipantProfile = {
 };
 
 export const defaultOperatorProfile: OperatorProfile = {
-  orgName: "Demo Energy",
+  orgName: localUtility,
   orgType: "utility",
   region: "South Florida",
   warningPercent: 85,

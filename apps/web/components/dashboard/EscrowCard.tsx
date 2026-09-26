@@ -108,7 +108,7 @@ export function EscrowCard({
               {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               {busy ?? (funded.phase === "committed" ? "Record meter readings" : "Pay participants")}
             </button>
-            <p className="mt-2 text-xs text-muted-2">Demo control. In production this runs on its own after 8:00 PM.</p>
+            <p className="mt-2 text-xs text-muted-2">Simulation control. Automated settlement runs after the event ends in production.</p>
           </div>
         ) : funded.phase === "settled" ? (
           <div>

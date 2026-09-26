@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   ArrowLeft,
   ArrowRight,
@@ -32,7 +33,12 @@ import {
   secondaryButton,
 } from "./controls";
 
-const STEPS = ["Resources", "Limits", "Payout"] as const;
+const ZoneMap = dynamic(() => import("./ZoneMap"), {
+  ssr: false,
+  loading: () => <div className="mt-4 flex h-64 items-center justify-center rounded-md border border-border bg-background-raised text-sm text-muted sm:h-72" role="status">Loading your grid zone…</div>,
+});
+
+const STEPS = ["Resources", "Location", "Limits", "Payout"] as const;
 
 const RESOURCE_TILES: { key: ResourceKey; icon: typeof Battery; title: string; description: string }[] = [
   { key: "battery", icon: Battery, title: "Home battery", description: "Powerwall, Enphase, or similar" },
@@ -60,7 +66,8 @@ export function ParticipantFlow() {
 
   const patch = (next: Partial<ParticipantProfile>) => setProfile((p) => ({ ...p, ...next }));
   const location = resolveZip(profile.zip);
-  const canContinue = step === 0 ? (profile.resources.length > 0 || profile.notSure) && location !== null : true;
+  const canContinue =
+    step === 0 ? profile.resources.length > 0 || profile.notSure : step === 1 ? location !== null : true;
 
   // Move focus to the new heading when the step changes, not on first load.
   const lastStep = useRef(`${step}-${done}`);
@@ -84,17 +91,16 @@ export function ParticipantFlow() {
     }
   }
 
-  if (done) return <Ready profile={profile} heading={heading} zone={location?.zone ?? "Downtown"} feeder={location?.feeder ?? "DT-A"} />;
+  if (done) return <Ready profile={profile} heading={heading} zone={location?.zone ?? "Downtown Miami"} feeder={location?.feeder ?? "DT-A"} />;
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-5 py-10 sm:py-14">
       <Progress step={step} />
 
-      {step === 0 && (
-        <ResourcesStep profile={profile} patch={patch} heading={heading} location={location} />
-      )}
-      {step === 1 && <LimitsStep profile={profile} patch={patch} heading={heading} />}
-      {step === 2 && <PayoutStep heading={heading} />}
+      {step === 0 && <ResourcesStep profile={profile} patch={patch} heading={heading} />}
+      {step === 1 && <LocationStep profile={profile} patch={patch} heading={heading} location={location} />}
+      {step === 2 && <LimitsStep profile={profile} patch={patch} heading={heading} />}
+      {step === 3 && <PayoutStep heading={heading} />}
 
       {error && (
         <p role="alert" className="mt-6 rounded-md border border-risk/40 px-3 py-2 text-sm text-foreground">
@@ -151,7 +157,7 @@ type StepProps = {
   heading: React.RefObject<HTMLHeadingElement | null>;
 };
 
-function ResourcesStep({ profile, patch, heading, location }: StepProps & { location: ReturnType<typeof resolveZip> }) {
+function ResourcesStep({ profile, patch, heading }: StepProps) {
   const toggle = (key: ResourceKey) => {
     const has = profile.resources.includes(key);
     patch({
@@ -159,7 +165,6 @@ function ResourcesStep({ profile, patch, heading, location }: StepProps & { loca
       resources: has ? profile.resources.filter((k) => k !== key) : [...profile.resources, key],
     });
   };
-  const zipComplete = profile.zip.length === 5;
 
   return (
     <section className="mt-8" aria-labelledby="resources-heading">
@@ -189,10 +194,20 @@ function ResourcesStep({ profile, patch, heading, location }: StepProps & { loca
           />
         </div>
       </div>
+    </section>
+  );
+}
 
-      <h2 className="mt-10 text-lg font-semibold text-foreground">Where are they connected?</h2>
-      <p className="mt-1 text-sm text-muted">
-        GridFlex finds your local grid zone from your address. For this demo, your ZIP code is enough.
+function LocationStep({ profile, patch, heading, location }: StepProps & { location: ReturnType<typeof resolveZip> }) {
+  const zipComplete = profile.zip.length === 5;
+
+  return (
+    <section className="mt-8" aria-labelledby="location-heading">
+      <h1 id="location-heading" ref={heading} tabIndex={-1} className="text-2xl font-semibold tracking-tight text-foreground outline-none">
+        Where are they connected?
+      </h1>
+      <p className="mt-2 text-sm text-muted">
+        GridFlex finds your local grid zone from your ZIP code.
       </p>
       <div className="mt-4 max-w-[12rem]">
         <TextField
@@ -229,11 +244,12 @@ function ResourcesStep({ profile, patch, heading, location }: StepProps & { loca
         ) : (
           <p className={`text-xs ${zipComplete ? "text-watch" : "text-muted-2"}`}>
             {zipComplete
-              ? "GridFlex isn't available at this ZIP yet. In the demo, try 33132."
-              : "Enter a 5-digit ZIP. In the demo, try 33132."}
+              ? "GridFlex isn't available at this ZIP yet. We currently serve the Miami area."
+              : "Enter a 5-digit ZIP code."}
           </p>
         )}
       </div>
+      {location && <ZoneMap key={location.zip} zip={location.zip} />}
     </section>
   );
 }
@@ -266,7 +282,6 @@ function LimitsStep({ profile, patch, heading }: StepProps) {
                 <Check className="h-4 w-4 shrink-0 text-normal" aria-hidden="true" />
                 <span className="font-medium text-foreground">{demoDevices[key].device}</span>
                 <span className="text-xs text-muted">{demoDevices[key].spec}</span>
-                <span className="ml-auto shrink-0 text-xs text-muted-2">Demo device</span>
               </li>
             ))}
           </ul>
@@ -535,7 +550,7 @@ function Ready({
           </div>
         )}
       </dl>
-      <p className="mt-3 text-xs text-muted-2">Demo estimate, based on your limits and illustrative event rates.</p>
+      <p className="mt-3 text-xs text-muted-2">Estimate based on your limits and recent event rates.</p>
 
       <Link href="/dashboard" className={`${primaryButton} mt-8`}>
         Go to My Energy

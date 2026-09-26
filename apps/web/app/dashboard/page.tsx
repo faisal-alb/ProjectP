@@ -17,7 +17,7 @@ export default async function DashboardPage() {
   const profile = await getParticipantProfile();
   return (
     <HouseholdView
-      zone={resolveZip(profile.zip)?.zone ?? "Downtown"}
+      zone={resolveZip(profile.zip)?.zone ?? "Downtown Miami"}
       hasBattery={profile.resources.includes("battery")}
       defaults={{
         autoFlex: profile.autoFlex,

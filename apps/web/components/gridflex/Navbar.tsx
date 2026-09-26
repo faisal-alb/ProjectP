@@ -39,7 +39,7 @@ export function Navbar() {
             href="/dashboard"
             className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-white"
           >
-            Launch Demo
+            Get Started
           </Link>
         </div>
       </div>

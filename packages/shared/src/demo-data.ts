@@ -12,14 +12,14 @@ export interface Zone {
 }
 
 export const zones: Zone[] = [
-  { name: "Downtown", capacityMw: 12.0, currentMw: 10.8, forecastMw: 12.8, peakTime: "7:20 PM", status: "high" },
-  { name: "North", capacityMw: 8.0, currentMw: 5.1, forecastMw: 6.0, peakTime: "6:50 PM", status: "normal" },
-  { name: "West", capacityMw: 7.0, currentMw: 5.9, forecastMw: 6.6, peakTime: "7:40 PM", status: "watch" },
-  { name: "South", capacityMw: 10.0, currentMw: 6.4, forecastMw: 7.1, peakTime: "8:10 PM", status: "normal" },
+  { name: "Downtown Miami", capacityMw: 12.0, currentMw: 10.8, forecastMw: 12.8, peakTime: "7:20 PM", status: "high" },
+  { name: "Miami Beach", capacityMw: 8.0, currentMw: 5.1, forecastMw: 6.0, peakTime: "6:50 PM", status: "normal" },
+  { name: "Fort Lauderdale", capacityMw: 7.0, currentMw: 5.9, forecastMw: 6.6, peakTime: "7:40 PM", status: "watch" },
+  { name: "Coral Gables", capacityMw: 10.0, currentMw: 6.4, forecastMw: 7.1, peakTime: "8:10 PM", status: "normal" },
 ];
 
 export const downtown = {
-  zone: "Downtown",
+  zone: "Downtown Miami",
   capacityMw: 12.0,
   currentLoadMw: 10.8,
   forecastLoadMw: 12.8,
@@ -38,7 +38,7 @@ export const NOW_MINUTES = 16 * 60 + 30;
 export const WINDOW_START_MINUTES = 19 * 60;
 export const WINDOW_END_MINUTES = 20 * 60;
 
-/** Downtown load: measured up to now, forecast after. MW. */
+/** Downtown Miami load: measured up to now, forecast after. MW. */
 export const downtownLoadCurve: { minutes: number; mw: number }[] = [
   { minutes: 14 * 60, mw: 9.4 },
   { minutes: 14 * 60 + 30, mw: 9.7 },
@@ -89,12 +89,12 @@ export interface FlexOffer {
   pricePerKwh: number;
 }
 
-/** Offers submitted for the Downtown 7–8 PM request. */
+/** Offers submitted for the Downtown Miami 7–8 PM request. */
 export const flexOffers: FlexOffer[] = [
   { label: "EV Fleet #4", type: "EV charging", kw: 180, pricePerKwh: 0.08 },
   { label: "Tower HVAC", type: "Building load", kw: 170, pricePerKwh: 0.09 },
   { label: "Solar Group #9", type: "Solar export", kw: 100, pricePerKwh: 0.11 },
-  { label: "Downtown home batteries", type: "Home batteries", kw: 100, pricePerKwh: 0.14 },
+  { label: "Downtown Miami home batteries", type: "Home batteries", kw: 100, pricePerKwh: 0.14 },
   { label: "Battery #17", type: "Commercial battery", kw: 250, pricePerKwh: 0.16 },
   { label: "Backup Generator #3", type: "Generator", kw: 250, pricePerKwh: 0.32 },
 ];
@@ -153,10 +153,10 @@ export const withoutGridFlexResources = [
   { label: "Solar", kw: 100 },
 ];
 
-/** A household in the Downtown home-battery group. */
+/** A household in the Downtown Miami home-battery group. */
 export const household = {
-  zone: "Downtown",
-  group: "Downtown home batteries",
+  zone: "Downtown Miami",
+  group: "Downtown Miami home batteries",
   batteryKwh: 13.5,
   chargePercent: 78,
   maxDischargeKw: 5,

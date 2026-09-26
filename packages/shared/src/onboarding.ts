@@ -26,41 +26,89 @@ export const BATTERY_CHARGE_PERCENT = 78;
 export const BATTERY_MAX_DISCHARGE_KW = 5;
 export const EV_SHIFTABLE_KW = 7.2;
 
+/** Mapbox / GeoJSON coordinate order: longitude, latitude. */
+export type MapCoordinate = [number, number];
+
+export const localUtility = "Florida Power & Light";
+
+export interface GridZone {
+  name: string;
+  center: MapCoordinate;
+  zips: string[];
+  feeders: string[];
+}
+
+// GridFlex groupings of real ZIP areas. Feeder assignments and substations
+// are illustrative, not FPL network topology or municipal boundaries.
+export const gridZones: GridZone[] = [
+  { name: "Downtown Miami", center: [-80.1937, 25.7743], zips: ["33130", "33131", "33132", "33136"], feeders: ["DT-A", "DT-B", "DT-C"] },
+  { name: "Miami Beach", center: [-80.13, 25.815], zips: ["33139", "33140", "33141"], feeders: ["MB-A", "MB-B"] },
+  { name: "Fort Lauderdale", center: [-80.1373, 26.1224], zips: ["33301", "33304", "33305", "33306", "33308", "33309", "33311", "33312", "33313", "33314", "33315", "33316"], feeders: ["FL-A", "FL-B"] },
+  { name: "Coral Gables", center: [-80.2684, 25.7215], zips: ["33133", "33134", "33143", "33146"], feeders: ["CG-A", "CG-B"] },
+];
+
+// Representative points from the 2020 Census ZCTA Gazetteer, not street addresses.
+// https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2020_Gazetteer/2020_Gaz_zcta_national.zip
+// 33302, 33303, 33307 and 33310 have no ZCTA and are intentionally excluded.
+const zipCoordinates: Record<string, MapCoordinate> = {
+  "33130": [-80.203359, 25.768524],
+  "33131": [-80.184275, 25.766561],
+  "33132": [-80.172412, 25.777404],
+  "33133": [-80.240995, 25.728632],
+  "33134": [-80.270379, 25.753332],
+  "33136": [-80.205296, 25.787247],
+  "33139": [-80.151566, 25.779391],
+  "33140": [-80.133711, 25.819714],
+  "33141": [-80.138726, 25.851854],
+  "33143": [-80.297375, 25.703032],
+  "33146": [-80.272571, 25.72085],
+  "33301": [-80.127909, 26.121323],
+  "33304": [-80.121184, 26.140411],
+  "33305": [-80.11944, 26.153361],
+  "33306": [-80.113853, 26.165442],
+  "33308": [-80.104988, 26.18851],
+  "33309": [-80.172721, 26.18599],
+  "33311": [-80.172785, 26.144208],
+  "33312": [-80.181783, 26.08817],
+  "33313": [-80.227397, 26.15152],
+  "33314": [-80.222641, 26.067582],
+  "33315": [-80.152994, 26.087022],
+  "33316": [-80.12184, 26.098696],
+};
+
 export interface GridLocation {
   zip: string;
   utility: string;
   zone: string;
   substation: string;
   feeder: string;
+  coordinates: MapCoordinate;
 }
 
-const rows: [string[], string, string, string][] = [
-  [["33132", "33130"], "Downtown", "Downtown Substation", "DT-A"],
-  [["33131", "33128"], "Downtown", "Downtown Substation", "DT-B"],
-  [["33137", "33138"], "North", "North Substation", "N-A"],
-  [["33150", "33147"], "North", "North Substation", "N-B"],
-  [["33135", "33145"], "West", "West Substation", "W-A"],
-  [["33155", "33165"], "West", "West Substation", "W-B"],
-  [["33133", "33143"], "South", "South Substation", "S-A"],
-  [["33156", "33176"], "South", "South Substation", "S-B"],
-];
-
-/** Fake resolution of a ZIP code to a utility, substation, feeder and GridFlex zone. */
+/** Resolve a mapped ZIP to its illustrative GridFlex network assignment. */
 export function resolveZip(zip: string): GridLocation | null {
   const clean = zip.trim();
-  for (const [zips, zone, substation, feeder] of rows) {
-    if (zips.includes(clean)) return { zip: clean, utility: "Demo Energy", zone, substation, feeder };
-  }
-  return null;
+  const zone = gridZones.find((candidate) => candidate.zips.includes(clean));
+  const coordinates = zipCoordinates[clean];
+  if (!zone || !coordinates) return null;
+  // Retain DT-A for the default household; assignments are sample topology.
+  const feederIndex = zone.name === "Downtown Miami"
+    ? (["33130", "33132"].includes(clean) ? 0 : 1)
+    : zone.zips.indexOf(clean) % zone.feeders.length;
+  return {
+    zip: clean,
+    utility: localUtility,
+    zone: zone.name,
+    substation: `${zone.name} Substation`,
+    feeder: zone.feeders[feederIndex],
+    coordinates,
+  };
 }
 
-/** Feeders per substation for the demo network. */
-export const demoNetworkFeeders: Record<string, string[]> = {
-  Downtown: ["DT-A", "DT-B", "DT-C"],
-  North: ["N-A", "N-B"],
-  West: ["W-A", "W-B"],
-  South: ["S-A", "S-B"],
-};
+/** Illustrative feeders per zone, shared by both onboarding flows. */
+export const demoNetworkFeeders: Record<string, string[]> = Object.fromEntries(
+  gridZones.map((zone) => [zone.name, zone.feeders]),
+);
 
 export const defaultZip = "33132";
 

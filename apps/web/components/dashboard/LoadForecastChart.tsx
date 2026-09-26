@@ -139,7 +139,7 @@ export function LoadForecastChart({
         className="relative mt-4 outline-none focus-visible:rounded-md focus-visible:outline-2 focus-visible:outline-offset-4"
         tabIndex={0}
         role="group"
-        aria-label={`Downtown load forecast. Peaks at ${peak.mw} MW at ${formatTime(peak.minutes)} against ${capacityMw} MW capacity; with committed flexibility the peak is ${peakWithFlex} MW. Use arrow keys to step through times.`}
+        aria-label={`Downtown Miami load forecast. Peaks at ${peak.mw} MW at ${formatTime(peak.minutes)} against ${capacityMw} MW capacity; with committed flexibility the peak is ${peakWithFlex} MW. Use arrow keys to step through times.`}
         onPointerMove={(e) => setActive(nearest(e.clientX))}
         onPointerLeave={() => setActive(null)}
         onBlur={() => setActive(null)}

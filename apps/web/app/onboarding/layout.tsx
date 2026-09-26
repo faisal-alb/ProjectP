@@ -9,7 +9,6 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
           <Link href="/onboarding" aria-label="GridFlex, back to the start">
             <Wordmark />
           </Link>
-          <span className="hidden text-xs text-muted-2 sm:inline">Demo setup · nothing is saved outside this browser</span>
         </div>
       </header>
       {children}

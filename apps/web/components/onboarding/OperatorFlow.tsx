@@ -139,7 +139,7 @@ export function OperatorFlow() {
           )}
           {step < STEPS.length - 1 ? (
             <button type="button" className={primaryButton} disabled={!canContinue} onClick={() => setStep(step + 1)}>
-              {step === 1 ? "Continue with demo data" : "Continue"}
+              {step === 1 ? "Continue with sample data" : "Continue"}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
           ) : (
@@ -192,7 +192,7 @@ function OrgStep({ profile, patch, heading }: StepProps) {
           label="Organization name"
           value={profile.orgName}
           onChange={(v) => patch({ orgName: v.slice(0, 60) })}
-          placeholder="Demo Energy"
+          placeholder="Florida Power &amp; Light"
         />
         <SelectField
           label="Organization type"
@@ -221,15 +221,15 @@ function NetworkStep({ profile, patch, heading }: StepProps) {
       </StepHeading>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="How to start">
-        <ChoiceTile radio selected title="GridFlex demo network" description="Pre-built, with limits filled in." onClick={() => {}} />
+        <ChoiceTile radio selected title="GridFlex sample network" description="Pre-built, with limits filled in." onClick={() => {}} />
         <ChoiceTile radio selected={false} disabled title="Import network data" description="Coming soon." onClick={() => {}} />
         <ChoiceTile radio selected={false} disabled title="Create manually" description="Coming soon." onClick={() => {}} />
       </div>
 
-      <h2 className="mt-10 text-lg font-semibold text-foreground">South Florida demo grid</h2>
+      <h2 className="mt-10 text-lg font-semibold text-foreground">South Florida grid</h2>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full border-collapse text-sm">
-          <caption className="sr-only">Substations, feeders, and safe capacity in the demo network</caption>
+          <caption className="sr-only">Substations, feeders, and safe capacity in the sample network</caption>
           <thead>
             <tr className="text-left text-xs text-muted">
               <th scope="col" className="pb-2 pr-3 font-medium">Substation</th>
@@ -268,7 +268,7 @@ function NetworkStep({ profile, patch, heading }: StepProps) {
 
       <h2 className="mt-10 text-lg font-semibold text-foreground">Where GridFlex gets its data</h2>
       <ul className="mt-3 divide-y divide-border border-y border-border">
-        {["Grid simulator", "Weather feed", "Demo resource network"].map((name) => (
+        {["Grid simulator", "Weather feed", "Simulated resource network"].map((name) => (
           <li key={name} className="flex items-center justify-between gap-3 py-2.5 text-sm">
             <span className="flex items-center gap-2 text-foreground">
               <Check className="h-4 w-4 text-normal" aria-hidden="true" />
@@ -280,7 +280,7 @@ function NetworkStep({ profile, patch, heading }: StepProps) {
         {["SCADA", "Smart meters (AMI)", "DERMS", "Building systems", "EV networks"].map((name) => (
           <li key={name} className="flex items-center justify-between gap-3 py-2.5 text-sm text-muted-2">
             <span>{name}</span>
-            <span className="text-xs">After the demo</span>
+            <span className="text-xs">Coming soon</span>
           </li>
         ))}
       </ul>
@@ -388,7 +388,7 @@ function Ready({ profile, heading }: { profile: OperatorProfile; heading: React.
       <h1 ref={heading} tabIndex={-1} className="text-3xl font-semibold tracking-tight text-foreground outline-none">
         {profile.orgName}&rsquo;s network is ready
       </h1>
-      <p className="mt-2 text-sm text-muted">GridFlex is watching your demo network and will flag constraints as they form.</p>
+      <p className="mt-2 text-sm text-muted">GridFlex is watching your sample network and will flag constraints as they form.</p>
 
       <dl className="panel mt-8 divide-y divide-border rounded-lg">
         {rows.map(([label, value]) => (
@@ -398,7 +398,7 @@ function Ready({ profile, heading }: { profile: OperatorProfile; heading: React.
           </div>
         ))}
       </dl>
-      <p className="mt-3 text-xs text-muted-2">Demo network. All figures are illustrative.</p>
+      <p className="mt-3 text-xs text-muted-2">Sample network. All figures are illustrative.</p>
 
       <Link href="/dashboard" className={`${primaryButton} mt-8`}>
         Open control center

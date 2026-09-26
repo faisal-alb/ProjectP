@@ -15,6 +15,7 @@ import {
   type OfferOutcome,
 } from "@/lib/demo-data";
 import { useCurrentMarket, type MarketDto } from "@/lib/api";
+import { rangeFill } from "@/components/onboarding/controls";
 import { EscrowCard } from "./EscrowCard";
 import { LoadForecastChart } from "./LoadForecastChart";
 import { useSolana } from "./SolanaProvider";
@@ -55,7 +56,7 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
               Needs flexibility
             </p>
             <h2 id="downtown-heading" className="mt-2 text-xl font-semibold tracking-tight text-balance text-foreground sm:text-2xl">
-              Downtown is forecast to go over capacity tonight
+              Downtown Miami is forecast to go over capacity tonight
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted sm:text-base">
               Load is expected to peak at{" "}
@@ -111,7 +112,7 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
               Flexibility request
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Downtown · {downtown.window} · {downtown.requiredFlexKw} kW needed. Offers are accepted
+              Downtown Miami · {downtown.window} · {downtown.requiredFlexKw} kW needed. Offers are accepted
               cheapest first until the need is covered.
             </p>
           </div>
@@ -131,7 +132,8 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
               step={0.01}
               value={cap}
               onChange={(e) => setCap(Math.round(Number(e.target.value) * 100) / 100)}
-              className="mt-2 w-full disabled:cursor-not-allowed disabled:opacity-50"
+              style={rangeFill(cap, 0.05, 0.4)}
+              className="mt-1 w-full"
               disabled={locked}
               aria-describedby={`${capId}-hint`}
             />
@@ -167,7 +169,7 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
               </>
             ) : (
               <>
-                <strong className="font-semibold">{market.shortfallKw} kW short.</strong> Downtown would still go over
+                <strong className="font-semibold">{market.shortfallKw} kW short.</strong> Downtown Miami would still go over
                 capacity. Raise your price to at least {price(coveringCap)} to cover the full {downtown.requiredFlexKw}{" "}
                 kW.
               </>

@@ -1,12 +1,10 @@
 import { Battery, Building2, Car, Sun, Zap } from "lucide-react";
-import { downtown } from "@/lib/demo-data";
+import { downtown, zones } from "@/lib/demo-data";
 
-const satellites = [
-  { label: "North", status: "bg-normal" },
-  { label: "West", status: "bg-watch" },
-  { label: "East", status: "bg-normal" },
-  { label: "South", status: "bg-normal" },
-];
+const satellites = zones.filter((zone) => zone.name !== downtown.zone).map((zone) => ({
+  label: zone.name,
+  status: zone.status === "watch" ? "bg-watch" : "bg-normal",
+}));
 
 const resources = [
   { icon: Battery, kw: "300 kW", label: "Battery" },
@@ -21,13 +19,13 @@ export function GridMapPreview() {
     <div className="relative overflow-hidden rounded-lg panel p-6 sm:p-8">
       <div className="relative grid grid-cols-3 items-center gap-3 text-center sm:gap-4">
         <div />
-        <NodeDot label={satellites[0].label} status={satellites[0].status} />
+        <NodeDot label={satellites[1].label} status={satellites[1].status} />
         <div />
 
-        <NodeDot label={satellites[1].label} status={satellites[1].status} />
+        <NodeDot label={satellites[2].label} status={satellites[2].status} />
         <div className="relative rounded-md border border-risk/50 bg-background-raised px-3 py-4">
-          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded border border-risk/50 bg-background-raised px-2 py-0.5 text-[10px] font-medium text-risk">
-            Downtown
+          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded border border-risk/50 bg-background-raised px-2 py-0.5 text-[10px] font-medium text-risk">
+            {downtown.zone}
           </span>
           <p className="mt-1 text-xs text-muted">Forecast utilization</p>
           <p className="font-mono text-xl font-semibold tabular text-risk">107%</p>
@@ -40,11 +38,8 @@ export function GridMapPreview() {
             {downtown.flexAvailableMw} MW
           </p>
         </div>
-        <NodeDot label={satellites[2].label} status={satellites[2].status} />
+        <NodeDot label={satellites[0].label} status={satellites[0].status} />
 
-        <div />
-        <NodeDot label={satellites[3].label} status={satellites[3].status} />
-        <div />
       </div>
 
       <div className="relative mt-8 flex flex-wrap justify-center gap-3 border-t border-border pt-6">

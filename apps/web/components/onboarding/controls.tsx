@@ -8,6 +8,12 @@ export const primaryButton =
 export const secondaryButton =
   "inline-flex items-center justify-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-50";
 
+/** Inline style that fills a range input's track up to its current value. */
+export function rangeFill(value: number, min: number, max: number): React.CSSProperties {
+  const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
+  return { "--range-pct": `${Math.min(100, Math.max(0, pct))}%` } as React.CSSProperties;
+}
+
 /** A labelled range input with its current value on the right. */
 export function SliderRow({
   label,
@@ -46,7 +52,8 @@ export function SliderRow({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         aria-describedby={hint ? `${id}-hint` : undefined}
-        className="mt-2 w-full"
+        style={rangeFill(value, min, max)}
+        className="mt-1 w-full"
       />
       {hint && (
         <p id={`${id}-hint`} className="mt-1 text-xs text-muted">

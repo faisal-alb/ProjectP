@@ -9,7 +9,7 @@ export function CTASection() {
           See GridFlex balance the grid in real time.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-balance text-muted">
-          Run the interactive demo and watch GridFlex predict congestion,
+          Explore the grid simulation and watch GridFlex predict congestion,
           coordinate distributed resources, verify delivery, and settle the
           market.
         </p>
@@ -18,7 +18,7 @@ export function CTASection() {
             href="/dashboard"
             className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-6 py-3 text-sm font-semibold text-background transition-colors hover:bg-white sm:w-auto"
           >
-            Launch Grid Demo
+            Get Started
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           <a

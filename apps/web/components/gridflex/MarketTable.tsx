@@ -39,7 +39,7 @@ export function MarketTable() {
             Active Flex Market
           </p>
           <p className="mt-1 text-lg font-semibold text-foreground">
-            Downtown · 7:00–8:00 PM
+            Downtown Miami · 7:00–8:00 PM
           </p>
         </div>
         <div className="flex gap-6 text-right">
