@@ -15,16 +15,6 @@ export default async function DashboardPage() {
     return <OperatorDashboard initialCap={profile.maxNormalPrice} />;
   }
   const profile = await getParticipantProfile();
-  return (
-    <HouseholdView
-      zone={resolveZip(profile.zip)?.zone ?? "Downtown Miami"}
-      hasBattery={profile.resources.includes("battery")}
-      defaults={{
-        autoFlex: profile.autoFlex,
-        reservePercent: profile.reservePercent,
-        minPricePerKwh: profile.minRate,
-        maxKwhPerEvent: Math.min(5, profile.maxKwhPerEvent),
-      }}
-    />
-  );
+  const location = resolveZip(profile.zip);
+  return <HouseholdView zone={location?.zone ?? "Downtown Miami"} feeder={location?.feeder ?? "DT-A"} profile={profile} />;
 }

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ChevronDown, UserRound } from "lucide-react";
 import { signOut } from "@/app/actions";
-import { clusterLabel } from "@/lib/api";
 import type { Role } from "@/lib/profile";
 import { Logo, Wordmark } from "@/components/gridflex/Logo";
 import { Dropdown } from "./Dropdown";
@@ -47,7 +46,7 @@ function NetworkStatus() {
       title={online ? `Settling in USDC on Solana ${health.cluster}` : "Live settlement is unavailable"}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${online ? "bg-normal" : "bg-muted-2"}`} aria-hidden="true" />
-      {online ? `Solana ${clusterLabel(health.cluster)}` : apiStatus === "loading" ? "Connecting…" : "Solana offline"}
+      {online ? "Solana" : apiStatus === "loading" ? "Connecting…" : "Solana offline"}
     </span>
   );
 }
@@ -75,7 +74,7 @@ function AccountMenu({ role, label }: { role: Role; label: string }) {
                 type="submit"
                 className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:border-border-strong"
               >
-                Switch account
+                Sign out
               </button>
             </form>
             <Link

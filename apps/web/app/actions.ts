@@ -1,7 +1,9 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { auth, authReady } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import {
   PROFILE_COOKIE,
   ROLE_COOKIE,
@@ -19,6 +21,8 @@ const cookieOptions = { httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 
  */
 export async function completeOnboarding(role: Role, input: unknown) {
   const profile = role === "operator" ? parseOperatorProfile(input) : parseParticipantProfile(input);
+  await authReady;
+  if (!(await getSession())) await auth.api.signInAnonymous({ headers: await headers() });
   const jar = await cookies();
   jar.set(ROLE_COOKIE, role, cookieOptions);
   jar.set(PROFILE_COOKIE, JSON.stringify(profile), cookieOptions);
@@ -26,6 +30,8 @@ export async function completeOnboarding(role: Role, input: unknown) {
 }
 
 export async function signOut() {
+  await authReady;
+  await auth.api.signOut({ headers: await headers() });
   const jar = await cookies();
   jar.delete(ROLE_COOKIE);
   jar.delete(PROFILE_COOKIE);
