@@ -77,7 +77,9 @@ def build_home_features(df: pd.DataFrame, horizon_h: int = 1) -> pd.DataFrame:
     a global shift would bleed one household's load into the next.
     """
     out = df.sort_values(["bldg_id", "ts"]).copy()
-    out["net_kwh"] = out["total_kwh"] + out["pv_kwh"]
+    if "net_kwh" not in out.columns:
+        # ResStock signs PV negative, so this equals the native `net` column.
+        out["net_kwh"] = out["total_kwh"] + out["pv_kwh"]
     out["has_pv_flag"] = (out["has_pv"] == "Yes").astype(int)
 
     # ResStock ships these as strings (and pyarrow-backed ints), with bucket
