@@ -13,7 +13,7 @@ Next route (signed URL)        GridAssistant → dashboard snapshot (read-only)
 
 ## Setup
 
-1. In `apps/web/.env.local` (see `.env.example`):
+1. In the repo-root `.env` (see `.env.example`):
    `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`.
 2. Create an agent in ElevenLabs, set **authentication on** (so it needs a signed URL), then add the
    **client tools** below (Tools → Add tool → Client, "wait for response" on).
