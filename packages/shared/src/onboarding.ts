@@ -9,9 +9,9 @@
 export type ResourceRole = "consumer" | "producer" | "storer";
 
 export const RESOURCE_ROLES: { role: ResourceRole; label: string; description: string }[] = [
-  { role: "consumer", label: "Consumes", description: "Uses power, and can shift or ease off when the grid is busy." },
-  { role: "producer", label: "Produces", description: "Generates power on site." },
-  { role: "storer", label: "Stores", description: "Holds energy to use or share later." },
+  { role: "consumer", label: "Uses power", description: "Can run later or use less when the grid is busy." },
+  { role: "producer", label: "Makes power", description: "Generates electricity right where you are." },
+  { role: "storer", label: "Stores power", description: "Saves energy to use or share later." },
 ];
 
 export interface ResourceType {

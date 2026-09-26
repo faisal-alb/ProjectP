@@ -123,14 +123,23 @@ export function Segmented<T extends string | number>({
   value,
   options,
   onChange,
+  gridOnMobile = false,
 }: {
   label: string;
   value: T;
   options: { value: T; label: string; disabled?: boolean }[];
   onChange: (v: T) => void;
+  /** Two columns on phones, one row from `sm` up. For longer labels that won't fit in one row. */
+  gridOnMobile?: boolean;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-md border border-border bg-background-raised p-0.5">
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className={`max-w-full rounded-md border border-border bg-background-raised p-0.5 ${
+        gridOnMobile ? "grid w-full grid-cols-2 gap-0.5 sm:inline-flex sm:w-auto" : "inline-flex overflow-x-auto"
+      }`}
+    >
       {options.map((option) => {
         const active = option.value === value;
         return (

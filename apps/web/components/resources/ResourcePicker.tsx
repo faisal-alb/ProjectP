@@ -214,6 +214,7 @@ export function ResourcePicker({
             value={role}
             options={[{ value: "all", label: "All" }, ...RESOURCE_ROLES.map((r) => ({ value: r.role, label: r.label }))]}
             onChange={setRole}
+            gridOnMobile
           />
         </div>
 

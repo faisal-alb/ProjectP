@@ -51,7 +51,7 @@ export function HouseholdDevices() {
       <PageHeader title="My devices" subtitle="Choose which devices GridFlex can use during events, or add more." />
 
       <section aria-labelledby="connected-heading" className="mt-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 id="connected-heading" className="tracked-caps text-xs font-medium text-muted">
             Connected · {resources.length}
           </h2>
@@ -64,6 +64,7 @@ export function HouseholdDevices() {
                 ...RESOURCE_ROLES.map((r) => ({ value: r.role, label: `${r.label} ${count(r.role)}`, disabled: count(r.role) === 0 })),
               ]}
               onChange={setFilter}
+              gridOnMobile
             />
           )}
         </div>
