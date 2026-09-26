@@ -1,5 +1,6 @@
 "use client";
 
+import type { PowerPlan } from "@gridflex/shared";
 import { createContext, useContext, useEffect, useRef, type MutableRefObject } from "react";
 
 /** What the voice agent's read-only tools can see. Published by the dashboard, never sent wholesale to the model. */
@@ -24,6 +25,8 @@ export interface VoiceSnapshot {
     paid?: string;
   };
   earnings: { monthTotal: number; eventCount: number };
+  /** Tonight's ranked plan from the optimizer. The agent explains it; it never ranks. */
+  plan: PowerPlan;
 }
 
 const SnapshotContext = createContext<MutableRefObject<VoiceSnapshot | null> | null>(null);

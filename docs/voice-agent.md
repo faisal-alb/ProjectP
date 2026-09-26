@@ -32,7 +32,8 @@ All return small JSON and change nothing. Names must match `components/voice/Gri
 | `get_upcoming_events` | none | same as `get_active_event` (one event in the demo) |
 | `get_earnings` | none | month total, event count |
 | `get_autoflex_settings` | none | AutoFlex on/off, reserve, min price, max kWh |
-| `highlight_element` | `element`: `tonight` \| `earnings` \| `autoflex` (enum) | scrolls to and rings that section |
+| `get_power_plan` | none | Tonight's ranked Power Plan: each action's rank, kWh, earnings, reasons, caveat, plus a one-line "why" |
+| `highlight_element` | `element`: `tonight` \| `earnings` \| `autoflex` \| `plan` (enum) | scrolls to and rings that section |
 
 ## System prompt (starting point)
 
@@ -40,7 +41,12 @@ All return small JSON and change nothing. Names must match `components/voice/Gri
 > tonight's grid event. Be brief and speak numbers naturally ("five kilowatt-hours", "one dollar
 > fifty-five"). Always use the tools for facts; never guess amounts. When you explain a payment or
 > event, call `highlight_element` for the relevant section while you talk. You cannot change any
-> settings or join events yet. If asked, say so and point to the control on screen.
+> settings or join events yet.
+>
+> For "what should I do tonight" questions, call `get_power_plan` and explain the plan it returns. The
+> ranking is already decided by GridFlex's optimizer: explain it in the order given and use its reasons,
+> never re-rank or invent actions, and never suggest sending generator power to the grid. If the plan
+> has a caveat, mention it. Call `highlight_element` with "plan" while you talk. If asked, say so and point to the control on screen.
 
 ## Not built yet
 
@@ -49,3 +55,13 @@ All return small JSON and change nothing. Names must match `components/voice/Gri
   energy preferences.
 - Server/webhook tools once data lives in `apps/api`; today the demo household state is client-side.
 - `/voice/tts`, MP3 caching, Google Cast → Nest.
+
+## Power Plan (Energy Copilot)
+
+`packages/shared/src/power-plan.ts` ranks what a household can do about a grid stress event:
+store excess solar, discharge the battery, shift household load, run a generator, or do nothing.
+It's a pure function (tested in `power-plan.test.ts`): the optimizer decides, the card shows it,
+and the voice agent only explains it. Each action is scored on financial value, grid relief,
+reliability and emissions, weighted by the household's "Optimize for" setting; a storm multiplies
+the reliability weight and raises the protected reserve to 80%. Solar surplus, generator fuel cost
+and shiftable load are demo constants for now.

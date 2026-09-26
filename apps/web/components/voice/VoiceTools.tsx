@@ -6,7 +6,7 @@ import { useVoiceSnapshotRef } from "@/lib/voice-snapshot";
 const money = (n: number) => `$${n.toFixed(2)}`;
 
 /** Sections the agent may point at. Ids live on the dashboard sections. */
-const HIGHLIGHTABLE = { tonight: "voice-tonight", earnings: "voice-earnings", autoflex: "voice-autoflex" } as const;
+const HIGHLIGHTABLE = { tonight: "voice-tonight", earnings: "voice-earnings", autoflex: "voice-autoflex", plan: "voice-plan" } as const;
 
 /**
  * Read-only tools. Names must match the client tools configured on the ElevenLabs
@@ -81,6 +81,29 @@ export function VoiceTools() {
       keepAtLeastPercent: s.reservePercent,
       minPricePerKwh: s.minPricePerKwh,
       maxKwhPerEvent: s.maxKwhPerEvent,
+    });
+  });
+
+  useConversationClientTool("get_power_plan", () => {
+    const { plan } = read();
+    return JSON.stringify({
+      optimizingFor: plan.preference,
+      stormExpected: plan.stormExpected,
+      protectedReservePercent: plan.reservePercent,
+      expectedEarnings: money(plan.expectedEarnings),
+      why: plan.why,
+      actions: plan.actions.map((a) => ({
+        rank: a.rank,
+        action: a.title,
+        recommended: a.recommended,
+        onlyIfMoreIsRequested: a.conditional,
+        kwh: a.kwh,
+        estimatedEarnings: money(a.earnings),
+        batteryAfterPercent: a.batteryAfterPercent ?? null,
+        detail: a.detail,
+        reasons: a.reasons,
+        caveat: a.caveat ?? null,
+      })),
     });
   });
 

@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import {
+  DEMO_GENERATOR,
+  DEMO_SOLAR_SURPLUS_KWH,
+  buildPowerPlan,
+  windowHours,
+  type PlanPreference,
+} from "@gridflex/shared";
+import {
   BATTERY_CHARGE_PERCENT,
   BATTERY_KWH,
   BATTERY_MAX_DISCHARGE_KW,
@@ -17,6 +24,7 @@ import { Segmented, SliderRow, Switch, secondaryButton } from "@/components/onbo
 import { AskGridFlexButton } from "@/components/voice/AskButton";
 import { useHousehold } from "./HouseholdProvider";
 import { EVENT_STATE_LABEL, HouseholdEvent, type EventState } from "./HouseholdEvent";
+import { PowerPlan } from "./PowerPlan";
 import { TxLink } from "./TxLink";
 import { usePublishVoiceSnapshot } from "@/lib/voice-snapshot";
 
@@ -62,6 +70,9 @@ export function HouseholdView({ zone, feeder, profile }: { zone: string; feeder:
   const [choice, setChoice] = useState<"joined" | "declined" | null>(null);
   // Demo control: lets you see every event state without waiting for one.
   const [preview, setPreview] = useState<EventState | "live">("live");
+  // Demo controls for the power plan: how the user wants to optimise, and a storm override.
+  const [planPreference, setPlanPreference] = useState<PlanPreference>("balanced");
+  const [storm, setStorm] = useState(false);
 
   const has = (k: ResourceKey) => profile.resources.includes(k);
   const batteryIn = has("battery") && !optedOut.battery;
@@ -112,6 +123,26 @@ export function HouseholdView({ zone, feeder, profile }: { zone: string; feeder:
   const month = monthBase + todayExtra;
   const lifetime = month + EARLIER_EARNINGS;
 
+  const plan = buildPowerPlan({
+    preference: planPreference,
+    stormExpected: storm,
+    event: { pricePerKwh: rate, durationHours: windowHours(household.eventWindow) },
+    battery: batteryIn
+      ? {
+          kwh: BATTERY_KWH,
+          chargePercent: BATTERY_CHARGE_PERCENT,
+          maxDischargeKw: BATTERY_MAX_DISCHARGE_KW,
+          reservePercent: rules.reserve,
+          maxKwhPerEvent: rules.maxKwh,
+          minRatePerKwh: rules.minRate,
+        }
+      : undefined,
+    solar: has("solar") && !optedOut.solar ? { surplusKwh: DEMO_SOLAR_SURPLUS_KWH } : undefined,
+    generator: has("generator") && !optedOut.generator ? DEMO_GENERATOR : undefined,
+    ev: evIn ? { shiftableKw: EV_SHIFTABLE_KW, delayMinutes: profile.ev.delayMinutes } : undefined,
+    hvac: has("hvac") && !optedOut.hvac ? profile.hvac : undefined,
+  });
+
   usePublishVoiceSnapshot({
     zone,
     hasBattery: batteryIn,
@@ -132,6 +163,7 @@ export function HouseholdView({ zone, feeder, profile }: { zone: string; feeder:
       paid: settledLive ? paidTonight!.payout?.formatted : undefined,
     },
     earnings: { monthTotal: month, eventCount: paidHistory.length + livePayouts.length },
+    plan,
   });
 
   const hour = new Date().getHours();
@@ -239,6 +271,8 @@ export function HouseholdView({ zone, feeder, profile }: { zone: string; feeder:
             setChoice("declined");
           }}
         />
+
+        <PowerPlan plan={plan} window={household.eventWindow} onPreference={setPlanPreference} onStorm={setStorm} />
 
         {/* Resources */}
         <section aria-labelledby="resources-heading">
