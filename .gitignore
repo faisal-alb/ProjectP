@@ -91,3 +91,8 @@ test-ledger/
 # Local API state (managed wallets, encrypted)
 .data/
 .next-*/
+
+# ML generated data and model artifacts
+ml/data_cache/
+ml/artifacts/
+ml/__pycache__/
