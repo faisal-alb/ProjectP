@@ -1,4 +1,4 @@
-# Voice agent (website)
+# Voice agent
 
 Two voice surfaces, one voice service. This covers the **website** surface: a conversational
 ElevenLabs agent on the household dashboard. Nest announcements (TTS → MP3 → Cast) come later.
@@ -8,7 +8,7 @@ Browser ── @elevenlabs/react ── ElevenLabs agent
    │                                  │
    │  GET /api/voice/session          │ calls client tools (browser-side)
    ▼                                  ▼
-Next route (signed URL)        GridAssistant → dashboard snapshot (read-only)
+Next route (signed URL)        VoiceTools → dashboard snapshot (read-only)
 ```
 
 ## Setup
@@ -21,7 +21,7 @@ Next route (signed URL)        GridAssistant → dashboard snapshot (read-only)
 
 ## Client tools
 
-All return small JSON and change nothing. Names must match `components/voice/GridAssistant.tsx`.
+All return small JSON and change nothing. Names must match `apps/web/components/voice/VoiceTools.tsx`.
 
 | Tool | Parameters | Returns |
 | --- | --- | --- |

@@ -1,6 +1,6 @@
-# 36-Hour Build Plan
+# 36-hour build plan (archived)
 
-This plan assumes two people.
+*Historical. This was the original hackathon plan for a two-person team. It is kept for context and no longer matches the code: the project moved past the plan, and several parts it lists (PostgreSQL, the simulator, the intelligence service) were not built. For current status, see the [docs index](../README.md#whats-built).*
 
 ## Definition of done
 
@@ -19,11 +19,9 @@ The project is successful when this exact flow works:
 
 Everything else is secondary.
 
----
+## Phase 1 — Foundation
 
-# Phase 1 — Foundation
-
-## Person A
+### Person A
 
 - Create Next.js app
 - Create dashboard layout
@@ -32,7 +30,7 @@ Everything else is secondary.
 - Add charts
 - Add mock state first
 
-## Person B
+### Person B
 
 - Create Hono API
 - Add PostgreSQL/Drizzle
@@ -40,7 +38,7 @@ Everything else is secondary.
 - Build grid simulator
 - Create grid/resource seed data
 
-## Shared milestone
+### Shared milestone
 
 Frontend can display:
 
@@ -49,18 +47,16 @@ Frontend can display:
 - capacity
 - resource availability
 
----
+## Phase 2 — Congestion
 
-# Phase 2 — Congestion
-
-## Person A
+### Person A
 
 - Congestion warning UI
 - Forecast panel
 - "Resolve with GridFlex" flow
 - Resource list
 
-## Person B
+### Person B
 
 - Forecast endpoint
 - Basic forecast logic
@@ -68,7 +64,7 @@ Frontend can display:
 - Flex requirement calculation
 - Matching algorithm
 
-### Minimum forecast
+#### Minimum forecast
 
 A deterministic formula is acceptable:
 
@@ -83,11 +79,9 @@ forecast =
 
 Do not block progress waiting for ML.
 
----
+## Phase 3 — Solana
 
-# Phase 3 — Solana
-
-## Person B primarily
+### Person B primarily
 
 Implement the smallest useful Anchor program.
 
@@ -104,9 +98,7 @@ Person A adds:
 - wallet/tx UI
 - explorer link if available
 
----
-
-# Phase 4 — Full simulation
+## Phase 4 — Full simulation
 
 Implement the demo loop:
 
@@ -128,9 +120,7 @@ Settlement
 
 This is the point where the hackathon project becomes viable.
 
----
-
-# Phase 5 — Polish
+## Phase 5 — Polish
 
 Only after the complete loop works.
 
@@ -146,9 +136,7 @@ Add:
 - city analytics
 - participant auto-flex controls
 
----
-
-# Last 4–6 hours
+## Last 4–6 hours
 
 Stop adding architecture.
 
@@ -165,9 +153,7 @@ Do:
 - prepare architecture diagram
 - prepare fallback if external API fails
 
----
-
-# Hard feature cut line
+## Hard feature cut line
 
 If time is running out, cut in this order:
 

@@ -1,10 +1,10 @@
-# Model Orchestration Spec
+# Model orchestration
 
-Virtual power plant (VPP) aggregator: forecasts grid stress, prices and sizes commitments, dispatches home batteries and HVAC, and settles payouts on Solana devnet.
+*Partly built. The feature layer, spike model and evaluation exist in `ml/` (see [Code layout](#10-code-layout)). The price, capacity, baseline and valuation models, the dispatcher and the orchestrator are still design.*
 
-This document covers the Python side: data, models, valuation, dispatch, and the orchestrator that runs them on a simulated clock and hands events to the Solana chain worker.
+A virtual power plant (VPP) aggregator: forecasts grid stress, prices and sizes commitments, dispatches home batteries and HVAC, and settles payouts on Solana devnet.
 
----
+This document covers the Python side: data, models, valuation, dispatch, and the orchestrator that runs them on a simulated clock and hands events to the Solana chain worker. The chain worker's instructions are in [Solana settlement](solana.md#instructions).
 
 ## 1. Design principles
 
@@ -13,8 +13,6 @@ This document covers the Python side: data, models, valuation, dispatch, and the
 3. Crude end to end first. Every layer ships a placeholder implementation on day one so one event can flow from data to on-chain payout. Models get upgraded afterward.
 4. One process, simple infrastructure. A single Python process with a simulated clock, `asyncio` queues, saved model files, and a YAML config. No Airflow, Kafka, or model server.
 5. Fixed contracts between layers. Each layer consumes and produces typed objects (Section 6), so team members can work in parallel.
-
----
 
 ## 2. Layer overview
 
@@ -42,8 +40,6 @@ flowchart TD
 | 5. Chain interface | Emits proposals and delivery reports; receives confirmations | On state transitions |
 
 A tick is one 15-minute simulated interval.
-
----
 
 ## 3. Layer details
 
@@ -203,8 +199,6 @@ class MockGrid:
     def settle(self, event: Event, deliveries: dict[str, float]) -> float: ...
 ```
 
----
-
 ## 4. Event lifecycle
 
 ### 4.1 State machine
@@ -256,8 +250,6 @@ At lock time:
 2. Serialize as canonical JSON (sorted keys, fixed decimal places).
 3. `baseline_hash = sha256(json_bytes)`, included in `EventProposal`.
 4. Store the JSON under `artifacts/baselines/{event_id}.json` so the dashboard can re-hash and verify.
-
----
 
 ## 5. The orchestrator loop
 
@@ -326,8 +318,6 @@ Bus topics:
 | `chain.close_event` | Chain worker | `SettlementReport` |
 | `chain.confirm` | Orchestrator | `{instruction, event_id, tx_sig}` |
 
----
-
 ## 6. Data contracts
 
 All monetary values in mock-USDC; energy in kWh; timestamps in UTC ISO 8601.
@@ -364,8 +354,6 @@ SettlementReport {
 ```
 
 Values shown are placeholders. The chain worker signs each `ContributionReport` transaction with the home's meter keypair; the aggregator wallet pays fees.
-
----
 
 ## 7. Configuration
 
@@ -411,8 +399,6 @@ dispatch:
 
 All thresholds are starting points to tune in the backtest.
 
----
-
 ## 8. Failure handling
 
 | Failure | Response |
@@ -423,8 +409,6 @@ All thresholds are starting points to tune in the backtest.
 | `lock_terms` produces no viable commitments | Cancel candidate → `IDLE` |
 | Home under-delivers | Pay only delivered kWh (up to commitment); flag in evaluation log |
 | Missing data for an interval | Forward-fill up to 2 ticks; otherwise skip trigger evaluation for that tick |
-
----
 
 ## 9. Backtest and evaluation
 
@@ -445,14 +429,17 @@ Dashboard evaluation views:
 3. Cumulative aggregator margin.
 4. Strategy comparison: earnings per home and kWh delivered during peaks.
 
----
-
 ## 10. Code layout
+
+Files marked *built* exist today; the rest are planned.
 
 ```
 ml/
-├── features.py         # point-in-time feature rows
-├── spike_model.py      # classifier + calibration
+├── ingest.py             # built: ERCOT prices and weather ingestion
+├── features.py           # built: point-in-time feature rows
+├── spike_model.py        # built: LightGBM classifier + calibration
+├── evaluate.py           # built: walk-forward and seasonality evaluation
+├── train_spike_model.py  # built: training entry point
 ├── price_model.py      # conditional expected price, quantiles
 ├── capacity.py         # deliverable kW, typical + low
 ├── baseline.py         # counterfactual usage
@@ -469,8 +456,6 @@ orchestrator/
 ├── contracts.py        # EventProposal, ContributionReport, SettlementReport
 └── config.yaml
 ```
-
----
 
 ## 11. Build order
 

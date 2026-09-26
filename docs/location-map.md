@@ -1,4 +1,4 @@
-# Location Map Boundary
+# Location map
 
 This document records the narrow boundary for the onboarding location map. It is a presentation aid for the illustrative GridFlex demo; it does not model utility topology, service territory, electrical boundaries, or municipal boundaries.
 
@@ -28,6 +28,6 @@ The request used `where=ZCTA5 IN (...)`, `outFields=ZCTA5`, `outSR=4326`, `retur
 
 ZIP codes `33302`, `33303`, `33307`, and `33310` have no ZCTA and are intentionally excluded. Zone and feeder assignments in `onboarding.ts` are illustrative sample data; they are not FPL network topology.
 
-## Known documentation drift
+## Relation to the design system
 
-The preexisting project brief in `docs/00_README.md` still describes the map as “MapLibre or Mapbox only if time allows,” although the onboarding implementation now uses Mapbox. `apps/web/DESIGN.md` documents the dashboard schematic map as the signature component; this onboarding map is a separate Census outline treatment. No design-system changes are required for this extension.
+`apps/web/DESIGN.md` documents the dashboard schematic map as the signature component. This onboarding map is a separate Census-outline treatment and needs no design-system changes.
