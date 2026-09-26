@@ -17,6 +17,8 @@ solar export shows up as negative draw exactly as the meter would record it.
 """
 
 import argparse
+import hashlib
+import json
 import sys
 from pathlib import Path
 from typing import Sequence
@@ -139,9 +141,16 @@ class BaselineQuantileModel:
         }
         self.models: dict[float, lgb.LGBMRegressor] = {}
         self.feature_names: list[str] = []
+        self.training_window: list[str] | None = None
+        self.n_train_rows: int | None = None
 
-    def fit(self, X: pd.DataFrame, y: pd.Series) -> "BaselineQuantileModel":
+    def fit(
+        self, X: pd.DataFrame, y: pd.Series, ts: pd.Series | None = None
+    ) -> "BaselineQuantileModel":
         self.feature_names = list(X.columns)
+        self.n_train_rows = int(len(X))
+        if ts is not None:
+            self.training_window = [str(ts.min()), str(ts.max())]
         for q in self.quantiles:
             model = lgb.LGBMRegressor(**{**self.params, "alpha": q})
             model.fit(X, y)
@@ -152,7 +161,80 @@ class BaselineQuantileModel:
         missing = [c for c in self.feature_names if c not in X.columns]
         if missing:
             raise KeyError(f"Input is missing training features: {missing}")
-        return {q: m.predict(X[self.feature_names]) for q, m in self.models.items()}
+        return {q: np.asarray(m.predict(X[self.feature_names])) for q, m in self.models.items()}
+
+
+    def save(self, out_dir: Path | str) -> dict:
+        """Write boosters in LightGBM's native text format, plus a manifest.
+
+        Not pickle: pickles are Python- and library-version fragile, and
+        ``pickle.load`` executes arbitrary code -- poor properties for a file a
+        third party is invited to re-run. The native format is stable text that
+        hashes cleanly, which is what the on-chain commitment needs
+        (``docs/09_HOME_MODELS_PLAN.md`` §4.3).
+        """
+        out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        files = {}
+        for q, model in self.models.items():
+            name = f"baseline_q{int(q * 100):02d}.txt"
+            model.booster_.save_model(str(out_dir / name))
+            files[str(q)] = name
+
+        manifest = {
+            "model": "BaselineQuantileModel",
+            "quantiles": list(self.quantiles),
+            "feature_names": self.feature_names,
+            "files": files,
+            "hashes": {
+                name: hashlib.sha256((out_dir / name).read_bytes()).hexdigest()
+                for name in files.values()
+            },
+            "lightgbm_version": lgb.__version__,
+            "params": {k: v for k, v in self.params.items() if k != "alpha"},
+            "training_window": self.training_window,
+            "n_train_rows": self.n_train_rows,
+        }
+        (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True))
+        return manifest
+
+    @classmethod
+    def load(cls, out_dir: Path | str) -> "BaselineQuantileModel":
+        """Load boosters and verify each against its recorded hash."""
+        out_dir = Path(out_dir)
+        manifest = json.loads((out_dir / "manifest.json").read_text())
+        model = cls(quantiles=tuple(manifest["quantiles"]))
+        model.feature_names = manifest["feature_names"]
+        model.training_window = manifest.get("training_window")
+        model.n_train_rows = manifest.get("n_train_rows")
+        for q_str, name in manifest["files"].items():
+            digest = hashlib.sha256((out_dir / name).read_bytes()).hexdigest()
+            if digest != manifest["hashes"][name]:
+                raise ValueError(f"{name} does not match its manifest hash")
+            model.models[float(q_str)] = lgb.Booster(model_file=str(out_dir / name))
+        return model
+
+
+def offerable_kw(
+    baseline_p10_kwh: np.ndarray | float,
+    generation_kw: float = 0.0,
+    intervals_per_hour: int = INTERVALS_PER_HOUR,
+) -> np.ndarray | float:
+    """How much a home can credibly commit for an event window.
+
+    A home cannot draw less than zero, so shedding is bounded by what it was
+    going to consume anyway; anything beyond that requires generation or
+    storage, which comes from the declared ``resources`` inventory rather than
+    from any model.
+
+        offerable = baseline_draw + declared_generation
+
+    Uses the p10 baseline, not p50: the commitment should be what the home will
+    comfortably meet, since shortfall carries a penalty and the fleet aggregate
+    absorbs the per-home variance.
+    """
+    draw_kw = np.asarray(baseline_p10_kwh) * intervals_per_hour
+    return np.maximum(draw_kw, 0.0) + generation_kw
 
 
 def time_split(df: pd.DataFrame, n_folds: int = 4, initial_frac: float = 0.5):
@@ -179,11 +261,22 @@ def pinball_loss(y: np.ndarray, pred: np.ndarray, q: float) -> float:
     return float(np.mean(np.maximum(q * d, (q - 1) * d)))
 
 
-def evaluate(df: pd.DataFrame, horizon_h: int = 1, n_folds: int = 4) -> pd.DataFrame:
-    """Walk-forward evaluation, reported per fold and macro-averaged."""
+def evaluate(
+    df: pd.DataFrame, horizon_h: int = 1, n_folds: int = 6, initial_frac: float = 0.3
+) -> pd.DataFrame:
+    """Walk-forward evaluation, reported per fold and macro-averaged.
+
+    ``initial_frac`` defaults low because ResStock covers a single calendar
+    year: holding back half of it would leave every test fold in the second
+    half, repeating the seasonal blind spot the spike work ran into.
+    """
     rows = []
-    for fold, (train, test) in enumerate(time_split(df, n_folds=n_folds)):
-        model = BaselineQuantileModel().fit(train[FEATURE_COLUMNS], train["net_kwh"])
+    for fold, (train, test) in enumerate(
+        time_split(df, n_folds=n_folds, initial_frac=initial_frac)
+    ):
+        model = BaselineQuantileModel().fit(
+            train[FEATURE_COLUMNS], train["net_kwh"], ts=train["ts"]
+        )
         preds = model.predict(test[FEATURE_COLUMNS])
         y = test["net_kwh"].to_numpy()
 
@@ -212,7 +305,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Train the per-home baseline model.")
     parser.add_argument("--homes", type=int, default=50)
     parser.add_argument("--horizon", type=int, default=1, help="lead time in hours")
-    parser.add_argument("--folds", type=int, default=4)
+    parser.add_argument("--folds", type=int, default=6)
+    parser.add_argument("--save", action="store_true", help="fit on all data and export")
     parser.add_argument(
         "--perfect-weather",
         action="store_true",
@@ -249,6 +343,29 @@ def main() -> None:
     print(f"pinball p10        {m.pinball_p10:.4f}")
     print(f"p10 coverage       {m.p10_coverage:.1%}  (target 10%)")
     print(f"mean actual        {m.mean_actual:.4f} kWh/interval")
+
+    if args.save:
+        print("\nFitting final model on full history...")
+        final = BaselineQuantileModel().fit(
+            df[FEATURE_COLUMNS], df["net_kwh"], ts=df["ts"]
+        )
+        out_dir = Path(__file__).resolve().parent / "artifacts" / "baseline"
+        manifest = final.save(out_dir)
+        print(f"Saved {out_dir}")
+        for name, digest in manifest["hashes"].items():
+            print(f"  {name}  sha256={digest[:16]}...")
+
+        # Offer sizing over the window that matters: summer late afternoon.
+        peak = df[(df.hour.between(16, 19)) & (df.month.isin([6, 7, 8, 9]))]
+        p10 = final.predict(peak[FEATURE_COLUMNS])[0.1]
+        offer = offerable_kw(p10)
+        print(
+            f"\nOffer sizing, summer 16-19h (n={len(peak):,}): "
+            f"mean {offer.mean():.2f} kW/home, p10 {np.percentile(offer, 10):.2f}, "
+            f"p90 {np.percentile(offer, 90):.2f}"
+        )
+        print(f"  fleet of {peak.bldg_id.nunique()} homes -> "
+              f"{offer.mean() * peak.bldg_id.nunique():.0f} kW offerable without generation")
 
 
 if __name__ == "__main__":
