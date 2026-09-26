@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { ZoneTable } from "@/components/dashboard/ZoneTable";
 import { getRole } from "@/lib/session";
 
-export const metadata: Metadata = { title: "Zones — GridFlex" };
+export const metadata: Metadata = { title: "Zones | GridFlex" };
 
 export default async function ZonesPage() {
   if ((await getRole()) !== "operator") redirect("/dashboard");

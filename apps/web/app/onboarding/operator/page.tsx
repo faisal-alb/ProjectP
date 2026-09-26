@@ -1,7 +1,7 @@
 import { OperatorFlow } from "@/components/onboarding/OperatorFlow";
 
 export const metadata = {
-  title: "Set up your network — GridFlex",
+  title: "Set up your network | GridFlex",
 };
 
 // No signed-in redirect here: saving sets the account cookie, and the page

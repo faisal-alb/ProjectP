@@ -60,7 +60,7 @@ export function HouseholdEarnings() {
                     {h.date} · rate was {price(h.pricePerKwh)}
                   </span>
                 </span>
-                <span className="font-mono tabular">—</span>
+                <span className="font-mono tabular">$0.00</span>
               </li>
             ),
           )}
