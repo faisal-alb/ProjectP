@@ -1,0 +1,1325 @@
+{
+  "address": "A7ocTy3qXyedzhxVDcyGbAyN6rNvu69XP9NnDAy4QWaf",
+  "metadata": {
+    "name": "gridflex",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "GridFlex flexibility-market escrow: USDC locked per request, paid out on verified delivery"
+  },
+  "docs": [
+    "Flexibility-market escrow. An operator locks USDC per request, accepted",
+    "offers become commitments, a trusted verifier records metered delivery,",
+    "and each participant is paid for what they delivered (up to what they",
+    "committed). Whatever is left is refunded when the market closes."
+  ],
+  "instructions": [
+    {
+      "name": "accept_commitment",
+      "discriminator": [
+        14,
+        249,
+        220,
+        223,
+        195,
+        182,
+        252,
+        156
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "docs": [
+            "Market authority or the configured verifier (the off-chain matcher)."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.authority",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.market_id",
+                "account": "Market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "commitment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  109,
+                  105,
+                  116,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "arg",
+                "path": "resource_hash"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "resource_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "participant",
+          "type": "pubkey"
+        },
+        {
+          "name": "committed_wh",
+          "type": "u64"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "close_market",
+      "discriminator": [
+        88,
+        154,
+        248,
+        186,
+        48,
+        14,
+        123,
+        244
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "docs": [
+            "Market authority or the configured verifier."
+          ],
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.authority",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.market_id",
+                "account": "Market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority_token_account",
+          "docs": [
+            "Receives the unused escrow."
+          ],
+          "writable": true
+        },
+        {
+          "name": "market_authority",
+          "docs": [
+            "Receives the vault's rent, since it paid for it."
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_market",
+      "discriminator": [
+        103,
+        226,
+        97,
+        235,
+        200,
+        188,
+        251,
+        254
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "market_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "market_id",
+          "type": "u64"
+        },
+        {
+          "name": "zone_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "required_wh",
+          "type": "u64"
+        },
+        {
+          "name": "max_price",
+          "type": "u64"
+        },
+        {
+          "name": "start_ts",
+          "type": "i64"
+        },
+        {
+          "name": "end_ts",
+          "type": "i64"
+        },
+        {
+          "name": "deposit",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_config",
+      "discriminator": [
+        208,
+        127,
+        21,
+        1,
+        194,
+        190,
+        196,
+        70
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "verifier",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_verifier",
+      "discriminator": [
+        186,
+        247,
+        191,
+        131,
+        148,
+        158,
+        213,
+        63
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "verifier",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "settle_commitment",
+      "discriminator": [
+        131,
+        217,
+        252,
+        92,
+        136,
+        78,
+        89,
+        78
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.authority",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.market_id",
+                "account": "Market"
+              }
+            ]
+          },
+          "relations": [
+            "commitment"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              }
+            ]
+          }
+        },
+        {
+          "name": "commitment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  109,
+                  105,
+                  116,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "commitment.resource_hash",
+                "account": "Commitment"
+              }
+            ]
+          }
+        },
+        {
+          "name": "participant_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "verify_delivery",
+      "discriminator": [
+        154,
+        187,
+        168,
+        137,
+        254,
+        36,
+        28,
+        136
+      ],
+      "accounts": [
+        {
+          "name": "verifier",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.authority",
+                "account": "Market"
+              },
+              {
+                "kind": "account",
+                "path": "market.market_id",
+                "account": "Market"
+              }
+            ]
+          },
+          "relations": [
+            "commitment"
+          ]
+        },
+        {
+          "name": "commitment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  109,
+                  109,
+                  105,
+                  116,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "commitment.resource_hash",
+                "account": "Commitment"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "delivered_wh",
+          "type": "u64"
+        },
+        {
+          "name": "proof_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Commitment",
+      "discriminator": [
+        61,
+        112,
+        129,
+        128,
+        24,
+        147,
+        77,
+        87
+      ]
+    },
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "Market",
+      "discriminator": [
+        219,
+        190,
+        213,
+        55,
+        0,
+        227,
+        198,
+        154
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "CommitmentAccepted",
+      "discriminator": [
+        222,
+        45,
+        56,
+        175,
+        49,
+        44,
+        249,
+        208
+      ]
+    },
+    {
+      "name": "CommitmentSettled",
+      "discriminator": [
+        55,
+        253,
+        253,
+        55,
+        211,
+        151,
+        103,
+        56
+      ]
+    },
+    {
+      "name": "DeliveryVerified",
+      "discriminator": [
+        241,
+        142,
+        183,
+        123,
+        105,
+        238,
+        231,
+        132
+      ]
+    },
+    {
+      "name": "MarketClosed",
+      "discriminator": [
+        86,
+        91,
+        119,
+        43,
+        94,
+        0,
+        217,
+        113
+      ]
+    },
+    {
+      "name": "MarketCreated",
+      "discriminator": [
+        88,
+        184,
+        130,
+        231,
+        226,
+        84,
+        6,
+        58
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "MathOverflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6001,
+      "name": "ZeroAmount",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidWindow",
+      "msg": "Market window must end after it starts"
+    },
+    {
+      "code": 6003,
+      "name": "InsufficientDeposit",
+      "msg": "Deposit does not cover the full need at the price cap"
+    },
+    {
+      "code": 6004,
+      "name": "Unauthorized",
+      "msg": "Only the market authority or the verifier can do this"
+    },
+    {
+      "code": 6005,
+      "name": "MarketNotOpen",
+      "msg": "Market is not accepting commitments"
+    },
+    {
+      "code": 6006,
+      "name": "MarketClosed",
+      "msg": "Market is already closed"
+    },
+    {
+      "code": 6007,
+      "name": "PriceAboveCap",
+      "msg": "Offer price is above the market's price cap"
+    },
+    {
+      "code": 6008,
+      "name": "OverCommitted",
+      "msg": "Commitments would exceed the flexibility required"
+    },
+    {
+      "code": 6009,
+      "name": "EscrowExceeded",
+      "msg": "Commitments would exceed the escrowed USDC"
+    },
+    {
+      "code": 6010,
+      "name": "AlreadyVerified",
+      "msg": "Commitment has already been verified"
+    },
+    {
+      "code": 6011,
+      "name": "NotVerified",
+      "msg": "Commitment must be verified before it can be paid"
+    },
+    {
+      "code": 6012,
+      "name": "UnpaidCommitments",
+      "msg": "Every commitment must be paid before the market can close"
+    },
+    {
+      "code": 6013,
+      "name": "CancelRequiresAuthority",
+      "msg": "Only the market authority can cancel a market with no commitments"
+    }
+  ],
+  "types": [
+    {
+      "name": "Commitment",
+      "docs": [
+        "A resource's accepted offer within a market."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant",
+            "docs": [
+              "Wallet that receives the payout."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "resource_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "committed_wh",
+            "type": "u64"
+          },
+          {
+            "name": "price",
+            "docs": [
+              "USDC base units per kWh."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "delivered_wh",
+            "type": "u64"
+          },
+          {
+            "name": "payable_wh",
+            "docs": [
+              "min(delivered, committed): delivery above the commitment isn't paid."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "proof_hash",
+            "docs": [
+              "Hash of the off-chain meter-reading payload backing `delivered_wh`."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "CommitmentStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CommitmentAccepted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "commitment",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant",
+            "type": "pubkey"
+          },
+          {
+            "name": "committed_wh",
+            "type": "u64"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CommitmentSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "commitment",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CommitmentStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Committed"
+          },
+          {
+            "name": "Verified"
+          },
+          {
+            "name": "Paid"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Config",
+      "docs": [
+        "Program-wide settings: who may verify delivery and which mint is \"USDC\"."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "verifier",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeliveryVerified",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "commitment",
+            "type": "pubkey"
+          },
+          {
+            "name": "delivered_wh",
+            "type": "u64"
+          },
+          {
+            "name": "payable_wh",
+            "type": "u64"
+          },
+          {
+            "name": "proof_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Market",
+      "docs": [
+        "One flexibility request for a zone and time window, with its USDC escrow."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "market_id",
+            "type": "u64"
+          },
+          {
+            "name": "zone_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "required_wh",
+            "type": "u64"
+          },
+          {
+            "name": "max_price",
+            "docs": [
+              "Highest price the operator will pay, in USDC base units per kWh."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "start_ts",
+            "type": "i64"
+          },
+          {
+            "name": "end_ts",
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "MarketStatus"
+              }
+            }
+          },
+          {
+            "name": "escrow_amount",
+            "docs": [
+              "USDC deposited into the vault at creation."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "reserved_amount",
+            "docs": [
+              "Worst-case payout of all accepted commitments."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "committed_wh",
+            "type": "u64"
+          },
+          {
+            "name": "paid_amount",
+            "type": "u64"
+          },
+          {
+            "name": "open_commitments",
+            "docs": [
+              "Commitments accepted but not yet paid."
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "paid_amount",
+            "type": "u64"
+          },
+          {
+            "name": "refunded_amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "required_wh",
+            "type": "u64"
+          },
+          {
+            "name": "max_price",
+            "type": "u64"
+          },
+          {
+            "name": "escrow_amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Verifying"
+          },
+          {
+            "name": "Closed"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "COMMITMENT_SEED",
+      "type": "bytes",
+      "value": "[99, 111, 109, 109, 105, 116, 109, 101, 110, 116]"
+    },
+    {
+      "name": "CONFIG_SEED",
+      "type": "bytes",
+      "value": "[99, 111, 110, 102, 105, 103]"
+    },
+    {
+      "name": "MARKET_SEED",
+      "type": "bytes",
+      "value": "[109, 97, 114, 107, 101, 116]"
+    },
+    {
+      "name": "VAULT_SEED",
+      "type": "bytes",
+      "value": "[118, 97, 117, 108, 116]"
+    },
+    {
+      "name": "WH_PER_KWH",
+      "docs": [
+        "Energy is tracked in Wh; prices are USDC base units per kWh."
+      ],
+      "type": "u64",
+      "value": "1000"
+    }
+  ]
+}

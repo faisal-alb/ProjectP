@@ -288,3 +288,38 @@ for (const resource of candidates) {
 ```
 
 That is enough for the demo.
+
+---
+
+# Implemented API (v1, `apps/api`)
+
+Hono on Node, port `8787`. State is in memory and mirrored to `.data/*.<cluster>.json` (gitignored). The market sections above remain the target design; this is what runs today for the Solana settlement flow. Details of the on-chain side are in [05_SOLANA_PROGRAM.md](05_SOLANA_PROGRAM.md).
+
+| Method | Path | Does |
+|---|---|---|
+| `GET` | `/health` | Cluster, RPC, program id, USDC mint, verifier. |
+| `GET` | `/markets/current` | The latest funded market, or `null`. |
+| `GET` | `/markets/:id` | One market with commitments, payouts and explorer links. |
+| `POST` | `/markets` | `{ operatorWallet, maxPricePerKwh }` → unsigned `create_market` transaction (base64) with the escrow amount. |
+| `POST` | `/markets/:id/confirm` | `{ signedTransaction }` (API broadcasts it) or `{ signature }`. Waits for the escrow on-chain, clears the market, records commitments. |
+| `POST` | `/markets/:id/verify` | Demo meter readings → `verify_delivery` for every commitment. |
+| `POST` | `/markets/:id/settle` | Pays every commitment, then closes the market and refunds the operator. |
+| `GET` | `/households/:resourceId` | Managed wallet, live USDC balance, payouts, and tonight's status. |
+| `GET` | `/wallets/:address/usdc` | USDC balance of any wallet. |
+| `POST` | `/faucet` | `{ wallet }` → 500 mock USDC plus fee SOL. Not available on mainnet. |
+| `GET` | `/stream` | Server-sent events (below). |
+
+Lifecycle steps return `409` if the market isn't in the right phase or is already being updated, so double clicks are harmless.
+
+## SSE events
+
+```text
+market.created          escrow confirmed on-chain
+commitment.accepted     accepted offers recorded
+verification.completed  deliveries recorded
+settlement.completed    participants paid
+market.closed           remainder refunded, vault closed
+market.failed           a step failed (payload has the message)
+```
+
+Each event carries `{ type, marketId }`; the dashboard refetches the market or household when one arrives.

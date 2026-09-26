@@ -24,6 +24,10 @@
   --solana-purple: #a38be0;
   --solana-green: #6fcf9f;
   --solana-soft: rgba(163, 139, 224, 0.1);
+
+  /* Chart series (validated for dark surface, CVD-safe with line-style + labels) */
+  --chart-forecast: #b86f9c;
+  --chart-flex: #4f92c3;
 }
 
 @theme inline {
@@ -50,6 +54,9 @@
   --color-solana-purple: var(--solana-purple);
   --color-solana-green: var(--solana-green);
   --color-solana-soft: var(--solana-soft);
+
+  --color-chart-forecast: var(--chart-forecast);
+  --color-chart-flex: var(--chart-flex);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -93,6 +100,11 @@ body {
 * {
   scrollbar-color: var(--border-strong) var(--background);
   scrollbar-width: thin;
+}
+
+input[type="range"] {
+  accent-color: var(--foreground);
+  cursor: pointer;
 }
 
 @layer utilities {

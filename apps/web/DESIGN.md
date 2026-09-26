@@ -152,7 +152,15 @@ The same system runs across both surfaces: the marketing page (`app/page.tsx`) a
 
 Content is capped at `max-w-[1240px]` with `px-5`/`sm:px-8` gutters on the marketing page; sections run `py-20`/`sm:py-28`, separated in places by full-bleed hairline-bordered bands (`border-y border-border`). The hero is an asymmetric two-column grid (`lg:grid-cols-[3fr_2fr]`) pairing display copy with the grid map and a telemetry card. The workflow rail and flex categories collapse to one column on mobile.
 
-The dashboard (`/dashboard`) is a denser control-room grid: top bar, alert band, a two-column split (zone map + Grid Intelligence) that stacks on mobile, a 4-up zone-status row, and the market table.
+The dashboard (`/dashboard`) shows one view per account. The account type is chosen once at onboarding and stored in a cookie with a validated profile (`lib/profile.ts`); there is no in-app toggle, and changing account type means **Switch account** from the account menu. Both views are capped at `max-w-[1240px]` and share a header: wordmark, account label (the organization name for operators, "My energy" for participants), Solana network status, a wallet control, and the account menu.
+
+Onboarding (`/onboarding`) asks one question, "How will you use GridFlex?", with two paths whose tone differs on purpose:
+- **Provide flexibility** (participant, `/onboarding/participant`): a narrow single column that feels like setting up a smart-home product. Three steps — resources plus where they're connected (ZIP resolves the grid zone, feeder and eligibility), AutoFlex limits (only the limits for the resources they picked, with a live estimate of what one event could use and earn), and payout (a GridFlex-held USDC wallet). Ends on "You're ready" with what GridFlex can use and potential earnings per event.
+- **Manage a grid** (operator, `/onboarding/operator`): wider, with a step rail, denser tables and mono values, like configuring an infrastructure console. Three steps — organization, network and data (demo network pre-loaded, warning threshold, data sources), and procurement rules plus settlement. Ends on "<org>'s network is ready".
+Both flows are demo onboarding: the topology, devices and ZIP lookup are illustrative (`packages/shared/src/onboarding.ts`), and what's chosen (reserve, minimum rate, price cap, organization name) is what the dashboards start from.
+- **Participant**: a 2/1 split — tonight's event and earnings on the left, AutoFlex settings on the right; stacks on mobile. The header wallet is the household's managed USDC wallet (balance, last payment, explorer link); there is nothing to connect.
+- **Grid operator**: page title with a one-line zone summary, then one full-width panel for the active event. Its top-right is the **USDC escrow card** — the amount to lock / locked / paid, the single next action (connect wallet, get test USDC, fund, record meter readings, pay participants), and flexibility committed — beside the plain-language situation headline; then five-step progress with transaction links, the load forecast chart beside "why the forecast is high", the flexibility request (price-cap slider, outcome sentence, merit-order offers table), and an "all zones" table sorted by severity. The header wallet connects the operator's own wallet and shows its USDC.
+Each view leads with a sentence that says what's happening and what it means, before any numbers. On phones, tables drop secondary columns rather than scrolling sideways.
 
 ## Elevation & Depth
 
@@ -172,13 +180,16 @@ Tight, consistent radii: `rounded-lg` (8px) for panels, `rounded-md` (6px) for b
 ### Panels
 - `.panel` utility: opaque `surface` fill + 1px hairline border, `rounded-lg`, `p-5`–`p-6`.
 - A highlighted panel (e.g. the at-risk zone) swaps the border to `border-risk/50`; the fill stays neutral.
-- Alerts use a 2px status-colored left border on a neutral panel (`CongestionAlert`).
+- Alerts use a 1px status-tinted border (`border-watch/35`) on a neutral panel with a status icon. Never a thick colored side stripe.
 
 ### Status Labels
 - `GridStatusBadge`: a 6px status dot plus label in the status color, no background pill. Dot pulses only for `high`. A `compact` variant renders the bare dot with an `sr-only` label.
 
 ### Navigation
 - Sticky header on the opaque canvas color with a hairline bottom border; neutral wordmark, tracked-caps links, ghost "Dashboard" and primary "Launch Demo".
+
+### Load Forecast Chart (dashboard)
+`components/dashboard/LoadForecastChart.tsx`: measured load (muted), forecast without flexibility (`--chart-forecast` #b86f9c, dashed) and forecast with committed flexibility (`--chart-flex` #4f92c3, solid) against a 1.5px risk-colored capacity line, with the overload area at 14% risk and the flex window as a faint band. Legend with line keys, crosshair tooltip, arrow-key stepping, and a "Show data as a table" disclosure. The two series colors were validated for the dark surface (CVD ΔE 7.2, so the dashed/solid distinction is required, not decorative).
 
 ### Grid Map (signature component)
 `NightGridMap.tsx`: zone points joined by faint lines; on mount a thin (1.5px) accent arc draws from a resource point into the highest-risk zone, whose low-opacity halo pulses slowly. No drop-shadow filter. `GridMapPreview` is the dashboard's schematic version.

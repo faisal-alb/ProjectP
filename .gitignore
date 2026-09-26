@@ -81,3 +81,13 @@ Thumbs.db
 *.key
 *.p12
 *.pfx
+
+# Solana / Anchor
+*.keypair.json
+.anchor/
+test-ledger/
+.keys/
+
+# Local API state (managed wallets, encrypted)
+.data/
+.next-*/

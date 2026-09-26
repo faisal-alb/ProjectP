@@ -1,0 +1,21 @@
+[toolchain]
+anchor_version = "1.1.2"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.devnet]
+gridflex = "A7ocTy3qXyedzhxVDcyGbAyN6rNvu69XP9NnDAy4QWaf"
+
+[programs.localnet]
+gridflex = "A7ocTy3qXyedzhxVDcyGbAyN6rNvu69XP9NnDAy4QWaf"
+
+[provider]
+cluster = "devnet"
+wallet = "~/Documents/Dev/Node/projectp/.keys/deployer.keypair.json"
+
+[scripts]
+test = "cargo test -p gridflex"
+
+[hooks]

@@ -14,6 +14,16 @@
     "dev": "node scripts/dev.mjs",
     "dev:web": "npm run dev --workspace=web",
     "build": "npm run build --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "solana:setup": "tsx scripts/solana/setup.ts",
+    "solana:faucet": "tsx scripts/solana/faucet.ts",
+    "solana:demo": "tsx scripts/solana/demo-flow.ts",
+    "solana:generate": "npm run generate -w @gridflex/solana",
+    "solana:api-smoke": "tsx scripts/solana/api-smoke.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4",
+    "@gridflex/solana": "*",
+    "@gridflex/shared": "*"
   }
 }
