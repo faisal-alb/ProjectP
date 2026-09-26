@@ -50,9 +50,12 @@ export default function ZoneMap({ zip }: { zip: string }) {
           dragRotate: false,
           pitchWithRotate: false,
           touchPitch: false,
+          attributionControl: false,
         });
         map.touchZoomRotate.disableRotation();
         map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+        // Required by Mapbox's terms; compact collapses the credits into an (i) button.
+        map.addControl(new mapboxgl.AttributionControl({ compact: true }));
         map.getCanvas().setAttribute("aria-label", `${selected.zone} zone map, ZIP ${zip}`);
         map.on("error", () => {
           if (!disposed) setStatus("error");

@@ -66,9 +66,12 @@ export function ZonesMap({ zones }: { zones: Zone[] }) {
           dragRotate: false,
           pitchWithRotate: false,
           touchPitch: false,
+          attributionControl: false,
         });
         map.touchZoomRotate.disableRotation();
         map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+        // Required by Mapbox's terms; compact collapses the credits into an (i) button.
+        map.addControl(new mapboxgl.AttributionControl({ compact: true }));
         map.getCanvas().setAttribute("aria-label", "Map of grid zones colored by status");
         map.on("error", fail);
         map.on("load", () => {
