@@ -8,11 +8,13 @@ export function Dropdown({
   label,
   children,
   align = "right",
+  width = "w-72",
 }: {
   trigger: React.ReactNode;
   label: string;
   children: (close: () => void) => React.ReactNode;
   align?: "left" | "right";
+  width?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -47,7 +49,7 @@ export function Dropdown({
       {open && (
         <div
           id={panelId}
-          className={`absolute top-full z-50 mt-2 w-72 rounded-md border border-border-strong bg-background-raised p-4 ${
+          className={`absolute top-full z-50 mt-2 ${width} max-w-[calc(100vw-2.5rem)] rounded-md border border-border-strong bg-background-raised p-4 ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
