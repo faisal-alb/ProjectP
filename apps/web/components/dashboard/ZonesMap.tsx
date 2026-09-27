@@ -137,7 +137,7 @@ export function ZonesMap({ zones }: { zones: Zone[] }) {
             {token && status === "error" && (
               <button
                 type="button"
-                className="rounded-md border border-border px-4 py-2 text-foreground transition-colors hover:border-border-strong"
+                className="rounded-md border border-border px-4 py-2 text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97]"
                 onClick={() => {
                   setStatus("loading");
                   setAttempt((v) => v + 1);

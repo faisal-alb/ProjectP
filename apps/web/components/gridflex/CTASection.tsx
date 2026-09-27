@@ -16,14 +16,14 @@ export function CTASection() {
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href="/dashboard"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-6 py-3 text-sm font-semibold text-background transition-colors hover:bg-white sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-6 py-3 text-sm font-semibold text-background transition-[color,background-color,transform] hover:bg-white active:scale-[0.97] sm:w-auto"
           >
             Get Started
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
           <a
             href="#technology"
-            className="inline-flex w-full items-center justify-center rounded-md border border-border px-6 py-3 text-sm font-medium text-foreground transition-colors hover:border-border-strong sm:w-auto"
+            className="inline-flex w-full items-center justify-center rounded-md border border-border px-6 py-3 text-sm font-medium text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97] sm:w-auto"
           >
             View Architecture
           </a>

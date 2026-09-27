@@ -11,9 +11,9 @@ import { useSolana } from "./SolanaProvider";
 import { TxLink } from "./TxLink";
 
 const primaryButton =
-  "inline-flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-[color,background-color,transform] hover:bg-white active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-50";
 const secondaryButton =
-  "inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-50";
 
 /**
  * The request's money, front and centre: how much USDC the escrow holds or
@@ -142,8 +142,8 @@ export function EscrowCard({
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-sm bg-white/[0.06]">
           <div
-            className={`h-full transition-[width] duration-200 ${committedKw >= requiredKw ? "bg-normal" : "bg-watch"}`}
-            style={{ width: `${pct}%` }}
+            className={`h-full w-full origin-left transition-transform duration-200 ${committedKw >= requiredKw ? "bg-normal" : "bg-watch"}`}
+            style={{ transform: `scaleX(${pct / 100})` }}
           />
         </div>
         {committedKw < requiredKw && (

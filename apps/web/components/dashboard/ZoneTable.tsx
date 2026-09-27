@@ -44,7 +44,7 @@ export function ZoneTable({
           onClick={() => onExpandedChange(!expanded)}
           aria-expanded={expanded}
           aria-controls="zones-body"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:border-border-strong hover:text-foreground"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97] hover:text-foreground"
         >
           <Icon className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
           {expanded ? "Compact" : "Details"}
