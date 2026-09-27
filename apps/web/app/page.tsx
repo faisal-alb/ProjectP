@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 
 import { Navbar } from "@/components/gridflex/Navbar";
-import { HeroGridPreview } from "@/components/gridflex/HeroGridPreview";
-import { NightGridMap } from "@/components/gridflex/NightGridMap";
+import { HeroHorizon } from "@/components/gridflex/HeroHorizon";
+import { HeroConsole } from "@/components/gridflex/HeroConsole";
 import { SectionHeader } from "@/components/gridflex/SectionHeader";
 import { WorkflowRail, WorkflowReadout } from "@/components/gridflex/WorkflowStep";
 import { FlexInstrumentPanel } from "@/components/gridflex/FlexResourceCard";
@@ -112,62 +112,62 @@ const workflowSteps = [
 
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col">
+    <div id="top" className="home flex flex-1 flex-col">
       <Navbar />
 
       {/* HERO */}
-      <section className="relative overflow-hidden pt-14 pb-28 sm:pt-20 sm:pb-36">
-        <div className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
-          <div className="grid min-w-0 items-center gap-12 lg:grid-cols-[3fr_2fr] lg:gap-10">
-            <div className="min-w-0">
-              <h1 className="text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl lg:text-[2.75rem] lg:leading-[1.12]">
-                Prevent grid congestion before it becomes an outage.
-              </h1>
+      <section className="relative overflow-hidden pb-10 sm:pb-16">
+        <HeroHorizon className="pointer-events-none absolute inset-x-0 top-0 h-[300px] w-full sm:h-[400px] lg:h-[460px]" />
 
-              <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted">
-                GridFlex predicts local electricity constraints and coordinates
-                batteries, EVs, buildings, solar, and generators to provide
-                flexibility exactly where the grid needs it.
-              </p>
+        <div className="relative mx-auto w-full max-w-[1240px] px-5 pt-[190px] sm:px-8 sm:pt-[250px] lg:pt-[290px]">
+          <div className="mx-auto max-w-4xl text-center">
+            <h1 className="rise text-[2.25rem] leading-[1.08] font-semibold tracking-[-0.03em] text-balance text-foreground sm:text-5xl lg:text-[3.5rem]">
+              Prevent grid congestion{" "}
+              <br className="hidden sm:block" />
+              <span className="text-ember-gradient">before</span> it becomes an
+              outage.
+            </h1>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-5 py-3 text-sm font-semibold text-background transition-[color,background-color,transform] hover:bg-white active:scale-[0.97]"
-                >
-                  Get Started
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-                <a
-                  href="#how-it-works"
-                  className="inline-flex items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-medium text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97]"
-                >
-                  See How It Works
-                </a>
-              </div>
+            <p
+              className="rise mx-auto mt-6 max-w-xl text-base leading-relaxed text-balance text-muted sm:text-lg"
+              style={{ "--rise-delay": "80ms" } as React.CSSProperties}
+            >
+              GridFlex forecasts where a local feeder will run out of capacity,
+              then coordinates nearby batteries, EVs, buildings, solar and
+              generators to relieve it, with every verified kilowatt settled on
+              Solana.
+            </p>
 
-              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-xs text-muted-2">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 bg-muted-2" />
-                  Predictive grid intelligence
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 bg-muted-2" />
-                  Local flexibility markets
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 bg-muted-2" />
-                  Solana settlement
-                </span>
-              </div>
+            <div
+              className="rise mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              style={{ "--rise-delay": "160ms" } as React.CSSProperties}
+            >
+              <Link
+                href="/dashboard"
+                className="btn-ember inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold sm:w-auto"
+              >
+                Get Started
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <a
+                href="#how-it-works"
+                className="btn-ghost-pill inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-medium sm:w-auto"
+              >
+                See how it works
+              </a>
             </div>
+          </div>
 
-            <div className="mx-auto w-full min-w-0 max-w-lg lg:mx-0">
-              <NightGridMap className="w-full h-auto" />
-              <div className="relative z-10 mx-auto -mt-10 w-full sm:-mt-16">
-                <HeroGridPreview />
-              </div>
+          <div
+            className="rise relative mx-auto mt-20 max-w-[1080px] sm:mt-24"
+            style={{ "--rise-delay": "260ms" } as React.CSSProperties}
+          >
+            <div className="fade-bottom">
+              <HeroConsole />
             </div>
+            <p className="mt-2 text-center text-xs text-muted-2">
+              Console preview with illustrative demo data
+            </p>
           </div>
         </div>
       </section>
