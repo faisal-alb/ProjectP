@@ -10,11 +10,15 @@ const BAND = [3, 1, 0, 2, 4];
 
 /**
  * A five-bar level meter. Listening reads the mic, speaking reads the agent's audio, both
- * live per frame. Connecting is a CSS wave; idle and reduced motion are static bars where
- * only colour says what's happening.
+ * live per frame. Connecting is a CSS wave, idle is CSS resting bars (which lift when the
+ * button is hovered), and reduced motion is static bars where only colour says what's happening.
+ *
+ * The overall level is also published as `--voice-level` (0–1) on the enclosing
+ * `.voice-button`, so the button's glow follows the voice.
  */
 export function VoiceMeter({ state, size = "md" }: { state: VoiceState; size?: "sm" | "md" }) {
   const { getInputByteFrequencyData, getOutputByteFrequencyData } = useConversationControls();
+  const root = useRef<HTMLSpanElement>(null);
   const bars = useRef<(HTMLSpanElement | null)[]>([]);
 
   useEffect(() => {
@@ -22,15 +26,18 @@ export function VoiceMeter({ state, size = "md" }: { state: VoiceState; size?: "
     const set = (i: number, v: number) => {
       if (els[i]) els[i].style.transform = `scaleY(${v})`;
     };
+    const button = root.current?.closest<HTMLElement>(".voice-button");
+    const glow = (v: number) => button?.style.setProperty("--voice-level", v.toFixed(3));
 
-    if (state === "connecting") {
-      // Hand the transform back to the CSS wave.
+    if (state === "connecting" || state === "idle") {
+      // Hand the transform back to CSS (the wave, or resting bars), which eases from where the bars are now.
       els.forEach((el) => el && (el.style.transform = ""));
+      glow(0);
       return;
     }
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (state === "idle" || reduced) {
-      REST.forEach((h, i) => set(i, state === "idle" ? h * 0.6 : h));
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      REST.forEach((h, i) => set(i, h));
+      glow(0.6);
       return;
     }
 
@@ -53,6 +60,7 @@ export function VoiceMeter({ state, size = "md" }: { state: VoiceState; size?: "
         levels[i] += (target - levels[i]) * (target > levels[i] ? 0.5 : 0.16);
         set(i, levels[i]);
       }
+      glow((levels.reduce((a, b) => a + b, 0) / levels.length - 0.18) / 0.82);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -60,15 +68,20 @@ export function VoiceMeter({ state, size = "md" }: { state: VoiceState; size?: "
   }, [state, getInputByteFrequencyData, getOutputByteFrequencyData]);
 
   return (
-    <span className={`voice-meter ${size === "sm" ? "h-4 gap-[2px]" : "h-6 gap-[3px]"}`} data-state={state} aria-hidden="true">
-      {REST.map((_, i) => (
+    <span
+      ref={root}
+      className={`voice-meter ${size === "sm" ? "h-4 gap-[2px]" : "h-6 gap-[3px]"}`}
+      data-state={state}
+      aria-hidden="true"
+    >
+      {REST.map((rest, i) => (
         <span
           key={i}
           ref={(el) => {
             bars.current[i] = el;
           }}
           className="voice-bar"
-          style={{ animationDelay: `${i * 90}ms` }}
+          style={{ animationDelay: `${i * 90}ms`, "--rest": rest, "--i": i } as React.CSSProperties}
         />
       ))}
     </span>
