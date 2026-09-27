@@ -3,7 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth, authReady } from "@/lib/auth";
-import { getSession } from "@/lib/session";
+import { getParticipantProfile, getRole, getSession } from "@/lib/session";
 import {
   PROFILE_COOKIE,
   ROLE_COOKIE,
@@ -26,6 +26,29 @@ export async function completeOnboarding(role: Role, input: unknown) {
   const jar = await cookies();
   jar.set(ROLE_COOKIE, role, cookieOptions);
   jar.set(PROFILE_COOKIE, JSON.stringify(profile), cookieOptions);
+  return { ok: true as const };
+}
+
+/**
+ * Save the AutoFlex limits from Settings, so they survive a reload and match what the
+ * household chose in onboarding. Only the limits change; devices and location stay as they were.
+ */
+export async function saveParticipantLimits(input: unknown) {
+  if ((await getRole()) !== "participant") return { ok: false as const };
+  const p = typeof input === "object" && input !== null ? (input as Record<string, unknown>) : {};
+  const current = await getParticipantProfile();
+  const next = parseParticipantProfile({
+    ...current,
+    autoFlex: p.autoFlex,
+    reservePercent: p.reserve,
+    maxKwhPerEvent: p.maxKwh,
+    maxEventsPerDay: p.maxEvents,
+    minRate: p.minRate,
+    emergency: p.emergency,
+    ev: p.ev,
+    hvac: p.hvac,
+  });
+  (await cookies()).set(PROFILE_COOKIE, JSON.stringify(next), cookieOptions);
   return { ok: true as const };
 }
 

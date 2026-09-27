@@ -10,6 +10,12 @@ export const PROFILE_COOKIE = "gridflex_profile";
 
 export type Emergency = "ask" | "allow" | "never";
 
+/** When an EV needs to be ready by, as offered in onboarding and Settings. */
+export const READY_BY = ["05:00", "06:00", "06:30", "07:00", "07:30", "08:00", "09:00"].map((v) => {
+  const [h, m] = v.split(":").map(Number);
+  return { value: v, label: `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}` };
+});
+
 export interface ParticipantProfile {
   resources: ResourceKey[];
   /** They picked "Not sure yet"; connect devices later from the dashboard. */

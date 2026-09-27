@@ -21,7 +21,7 @@ const RESOURCE_STYLE: Record<ResourceStatus, string> = {
 type RoleFilter = ResourceRole | "all";
 
 export function HouseholdDevices() {
-  const { profile, resources: keys, toggleResource, optedOut, setOptedOut, rules, state } = useHouseholdState();
+  const { resources: keys, toggleResource, optedOut, setOptedOut, rules, state } = useHouseholdState();
   const [filter, setFilter] = useState<RoleFilter>("all");
 
   const resources = keys.map((key) => {
@@ -35,8 +35,8 @@ export function HouseholdDevices() {
       if (!out) line2 = `${Math.max(0, ((BATTERY_CHARGE_PERCENT - rules.reserve) / 100) * BATTERY_KWH).toFixed(1)} kWh available`;
     } else if (key === "ev") {
       line1 = `${EV_CHARGE_PERCENT}% charge`;
-      if (!out) line2 = `Charging can shift until ${formatTime(profile.ev.readyBy)}`;
-    } else if (key === "hvac" && !out) line2 = `Can adjust ±${profile.hvac.maxAdjustF}°F for up to ${profile.hvac.maxMinutes} min`;
+      if (!out) line2 = `Charging can shift until ${formatTime(rules.ev.readyBy)}`;
+    } else if (key === "hvac" && !out) line2 = `Can adjust ±${rules.hvac.maxAdjustF}°F for up to ${rules.hvac.maxMinutes} min`;
     else if (key === "generator" && !out) line2 = "On standby";
     return { key, name: d.device, roles: d.roles, status, line1, line2, out };
   });
