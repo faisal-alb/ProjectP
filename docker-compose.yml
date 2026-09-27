@@ -1,6 +1,6 @@
 # GridFlex on Dokploy (Docker Compose). See docs/deployment.md.
 #
-# - Domains are attached in Dokploy's Domains tab (web -> 3000, api -> 8787), so
+# - Domains are attached in Dokploy's Domains tab (web -> 43187, api -> 8787), so
 #   no ports are published here. The intelligence service stays internal.
 # - Values come from Dokploy's Environment tab. Required ones use ${VAR:?}, so a
 #   missing value stops the deploy instead of starting a half-configured app.
@@ -24,6 +24,10 @@ services:
       SOLANA_RPC_URL: ${SOLANA_RPC_URL:-https://api.devnet.solana.com}
       USDC_MINT: ${USDC_MINT:?set USDC_MINT}
       WALLET_ENCRYPTION_KEY: ${WALLET_ENCRYPTION_KEY:?set WALLET_ENCRYPTION_KEY}
+      # Inline Solana CLI JSON takes precedence over mounted keypair files.
+      DEPLOYER_KEYPAIR_JSON: ${DEPLOYER_KEYPAIR_JSON:-}
+      VERIFIER_KEYPAIR_JSON: ${VERIFIER_KEYPAIR_JSON:-}
+      MINT_AUTHORITY_KEYPAIR_JSON: ${MINT_AUTHORITY_KEYPAIR_JSON:-}
       DEPLOYER_KEYPAIR_PATH: /run/keys/deployer.keypair.json
       VERIFIER_KEYPAIR_PATH: /run/keys/verifier.keypair.json
       MINT_AUTHORITY_KEYPAIR_PATH: /run/keys/mint-authority.keypair.json
@@ -44,7 +48,7 @@ services:
     restart: unless-stopped
     init: true
     expose:
-      - "3000"
+      - "43187"
     environment:
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:?set BETTER_AUTH_URL to the web app's public URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET}

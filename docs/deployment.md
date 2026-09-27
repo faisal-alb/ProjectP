@@ -38,7 +38,19 @@ can execute code.
    `BETTER_AUTH_SECRET` and `WALLET_ENCRYPTION_KEY`. Preserve the latter with the
    wallet data: changing it makes existing encrypted wallet seeds unreadable.
    Set the real devnet `USDC_MINT`. Mapbox and ElevenLabs settings are optional.
-4. Provision the sibling `files/` directory next to Dokploy's repository checkout:
+4. Supply the **existing** Solana keypairs using either method:
+
+   - In Dokploy Environment, set `DEPLOYER_KEYPAIR_JSON`, `VERIFIER_KEYPAIR_JSON`,
+     and `MINT_AUTHORITY_KEYPAIR_JSON` to the corresponding file contents: each
+     a single-line JSON array of 64 byte values. These are runtime secrets;
+     never put them in build arguments or commit them. Nonempty JSON variables
+     take precedence over mounted files.
+   - Or leave those variables empty and provision the three files shown below.
+
+   Do not generate replacement keys to fix missing files: the verifier and mint
+   authority must match the existing on-chain configuration.
+
+   Provision the sibling `files/` directory next to Dokploy's repository checkout:
 
    ```text
    files/
@@ -50,14 +62,17 @@ can execute code.
      models/
    ```
 
-   Transfer the keypairs securely, restrict host access, and never commit them.
+   If using files, transfer the keypairs securely, restrict host access, and never commit them.
    Dokploy File Mounts can provision them too; ensure they land at the paths above.
    Keep `FILES_DIR=../files` in Dokploy. State directories must be writable by the
    containers; keys and models are mounted read-only. Do not copy local wallet
    state unless you also use the exact encryption key that encrypted it.
-5. Add two HTTPS domains in Domains: web → service `web`, container port `3000`;
+5. Add two HTTPS domains in Domains: web → service `web`, container port `43187`;
    API → service `api`, container port `8787`. Leave intelligence internal. Deploy
    after configuring domains. The base Compose file publishes no host ports.
+   If updating an existing deployment, change its web domain target from `3000`
+   to `43187` too. Public HTTPS URLs still use the normal port 443. The container
+   port change does not itself repair DNS records or certificate issuance.
 6. Check deployment logs and container health, then open the web app and API
    `/health`. Confirm the intended cluster/mint and `intelligence: "online"`.
    Inspect the intelligence `/health` from inside its container for model sources.
@@ -84,9 +99,10 @@ mkdir -p .data/compose/keys .data/compose/api-data .data/compose/web-data .data/
 ```
 
 Edit `.env.deploy` with `FILES_DIR=./.data/compose`,
-`WEB_ORIGIN=http://localhost:3000`, `BETTER_AUTH_URL=http://localhost:3000`, and
+`WEB_ORIGIN=http://localhost:43187`, `BETTER_AUTH_URL=http://localhost:43187`, and
 `NEXT_PUBLIC_API_URL=http://localhost:8787`. Generate both secrets, set your devnet
-mint, and copy the three devnet keypairs into `.data/compose/keys/`. Copy trained
+mint, and set the three keypair JSON variables or copy the three devnet keypairs
+into `.data/compose/keys/`. Copy trained
 artifacts to `.data/compose/models/` if desired. These local files are ignored by
 Git and Docker. Do not copy a production database into this test stack.
 
@@ -96,11 +112,11 @@ docker compose --env-file .env.deploy -f docker-compose.yml -f docker-compose.lo
 docker compose --env-file .env.deploy -f docker-compose.yml -f docker-compose.local.yml ps
 curl --fail http://localhost:8787/health
 curl --fail http://localhost:8787/forecast/downtown
-curl --fail http://localhost:3000/ -o /dev/null
+curl --fail http://localhost:43187/ -o /dev/null
 ```
 
 The local override binds only loopback ports and disables forwarded-header trust.
-Ensure ports 3000 and 8787 are free. Sign in anonymously through onboarding, then
+Ensure ports 43187 and 8787 are free. Sign in anonymously through onboarding, then
 exercise the devnet operator flow (faucet → create/sign → verify → settle) and
 confirm the household payout. Refresh and restart the containers to verify state
 and sessions persist. A health-only smoke test with unfunded throwaway keys does

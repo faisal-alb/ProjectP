@@ -1,13 +1,48 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { generateKeyPairSync } from "node:crypto";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { Hono } from "hono";
 import { writeFileAtomic } from "./files";
+import { loadKeypairSigner } from "@gridflex/solana/node";
 
 process.env.TRUST_PROXY = "1";
 const { clientIp, rateLimit } = await import("./rate-limit");
+
+test("service keypairs support inline secrets and file fallback with safe errors", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gridflex-keys-"));
+  const variable = "GRIDFLEX_TEST_KEYPAIR_JSON";
+  const previous = process.env[variable];
+  try {
+    const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+    const bytes = [...privateKey.export({ format: "der", type: "pkcs8" }).subarray(-32),
+      ...publicKey.export({ format: "der", type: "spki" }).subarray(-32)];
+    const file = path.join(dir, "test.keypair.json");
+    writeFileSync(file, JSON.stringify(bytes), { mode: 0o600 });
+    const fromFile = await loadKeypairSigner(file);
+    process.env[variable] = JSON.stringify(bytes);
+    assert.equal((await loadKeypairSigner(path.join(dir, "missing"), variable)).address, fromFile.address);
+    process.env[variable] = " ";
+    assert.equal((await loadKeypairSigner(file, variable)).address, fromFile.address);
+    await assert.rejects(loadKeypairSigner(path.join(dir, "missing"), variable), /Mount the existing keypair file or set GRIDFLEX_TEST_KEYPAIR_JSON/);
+    for (const invalid of ["private-secret-not-json", "[]", JSON.stringify(Array(64).fill(256)),
+      JSON.stringify(Array(64).fill(0.5)), JSON.stringify(Array(64).fill(0))]) {
+      process.env[variable] = invalid;
+      await assert.rejects(loadKeypairSigner(file, variable), error => {
+        assert.ok(error instanceof Error);
+        assert.match(error.message, /Invalid Solana keypair in GRIDFLEX_TEST_KEYPAIR_JSON/);
+        assert.ok(!error.message.includes(invalid));
+        return true;
+      });
+    }
+  } finally {
+    if (previous === undefined) delete process.env[variable];
+    else process.env[variable] = previous;
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 test("proxy identity ignores spoofed prefix; limits cover clients and global spend", async () => {
   const app = new Hono();

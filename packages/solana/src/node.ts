@@ -6,9 +6,33 @@ import { createKeyPairSignerFromBytes, type KeyPairSigner } from "@solana/kit";
 import type { Cluster } from "./client";
 
 /** Load a Solana CLI keypair file (JSON array of 64 bytes). */
-export async function loadKeypairSigner(file: string): Promise<KeyPairSigner> {
-  const bytes = Uint8Array.from(JSON.parse(readFileSync(file, "utf8")) as number[]);
-  return createKeyPairSignerFromBytes(bytes);
+export async function loadKeypairSigner(file: string, jsonEnvVar?: string): Promise<KeyPairSigner> {
+  const inline = jsonEnvVar ? process.env[jsonEnvVar]?.trim() : undefined;
+  const source = inline ? jsonEnvVar! : file;
+  let json: string;
+  if (inline) {
+    json = inline;
+  } else {
+    try {
+      json = readFileSync(file, "utf8");
+    } catch {
+      throw new Error(`Cannot read Solana keypair at ${file}. Mount the existing keypair file${jsonEnvVar ? ` or set ${jsonEnvVar} to its JSON array` : ""}.`);
+    }
+  }
+  // Never include input or parser errors: they can expose private key bytes.
+  let bytes: unknown;
+  try { bytes = JSON.parse(json); } catch {
+    throw new Error(`Invalid Solana keypair in ${source}: expected a JSON array of 64 bytes.`);
+  }
+  if (!Array.isArray(bytes) || bytes.length !== 64 ||
+      !bytes.every(byte => Number.isInteger(byte) && byte >= 0 && byte <= 255)) {
+    throw new Error(`Invalid Solana keypair in ${source}: expected a JSON array of 64 bytes.`);
+  }
+  try {
+    return await createKeyPairSignerFromBytes(Uint8Array.from(bytes));
+  } catch {
+    throw new Error(`Invalid Solana keypair in ${source}: key bytes do not form a valid keypair.`);
+  }
 }
 
 /**
@@ -36,9 +60,9 @@ export function loadSolanaEnv(root: string) {
     clusterEnvFile,
     rpcUrl,
     loadKeys: async () => ({
-      deployer: await loadKeypairSigner(keyPath("deployer", "DEPLOYER_KEYPAIR_PATH")),
-      verifier: await loadKeypairSigner(keyPath("verifier", "VERIFIER_KEYPAIR_PATH")),
-      mintAuthority: await loadKeypairSigner(keyPath("mint-authority", "MINT_AUTHORITY_KEYPAIR_PATH")),
+      deployer: await loadKeypairSigner(keyPath("deployer", "DEPLOYER_KEYPAIR_PATH"), "DEPLOYER_KEYPAIR_JSON"),
+      verifier: await loadKeypairSigner(keyPath("verifier", "VERIFIER_KEYPAIR_PATH"), "VERIFIER_KEYPAIR_JSON"),
+      mintAuthority: await loadKeypairSigner(keyPath("mint-authority", "MINT_AUTHORITY_KEYPAIR_PATH"), "MINT_AUTHORITY_KEYPAIR_JSON"),
     }),
     /** Write or replace KEY=value in a repo-root env file. */
     setEnvValue(file: string, key: string, value: string) {
