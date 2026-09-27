@@ -573,6 +573,51 @@ html:has(.home),
 html:has(.home) body {
   background: #0a0a0c;
 }
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.home) {
+    scroll-behavior: smooth;
+  }
+}
+
+/* The dashboard preview on the homepage renders in the app's own graphite tokens
+   and card style, so it looks like the product rather than the marketing page. */
+.home .console-app {
+  --background: #17181b;
+  --background-raised: #1d1e22;
+  --surface: #212226;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  background: var(--background);
+}
+.home .console-app .panel {
+  border-radius: 14px;
+  border-color: rgba(255, 255, 255, 0.06);
+  background: var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 1px 2px rgba(0, 0, 0, 0.22),
+    0 10px 28px -16px rgba(0, 0, 0, 0.45);
+}
+
+/* The homepage nav's current-section pill: one element that slides between items.
+   Navbar sets its transform and width; it only transitions once placed, so it
+   lands without motion on first paint. */
+.nav-pill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+.nav-pill[data-ready] {
+  transition:
+    transform 420ms cubic-bezier(0.32, 0.72, 0, 1),
+    width 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
 
 @theme inline {
   --color-volt: var(--volt);
