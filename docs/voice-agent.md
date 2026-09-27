@@ -17,23 +17,26 @@ Next route (signed URL)        VoiceTools → dashboard snapshot (read-only)
    `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`.
 2. Create an agent in ElevenLabs, set **authentication on** (so it needs a signed URL), then add the
    **client tools** below (Tools → Add tool → Client, "wait for response" on).
-3. Turn on the **End conversation** system tool (Tools → System tools → `end_call`), so the agent
-   can hang up when the household is done.
+3. Recommended: turn on the **End conversation** system tool (Tools → System tools → `end_call`),
+   so the agent can hang up itself. The app also ends on a goodbye without it (below).
 4. Paste the system prompt below.
 5. Optional: under Advanced → Client events, turn on `vad_score` and `tentative_user_transcript`.
-   The idle timer (below) already watches the mic locally; these just make it surer you're mid-sentence.
+   They help the app tell you're mid-sentence; it also watches the mic locally.
 
 ## Ending a conversation
 
-A session ends in one of three ways:
+`VoiceAssistantProvider` ends a session on its own while it's listening, whichever comes first:
 
-- **The agent hangs up.** When the household says they're done, the agent says a short goodbye and
-  calls the built-in `end_call` system tool. The SDK disconnects and the button returns to "Ask GridFlex".
-- **It goes quiet.** `VoiceAssistantProvider` ends the session 10 s after GridFlex finishes speaking
-  if nothing happens. It counts as activity if the mic rises above the room's noise floor, if the server
-  sends a transcript or VAD score, or if the agent is replying or calling a tool. The floating button
-  says "Ending soon" for the last 3 s.
-- **The household taps the floating button.**
+- **A goodbye.** You say "bye", "that's all", "I'm done" (etc.), GridFlex answers, and 1.5 s after it
+  stops speaking the session ends. Same if GridFlex says "goodbye" itself. Anything else you say in
+  between calls it off. If `end_call` is on, the agent may hang up even sooner.
+- **Quiet.** 10 s after GridFlex finishes speaking with no sign of you talking: no transcript, VAD
+  score or interruption from the server, and no sustained mic level above the room's noise floor.
+- **The ceiling.** 30 s with no real turn: nothing you said was transcribed, GridFlex didn't reply,
+  and no tool ran. Mic noise can't extend this one, so a noisy room or a TV can't hold it open.
+
+The floating button says "Ending soon" for the last 3 s of either timer, and a tap on it always ends
+the session.
 
 ## Client tools
 
