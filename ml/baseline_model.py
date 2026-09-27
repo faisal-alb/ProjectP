@@ -127,8 +127,14 @@ FEATURE_COLUMNS = (
 class BaselineQuantileModel:
     """LightGBM quantile regressors, one booster per quantile."""
 
-    def __init__(self, quantiles: Sequence[float] = QUANTILES, params: dict | None = None):
+    def __init__(
+        self,
+        quantiles: Sequence[float] = QUANTILES,
+        params: dict | None = None,
+        include_mean: bool = True,
+    ):
         self.quantiles = tuple(quantiles)
+        self.include_mean = include_mean
         self.params = params or {
             "objective": "quantile",
             "learning_rate": 0.05,
@@ -142,6 +148,11 @@ class BaselineQuantileModel:
             "random_state": 42,
         }
         self.models: dict[float, lgb.LGBMRegressor] = {}
+        # Separate L2 booster. Quantiles serve per-home roles and are never
+        # summed; zone-level load is a sum, and only means are additive
+        # (E[X+Y] = E[X]+E[Y] holds unconditionally, medians have no such
+        # identity). Summing per-home p50 understates zone load by ~11%.
+        self.mean_model: lgb.LGBMRegressor | None = None
         self.feature_names: list[str] = []
         self.training_window: list[str] | None = None
         self.n_train_rows: int | None = None
@@ -157,7 +168,22 @@ class BaselineQuantileModel:
             model = lgb.LGBMRegressor(**{**self.params, "alpha": q})
             model.fit(X, y)
             self.models[q] = model
+
+        if self.include_mean:
+            mean_params = {k: v for k, v in self.params.items() if k != "alpha"}
+            mean_params["objective"] = "regression"
+            self.mean_model = lgb.LGBMRegressor(**mean_params)
+            self.mean_model.fit(X, y)
         return self
+
+    def predict_mean(self, X: pd.DataFrame) -> np.ndarray:
+        """Conditional mean, for summing across homes into a zone forecast."""
+        if self.mean_model is None:
+            raise ValueError("Model was fit without include_mean")
+        missing = [c for c in self.feature_names if c not in X.columns]
+        if missing:
+            raise KeyError(f"Input is missing training features: {missing}")
+        return np.asarray(self.mean_model.predict(X[self.feature_names]))
 
     def predict(self, X: pd.DataFrame) -> dict[float, np.ndarray]:
         missing = [c for c in self.feature_names if c not in X.columns]
@@ -182,10 +208,14 @@ class BaselineQuantileModel:
             name = f"baseline_q{int(q * 100):02d}.txt"
             model.booster_.save_model(str(out_dir / name))
             files[str(q)] = name
+        if self.mean_model is not None:
+            self.mean_model.booster_.save_model(str(out_dir / "baseline_mean.txt"))
+            files["mean"] = "baseline_mean.txt"
 
         manifest = {
             "model": "BaselineQuantileModel",
             "quantiles": list(self.quantiles),
+            "include_mean": self.include_mean,
             "feature_names": self.feature_names,
             "files": files,
             "hashes": {
@@ -213,7 +243,12 @@ class BaselineQuantileModel:
             digest = hashlib.sha256((out_dir / name).read_bytes()).hexdigest()
             if digest != manifest["hashes"][name]:
                 raise ValueError(f"{name} does not match its manifest hash")
-            model.models[float(q_str)] = lgb.Booster(model_file=str(out_dir / name))
+            booster = lgb.Booster(model_file=str(out_dir / name))
+            if q_str == "mean":
+                model.mean_model = booster
+            else:
+                model.models[float(q_str)] = booster
+        model.include_mean = model.mean_model is not None
         return model
 
 
