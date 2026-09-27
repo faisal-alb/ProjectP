@@ -11,6 +11,8 @@ export interface VoiceAssistant {
   toggle: (prompt?: string) => void;
   /** Start the assistant with a question, or ask it into the running session. Never ends it. */
   ask: (prompt?: string) => void;
+  /** The session has been quiet long enough that it's about to end on its own. */
+  endingSoon: boolean;
 }
 
 export const VoiceContext = createContext<VoiceAssistant | null>(null);

@@ -14,7 +14,7 @@ function StateText({ state, text }: { state: VoiceState; text: string }) {
 
 /** Bottom-right, always on screen. Shows what the assistant is doing, and ends the session on tap. */
 export function FloatingAskButton() {
-  const { state, error, toggle } = useVoiceAssistant();
+  const { state, error, toggle, endingSoon } = useVoiceAssistant();
   const active = state !== "idle";
   return (
     <div className="fixed right-5 bottom-5 z-40 flex flex-col items-end gap-2 sm:right-8 sm:bottom-8">
@@ -35,7 +35,14 @@ export function FloatingAskButton() {
           <span className="text-sm font-medium text-foreground" aria-live="polite">
             <StateText state={state} text={STATE_LABEL[state]} />
           </span>
-          {active && <span className="text-[11px] text-muted-2">Tap to end</span>}
+          {active && (
+            <span className="text-[11px] text-muted-2">
+              {/* Keyed so the hint settles in when it changes, like the state label above. */}
+              <span key={endingSoon ? "ending" : "tap"} className="voice-label">
+                {endingSoon ? "Ending soon" : "Tap to end"}
+              </span>
+            </span>
+          )}
         </span>
       </button>
     </div>
