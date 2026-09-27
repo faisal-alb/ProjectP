@@ -1,16 +1,25 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { Segmented, SliderRow, Switch } from "@/components/onboarding/controls";
+import { Segmented, SelectField, SliderRow, Switch } from "@/components/onboarding/controls";
 import { useHouseholdState } from "./HouseholdState";
 import { PageHeader } from "./PageHeader";
 import { InfoTip } from "@/components/ui/Tooltip";
+import { READY_BY } from "@/lib/profile";
+import type { SaveStatus } from "./HouseholdState";
 
 const price = (n: number) => `$${n.toFixed(2)}/kWh`;
 
+const SAVE_NOTE: Record<SaveStatus, string> = {
+  idle: "Changes save automatically and apply to tonight and future events.",
+  saving: "Saving…",
+  saved: "Saved. Applies to tonight and future events.",
+  error: "Couldn't save your changes. They apply to this visit only.",
+};
+
 /** AutoFlex and the limits it works within. On its own page, so the controls are always open. */
 export function HouseholdSettings() {
-  const { rules, setRules, rate } = useHouseholdState();
+  const { rules, setRules, rate, resources, saveStatus } = useHouseholdState();
 
   return (
     <div>
@@ -96,7 +105,65 @@ export function HouseholdSettings() {
               onChange={(v) => setRules((r) => ({ ...r, emergency: v }))}
             />
           </div>
-          <p className="text-xs text-muted-2">Changes apply to tonight and future events.</p>
+
+          {resources.includes("ev") && (
+            <div className="space-y-6 border-t border-border pt-6">
+              <h3 className="text-sm font-semibold text-foreground">Electric vehicle</h3>
+              <SelectField
+                label="Vehicle ready by"
+                value={rules.ev.readyBy}
+                options={READY_BY}
+                onChange={(v) => setRules((r) => ({ ...r, ev: { ...r.ev, readyBy: v } }))}
+              />
+              <SliderRow
+                label="Always have at least"
+                value={rules.ev.minCharge}
+                display={`${rules.ev.minCharge}%`}
+                min={20}
+                max={90}
+                step={5}
+                onChange={(v) => setRules((r) => ({ ...r, ev: { ...r.ev, minCharge: v } }))}
+              />
+              <SliderRow
+                label="Delay charging by up to"
+                value={rules.ev.delayMinutes}
+                display={`${rules.ev.delayMinutes} min`}
+                min={30}
+                max={180}
+                step={15}
+                onChange={(v) => setRules((r) => ({ ...r, ev: { ...r.ev, delayMinutes: v } }))}
+                hint="Delayed charging counts as flexibility."
+              />
+            </div>
+          )}
+
+          {resources.includes("hvac") && (
+            <div className="space-y-6 border-t border-border pt-6">
+              <h3 className="text-sm font-semibold text-foreground">HVAC</h3>
+              <SliderRow
+                label="Maximum adjustment"
+                value={rules.hvac.maxAdjustF}
+                display={`${rules.hvac.maxAdjustF}°F`}
+                min={1}
+                max={4}
+                step={1}
+                onChange={(v) => setRules((r) => ({ ...r, hvac: { ...r.hvac, maxAdjustF: v } }))}
+              />
+              <SliderRow
+                label="Maximum event duration"
+                value={rules.hvac.maxMinutes}
+                display={`${rules.hvac.maxMinutes} min`}
+                min={30}
+                max={120}
+                step={15}
+                onChange={(v) => setRules((r) => ({ ...r, hvac: { ...r.hvac, maxMinutes: v } }))}
+              />
+            </div>
+          )}
+
+          <p className="text-xs text-muted-2" role="status" aria-live="polite">
+            {SAVE_NOTE[saveStatus]}
+          </p>
         </div>
       </section>
     </div>

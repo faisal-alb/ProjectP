@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
   DEMO_GENERATOR,
   DEMO_SOLAR_SURPLUS_KWH,
@@ -16,6 +16,7 @@ import {
   household,
   type ResourceKey,
 } from "@/lib/demo-data";
+import { saveParticipantLimits } from "@/app/actions";
 import type { Emergency, ParticipantProfile } from "@/lib/profile";
 import { usePublishVoiceSnapshot } from "@/lib/voice-snapshot";
 import { useHousehold } from "./HouseholdProvider";
@@ -31,7 +32,11 @@ export interface Rules {
   maxKwh: number;
   maxEvents: number;
   emergency: Emergency;
+  ev: ParticipantProfile["ev"];
+  hvac: ParticipantProfile["hvac"];
 }
+
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 function useHouseholdModel(zone: string, feeder: string, profile: ParticipantProfile) {
   const live = useHousehold();
@@ -42,7 +47,26 @@ function useHouseholdModel(zone: string, feeder: string, profile: ParticipantPro
     maxKwh: profile.maxKwhPerEvent,
     maxEvents: profile.maxEventsPerDay,
     emergency: profile.emergency,
+    ev: profile.ev,
+    hvac: profile.hvac,
   });
+  // Limits are saved to the profile shortly after they stop changing, so they survive a reload.
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const lastSaved = useRef(JSON.stringify(rules));
+  useEffect(() => {
+    const body = JSON.stringify(rules);
+    if (body === lastSaved.current) return;
+    const timer = window.setTimeout(() => {
+      setSaveStatus("saving");
+      saveParticipantLimits(rules)
+        .then((r) => {
+          if (r.ok) lastSaved.current = body;
+          setSaveStatus(r.ok ? "saved" : "error");
+        })
+        .catch(() => setSaveStatus("error"));
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [rules]);
   // Starts from onboarding; added to or trimmed on the Devices page. Kept for this visit only, like the rules.
   const [resources, setResources] = useState<ResourceKey[]>(profile.resources);
   const toggleResource = (key: ResourceKey) =>
@@ -116,8 +140,8 @@ function useHouseholdModel(zone: string, feeder: string, profile: ParticipantPro
       : undefined,
     solar: has("solar") && !optedOut.solar ? { surplusKwh: DEMO_SOLAR_SURPLUS_KWH } : undefined,
     generator: has("generator") && !optedOut.generator ? DEMO_GENERATOR : undefined,
-    ev: evIn ? { shiftableKw: EV_SHIFTABLE_KW, delayMinutes: profile.ev.delayMinutes } : undefined,
-    hvac: has("hvac") && !optedOut.hvac ? profile.hvac : undefined,
+    ev: evIn ? { shiftableKw: EV_SHIFTABLE_KW, delayMinutes: rules.ev.delayMinutes } : undefined,
+    hvac: has("hvac") && !optedOut.hvac ? rules.hvac : undefined,
   });
 
   // Published from the layout, so the voice assistant sees the same figures on every page.
@@ -150,6 +174,7 @@ function useHouseholdModel(zone: string, feeder: string, profile: ParticipantPro
     profile,
     rules,
     setRules,
+    saveStatus,
     resources,
     toggleResource,
     optedOut,
