@@ -117,14 +117,19 @@ function Action({ action: a, best }: { action: PlanAction; best: boolean }) {
                   aria-hidden="true"
                 />
               </button>
-              {open && (
-                <ul className="mt-1.5 space-y-1 text-xs text-muted">
-                  {a.reasons.map((r) => (
-                    <li key={r}>{r}</li>
-                  ))}
-                  {a.caveat && <li className="text-watch">{a.caveat}</li>}
-                </ul>
-              )}
+              <div
+                className={`grid transition-[grid-template-rows] duration-200 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                inert={!open}
+              >
+                <div className="overflow-hidden">
+                  <ul className="mt-1.5 space-y-1 text-xs text-muted">
+                    {a.reasons.map((r) => (
+                      <li key={r}>{r}</li>
+                    ))}
+                    {a.caveat && <li className="text-watch">{a.caveat}</li>}
+                  </ul>
+                </div>
+              </div>
             </>
           )}
         </div>

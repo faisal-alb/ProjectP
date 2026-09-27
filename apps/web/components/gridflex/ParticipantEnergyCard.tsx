@@ -65,7 +65,7 @@ export function ParticipantEnergyCard() {
 
       <button
         type="button"
-        className="mt-5 w-full rounded-md bg-foreground py-2.5 text-sm font-semibold text-background transition-colors hover:bg-white"
+        className="mt-5 w-full rounded-md bg-foreground py-2.5 text-sm font-semibold text-background transition-[color,background-color,transform] hover:bg-white active:scale-[0.97]"
       >
         Participate
       </button>

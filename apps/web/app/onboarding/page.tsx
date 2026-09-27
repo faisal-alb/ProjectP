@@ -59,7 +59,7 @@ export default async function OnboardingPage() {
             {highlights.map(({ icon: Icon, label }) => (
               <li
                 key={label}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-background-raised/70 px-3 py-1.5 text-xs text-muted backdrop-blur"
+                className="inline-flex items-center gap-2 rounded-full border border-border glass px-3 py-1.5 text-xs text-muted"
               >
                 <Icon className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
                 {label}
@@ -70,7 +70,7 @@ export default async function OnboardingPage() {
 
         <section
           aria-labelledby="operator-heading"
-          className="rise mt-14 rounded-lg bg-background-raised/60 p-5 backdrop-blur sm:mt-16 sm:p-6"
+          className="rise mt-14 rounded-lg glass p-5 sm:mt-16 sm:p-6"
           style={rise(400)}
         >
           <h2 id="operator-heading" className="text-xl font-semibold tracking-tight text-foreground">
@@ -83,7 +83,7 @@ export default async function OnboardingPage() {
           </p>
           <Link
             href="/onboarding/operator"
-            className="group mt-5 inline-flex items-center gap-2 rounded-md border border-border-strong px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-surface"
+            className="group mt-5 inline-flex items-center gap-2 rounded-md border border-border-strong px-4 py-2.5 text-sm font-medium text-foreground transition-[color,background-color,transform] hover:bg-surface active:scale-[0.97]"
           >
             Set up your grid
             <ArrowRight

@@ -109,7 +109,7 @@ export default function ZoneMap({ zip }: { zip: string }) {
               : status === "error" ? "The map couldn't load. Your zone details are shown above."
               : "Loading your grid zone…"}</p>
             {token && status === "error" && (
-              <button type="button" className="rounded-md border border-border px-4 py-2 text-foreground transition-colors hover:border-border-strong"
+              <button type="button" className="rounded-md border border-border px-4 py-2 text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97]"
                 onClick={() => { setStatus("loading"); setAttempt((value) => value + 1); }}>
                 Retry map
               </button>

@@ -4,9 +4,9 @@ import { useId } from "react";
 import { Check } from "lucide-react";
 
 export const primaryButton =
-  "inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-[color,background-color,transform] hover:bg-white active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-50";
 export const secondaryButton =
-  "inline-flex items-center justify-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Inline style that fills a range input's track up to its current value. */
 export function rangeFill(value: number, min: number, max: number): React.CSSProperties {

@@ -127,7 +127,7 @@ function WalletOption({ wallet, onConnected }: { wallet: UiWallet; onConnected: 
     <button
       type="button"
       disabled={connecting}
-      className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-border-strong disabled:opacity-50"
+      className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97] disabled:active:scale-100 disabled:opacity-50"
       onClick={async () => {
         setFailed(false);
         try {
@@ -223,7 +223,7 @@ function ConnectedWallet({ connection, close }: { connection: Connection; close:
       </div>
       <button
         type="button"
-        className="mt-4 w-full rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:border-border-strong"
+        className="mt-4 w-full rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97]"
         onClick={async () => {
           await disconnectWallet().catch(() => {});
           disconnect();

@@ -82,7 +82,7 @@ function AccountMenu({ role, label }: { role: Role; label: string }) {
             <form action={signOut}>
               <button
                 type="submit"
-                className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:border-border-strong"
+                className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97]"
               >
                 Sign out
               </button>
