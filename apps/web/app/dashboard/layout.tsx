@@ -15,7 +15,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
   } else {
     const profile = await getParticipantProfile();
     const location = resolveZip(profile.zip);
-    household = { zone: location?.zone ?? "Downtown Miami", feeder: location?.feeder ?? "DT-A", profile };
+    household = { zone: location?.zone ?? "Downtown Austin", feeder: location?.feeder ?? "DT-A", profile };
   }
 
   return (

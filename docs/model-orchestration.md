@@ -1,6 +1,6 @@
 # Model orchestration
 
-*Partly built. The feature layer, spike model and evaluation exist in `ml/` (see [Code layout](#10-code-layout)). The price, capacity, baseline and valuation models, the dispatcher and the orchestrator are still design.*
+*Partly built. The feature layer, spike model, fair-value statistics, home baseline (which also covers capacity, per [Home models plan](home-models-plan.md)) and evaluation exist in `ml/` (see [Code layout](#10-code-layout)), and the [intelligence service](intelligence.md) serves them to the Node API, which stays the orchestrator for now. The dispatcher and this document's Python orchestrator loop are still design.*
 
 A virtual power plant (VPP) aggregator: forecasts grid stress, prices and sizes commitments, dispatches home batteries and HVAC, and settles payouts on Solana devnet.
 
@@ -440,12 +440,14 @@ ml/
 ├── spike_model.py        # built: LightGBM classifier + calibration
 ├── evaluate.py           # built: walk-forward and seasonality evaluation
 ├── train_spike_model.py  # built: training entry point
-├── price_model.py      # conditional expected price, quantiles
-├── capacity.py         # deliverable kW, typical + low
-├── baseline.py         # counterfactual usage
-├── valuation.py        # fair value, locked price, sizing
+├── fair_value.py         # built: price statistics, fair value, locked price, sizing
+├── homes.py              # built: ResStock Travis County household load
+├── baseline_model.py     # built: p10/p50 home baseline (also capacity)
+├── export_replay.py      # built: replay slices for the intelligence service
+├── build_artifacts.py    # built: the whole pipeline (npm run ml:train)
 ├── backtest.py         # replay + strategy comparison
-└── artifacts/          # saved models, baselines, event log
+└── artifacts/            # built: saved models (native LightGBM + manifests), replay data
+services/intelligence/    # built: serves the models to the API (docs/intelligence.md)
 orchestrator/
 ├── clock.py            # SimClock
 ├── events.py           # Event, state machine

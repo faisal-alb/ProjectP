@@ -13,7 +13,8 @@ All zone, load and pricing figures in the app are illustrative demo data.
 | `programs/gridflex` | Solana program (Anchor): escrow, commitments, verification, payouts |
 | `packages/shared` | Shared TypeScript: unit maths, Power Plan optimizer, onboarding data |
 | `packages/solana` | Solana client and generated program bindings |
-| `ml/` | Python spike-forecasting model |
+| `services/intelligence` | Python model service: price-spike forecast, fair value, household baselines ([docs](docs/intelligence.md)) |
+| `ml/` | Python models and training: ERCOT spike classifier, price statistics, ResStock home baseline |
 | `scripts/` | Dev runner and Solana setup, faucet and demo scripts |
 | `docs/` | Product, architecture and how-to docs ([index](docs/README.md)) |
 
@@ -28,6 +29,15 @@ npm run dev                  # API on :8787 and web on :3000
 ```
 
 The web app works without Solana running, but live settlement shows as offline. To run the full flow locally, follow [Running it](docs/solana.md#running-it).
+
+The demo is set in Austin, Texas, where the models are trained. To run them (Python 3.10+), set up once and `npm run dev` also starts the model service on :8000:
+
+```bash
+npm run intelligence:setup   # Python venv at .venv
+npm run ml:train             # download public ERCOT/ResStock data and train
+```
+
+Without it, the API uses demo values instead ([Intelligence service](docs/intelligence.md)).
 
 Optional settings, all in the root `.env`:
 

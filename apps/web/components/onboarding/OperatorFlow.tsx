@@ -192,7 +192,7 @@ function OrgStep({ profile, patch, heading }: StepProps) {
           label="Organization name"
           value={profile.orgName}
           onChange={(v) => patch({ orgName: v.slice(0, 60) })}
-          placeholder="Florida Power &amp; Light"
+          placeholder="Austin Energy"
         />
         <SelectField
           label="Organization type"
@@ -204,7 +204,7 @@ function OrgStep({ profile, patch, heading }: StepProps) {
           label="Primary region"
           value={profile.region}
           onChange={(v) => patch({ region: v.slice(0, 60) })}
-          placeholder="South Florida"
+          placeholder="Central Texas"
           hint="State, territory, or service area."
         />
       </div>
@@ -226,7 +226,7 @@ function NetworkStep({ profile, patch, heading }: StepProps) {
         <ChoiceTile radio selected={false} disabled title="Create manually" description="Coming soon." onClick={() => {}} />
       </div>
 
-      <h2 className="mt-10 text-lg font-semibold text-foreground">South Florida grid</h2>
+      <h2 className="mt-10 text-lg font-semibold text-foreground">Austin grid</h2>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Substations, feeders, and safe capacity in the sample network</caption>

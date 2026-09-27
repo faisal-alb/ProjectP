@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, Iterable, Sequence
 
 import lightgbm as lgb
@@ -140,12 +143,26 @@ class LightGBMSpikeModel:
         cal = self.calibrators.get(horizon)
         if cal is None:
             return raw
+        eps = 1e-6
+        if isinstance(cal, dict):
+            # Loaded from a manifest: the same two maps, as plain parameters.
+            if cal["method"] == "sigmoid":
+                clipped = np.clip(raw, eps, 1 - eps)
+                z = np.log(clipped / (1 - clipped))
+                return 1.0 / (1.0 + np.exp(-(cal["coef"] * z + cal["intercept"])))
+            return np.interp(raw, cal["x"], cal["y"])
         if isinstance(cal, LogisticRegression):
-            eps = 1e-6
             clipped = np.clip(raw, eps, 1 - eps)
             z = np.log(clipped / (1 - clipped))
             return cal.predict_proba(z.reshape(-1, 1))[:, 1]
         return cal.predict(raw)
+
+    @staticmethod
+    def _raw_proba(model, X: pd.DataFrame) -> np.ndarray:
+        """P(spike) before calibration, from a fitted classifier or a loaded booster."""
+        if isinstance(model, lgb.Booster):
+            return np.asarray(model.predict(X))
+        return model.predict_proba(X)[:, 1]
 
     def predict(self, X: pd.DataFrame) -> dict[int, float]:
         """Return a probability for each horizon in the orchestration contract."""
@@ -155,8 +172,7 @@ class LightGBMSpikeModel:
         feature_cols = self._align(X)
         probs: dict[int, float] = {}
         for horizon in self.horizons:
-            model = self.models[horizon]
-            prob = model.predict_proba(X[feature_cols])[:, 1]
+            prob = self._raw_proba(self.models[horizon], X[feature_cols])
             prob = self._apply_calibration(horizon, prob)
             probs[horizon] = float(np.clip(prob[0], 0.0, 1.0))
         return probs
@@ -170,9 +186,80 @@ class LightGBMSpikeModel:
         batch = X[feature_cols].copy()
         out = []
         for horizon in self.horizons:
-            raw = self.models[horizon].predict_proba(batch)[:, 1]
+            raw = self._raw_proba(self.models[horizon], batch)
             out.append(self._apply_calibration(horizon, raw))
         return np.column_stack(out)
+
+    def _calibrator_params(self, horizon: int) -> dict | None:
+        cal = self.calibrators.get(horizon)
+        if cal is None:
+            return None
+        if isinstance(cal, dict):
+            return cal
+        if isinstance(cal, LogisticRegression):
+            return {
+                "method": "sigmoid",
+                "coef": float(cal.coef_[0][0]),
+                "intercept": float(cal.intercept_[0]),
+            }
+        return {
+            "method": "isotonic",
+            "x": [float(v) for v in cal.X_thresholds_],
+            "y": [float(v) for v in cal.y_thresholds_],
+        }
+
+    def save(self, out_dir: Path | str, extra: dict | None = None) -> dict:
+        """Write one booster per horizon in LightGBM's native text format, plus a manifest.
+
+        Same format as ``BaselineQuantileModel.save``: stable across library
+        versions, hashes cleanly, and loading it runs no code (a pickle does).
+        Calibrators are two-parameter or piecewise-linear maps, so they go into
+        the manifest as plain numbers.
+        """
+        if not self.models:
+            raise ValueError("Model has not been fit yet")
+        out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        files = {}
+        for horizon, model in self.models.items():
+            name = f"spike_{horizon}h.txt"
+            booster = model if isinstance(model, lgb.Booster) else model.booster_
+            booster.save_model(str(out_dir / name))
+            files[str(horizon)] = name
+
+        manifest = {
+            "model": "LightGBMSpikeModel",
+            "horizons": list(self.horizons),
+            "feature_names": self.feature_names,
+            "files": files,
+            "hashes": {
+                name: hashlib.sha256((out_dir / name).read_bytes()).hexdigest()
+                for name in files.values()
+            },
+            "calibrators": {str(h): self._calibrator_params(h) for h in self.horizons},
+            "lightgbm_version": lgb.__version__,
+            "params": self.params,
+            **(extra or {}),
+        }
+        (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True))
+        return manifest
+
+    @classmethod
+    def load(cls, out_dir: Path | str) -> "LightGBMSpikeModel":
+        """Load boosters and verify each against its recorded hash."""
+        out_dir = Path(out_dir)
+        manifest = json.loads((out_dir / "manifest.json").read_text())
+        model = cls(horizons=tuple(manifest["horizons"]), params=manifest.get("params"))
+        model.feature_names = manifest["feature_names"]
+        for h_str, name in manifest["files"].items():
+            digest = hashlib.sha256((out_dir / name).read_bytes()).hexdigest()
+            if digest != manifest["hashes"][name]:
+                raise ValueError(f"{name} does not match its manifest hash")
+            model.models[int(h_str)] = lgb.Booster(model_file=str(out_dir / name))
+        model.calibrators = {
+            int(h): cal for h, cal in manifest.get("calibrators", {}).items() if cal is not None
+        }
+        return model
 
 
 class PlaceholderSpikeModel:

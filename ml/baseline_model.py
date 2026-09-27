@@ -192,7 +192,7 @@ class BaselineQuantileModel:
         return {q: np.asarray(m.predict(X[self.feature_names])) for q, m in self.models.items()}
 
 
-    def save(self, out_dir: Path | str) -> dict:
+    def save(self, out_dir: Path | str, extra: dict | None = None) -> dict:
         """Write boosters in LightGBM's native text format, plus a manifest.
 
         Not pickle: pickles are Python- and library-version fragile, and
@@ -226,6 +226,7 @@ class BaselineQuantileModel:
             "params": {k: v for k, v in self.params.items() if k != "alpha"},
             "training_window": self.training_window,
             "n_train_rows": self.n_train_rows,
+            **(extra or {}),
         }
         (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True))
         return manifest
@@ -345,6 +346,12 @@ def main() -> None:
     parser.add_argument("--folds", type=int, default=6)
     parser.add_argument("--save", action="store_true", help="fit on all data and export")
     parser.add_argument(
+        "--exclude-window",
+        nargs=2,
+        metavar=("START", "END"),
+        help="hold these timestamps out of training, e.g. the days the demo replays",
+    )
+    parser.add_argument(
         "--perfect-weather",
         action="store_true",
         help="use weather actuals as-is (optimistic; deployment sees forecasts)",
@@ -383,11 +390,19 @@ def main() -> None:
 
     if args.save:
         print("\nFitting final model on full history...")
+        train = df
+        if args.exclude_window:
+            lo, hi = (pd.Timestamp(v) for v in args.exclude_window)
+            train = df[(df["ts"] < lo) | (df["ts"] >= hi)]
+            print(f"holding out {lo} -> {hi}: {len(df) - len(train):,} rows")
         final = BaselineQuantileModel().fit(
-            df[FEATURE_COLUMNS], df["net_kwh"], ts=df["ts"]
+            train[FEATURE_COLUMNS], train["net_kwh"], ts=train["ts"]
         )
         out_dir = Path(__file__).resolve().parent / "artifacts" / "baseline"
-        manifest = final.save(out_dir)
+        manifest = final.save(
+            out_dir,
+            extra={"horizon_h": args.horizon, "excluded_window": args.exclude_window},
+        )
         print(f"Saved {out_dir}")
         for name, digest in manifest["hashes"].items():
             print(f"  {name}  sha256={digest[:16]}...")

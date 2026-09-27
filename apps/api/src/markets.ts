@@ -7,6 +7,9 @@ import {
   clearMarket,
   downtown,
   flexOffers,
+  homeLabel,
+  homeResourceId,
+  household,
   kwToWh,
   minEscrowBase,
   participantCommitments,
@@ -30,14 +33,40 @@ import {
 
 import { client, cluster, config, keys } from "./env";
 import { publish } from "./events";
+import { getForecast, sizeHomes } from "./intelligence";
 import { managedWallet } from "./wallets";
 
 export type MarketPhase = "awaiting-signature" | "open" | "committed" | "verified" | "settled";
 
-export interface CommitmentRecord extends ParticipantCommitment {
+export interface PlannedCommitment extends ParticipantCommitment {
+  /** Model baseline for the window (p50, kW). Only for model-sized households. */
+  baselineKw?: number;
+  /** The ResStock home standing in for this household. */
+  modelHome?: string | null;
+}
+
+/**
+ * Who commits how much, decided once and saved before anything goes on-chain,
+ * so a retried confirm always records the same commitments. When the model
+ * service sized the households, the hashes commit to its baselines.
+ */
+export interface CommitmentPlan {
+  source: "model" | "placeholder" | "demo";
+  commitments: PlannedCommitment[];
+  window?: { start: string; end: string };
+  baselineHash?: string;
+  modelHash?: string | null;
+  featuresHash?: string | null;
+}
+
+export interface CommitmentRecord extends PlannedCommitment {
   participant: Address;
   commitment?: Address;
   deliveredKw?: number;
+  /** Meter reading against the committed baseline: delivered = baseline - actual. */
+  meter?: { baselineKw: number; actualKw: number };
+  /** The verify_delivery proof, exactly as hashed on-chain. */
+  proof?: string;
   payoutBase?: bigint;
   signatures: { accept?: Signature; verify?: Signature; settle?: Signature };
 }
@@ -54,6 +83,9 @@ export interface MarketRecord {
   escrowBase: bigint;
   phase: MarketPhase;
   commitments: CommitmentRecord[];
+  plan?: CommitmentPlan;
+  /** The model's view when the market was opened, for the record. */
+  forecast?: { at: string; pSpike: number | null; lockedPricePerKwh: number | null; source: string };
   signatures: { create?: Signature; close?: Signature };
   paidBase?: bigint;
   refundBase?: bigint;
@@ -113,11 +145,16 @@ export function allMarkets(): MarketRecord[] {
 const busy = new Set<string>();
 
 /** One lifecycle step at a time per market; double clicks get a 409. */
-async function step<T>(id: string, expected: MarketPhase, run: (m: MarketRecord) => Promise<T>): Promise<T> {
+async function step<T>(
+  id: string,
+  expected: MarketPhase | MarketPhase[],
+  run: (m: MarketRecord) => Promise<T>,
+): Promise<T> {
   const market = getMarket(id);
   if (busy.has(id)) throw new HttpError(409, "This market is already being updated");
-  if (market.phase !== expected) {
-    throw new HttpError(409, `Market is ${market.phase}; this step needs it to be ${expected}`);
+  const allowed = Array.isArray(expected) ? expected : [expected];
+  if (!allowed.includes(market.phase)) {
+    throw new HttpError(409, `Market is ${market.phase}; this step needs it to be ${allowed.join(" or ")}`);
   }
   busy.add(id);
   try {
@@ -152,6 +189,7 @@ export async function openMarket(authority: Address, maxPricePerKwh: number) {
     endTs: now + 3600n,
     deposit: escrowBase,
   });
+  const forecast = await getForecast("downtown");
 
   const record: MarketRecord = {
     id: marketId.toString(),
@@ -165,6 +203,14 @@ export async function openMarket(authority: Address, maxPricePerKwh: number) {
     escrowBase,
     phase: "awaiting-signature",
     commitments: [],
+    forecast: forecast
+      ? {
+          at: forecast.at,
+          pSpike: forecast.pSpike,
+          lockedPricePerKwh: forecast.valuation.lockedPricePerKwh,
+          source: forecast.source,
+        }
+      : undefined,
     signatures: {},
     createdAt: new Date().toISOString(),
   };
@@ -173,21 +219,88 @@ export async function openMarket(authority: Address, maxPricePerKwh: number) {
   return { market: record, transaction: built.transaction };
 }
 
+/** Most homes the model may be asked to size for one event. */
+const MAX_HOMES = 40;
+
+/**
+ * Turn cleared offers into commitments. Households are sized by the baseline
+ * model when it's reachable: each commits what it can credibly deliver (p10
+ * draw plus its battery), cheapest-first order is kept, and the last home is
+ * trimmed so the total never exceeds what the market accepted. Otherwise every
+ * home commits its battery's hourly limit, as before.
+ */
+async function planCommitments(rows: ReturnType<typeof clearMarket>["rows"]): Promise<CommitmentPlan> {
+  const demo = participantCommitments(rows);
+  const homeRow = rows.find((r) => r.offer.type === "Home batteries" && r.acceptedKw > 0);
+  if (!homeRow) return { source: "demo", commitments: demo };
+
+  const sizing = await sizeHomes({
+    zone: "downtown",
+    homes: Array.from({ length: MAX_HOMES }, (_, i) => homeResourceId(i)),
+    generationKw: household.maxDischargeKw,
+  });
+  if (!sizing) return { source: "demo", commitments: demo };
+
+  // Work in tenths of a kW so the running total can't drift.
+  let remaining = Math.round(homeRow.acceptedKw * 10);
+  const homes: PlannedCommitment[] = [];
+  for (const [i, home] of sizing.homes.entries()) {
+    if (remaining <= 0) break;
+    const tenths = Math.min(Math.floor(home.offerableKw * 10), remaining);
+    if (tenths <= 0) continue;
+    remaining -= tenths;
+    homes.push({
+      resourceId: home.resourceId,
+      label: homeLabel(i),
+      type: homeRow.offer.type,
+      kw: tenths / 10,
+      pricePerKwh: homeRow.offer.pricePerKwh,
+      isDemoHousehold: i === 0,
+      baselineKw: home.baselineKw,
+      modelHome: home.modelHome,
+    });
+  }
+  if (remaining > 0) {
+    console.warn(`Model-sized homes cover ${homeRow.acceptedKw - remaining / 10} of ${homeRow.acceptedKw} kW; using demo sizing`);
+    return { source: "demo", commitments: demo };
+  }
+
+  const firstHome = demo.findIndex((c) => c.type === "Home batteries");
+  const others = demo.filter((c) => c.type !== "Home batteries");
+  return {
+    source: sizing.source,
+    commitments: [...others.slice(0, firstHome), ...homes, ...others.slice(firstHome)],
+    window: sizing.window,
+    baselineHash: sizing.baselineHash,
+    modelHash: sizing.modelHash,
+    featuresHash: sizing.featuresHash,
+  };
+}
+
 /**
  * After the operator's wallet sends create_market: confirm the escrow exists
  * on-chain, then clear the market and record the accepted commitments.
  */
 export function confirmMarket(id: string, signature: Signature | undefined) {
-  return step(id, "awaiting-signature", async (market) => {
-    const onChain = await waitForMarket(market.address);
-    if (onChain.authority !== market.authority) throw new HttpError(400, "Market authority mismatch");
-    market.signatures.create = signature;
-    market.phase = "open";
-    publish({ type: "market.created", marketId: id });
+  // "open" too: if recording commitments failed partway, confirming again
+  // picks up where it stopped.
+  return step(id, ["awaiting-signature", "open"], async (market) => {
+    if (market.phase === "awaiting-signature") {
+      const onChain = await waitForMarket(market.address);
+      if (onChain.authority !== market.authority) throw new HttpError(400, "Market authority mismatch");
+      market.signatures.create = signature;
+      market.phase = "open";
+      publish({ type: "market.created", marketId: id });
+    }
 
-    const { rows } = clearMarket(flexOffers, market.requiredKw, market.maxPricePerKwh);
+    if (!market.plan) {
+      const { rows } = clearMarket(flexOffers, market.requiredKw, market.maxPricePerKwh);
+      market.plan = await planCommitments(rows);
+      // Saved before anything goes on-chain, so a retry records the same commitments.
+      persist();
+    }
     const participants = await Promise.all(
-      participantCommitments(rows).map(async (p) => ({
+      market.plan.commitments.map(async (p) => ({
         ...p,
         participant: await managedWallet(p.resourceId),
         commitment: await commitmentAddress(market.address, p.resourceId),
@@ -239,21 +352,42 @@ async function waitForMarket(address: Address) {
   throw new HttpError(400, "The market wasn't found on-chain. Was the transaction sent?");
 }
 
-/** Demo stand-in for meter data: record each participant's delivery. */
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
+/**
+ * Demo stand-in for meter data: record each participant's delivery. Model-sized
+ * households are measured against the baseline committed when they were
+ * accepted (delivered = baseline - metered draw); the draw itself is still
+ * simulated.
+ */
 export function verifyMarket(id: string) {
   return step(id, "committed", async (market) => {
-    for (const c of market.commitments) c.deliveredKw = simulatedDeliveredKw(c);
+    for (const c of market.commitments) {
+      const delivered = simulatedDeliveredKw(c);
+      if (c.baselineKw === undefined) {
+        c.deliveredKw = delivered;
+        continue;
+      }
+      c.meter = { baselineKw: c.baselineKw, actualKw: round3(c.baselineKw - delivered) };
+      c.deliveredKw = round3(c.meter.baselineKw - c.meter.actualKw);
+    }
     // Retry-safe: only verify commitments still waiting for it on-chain.
     const pending = await withStatus(market, CommitmentStatus.Committed);
     const signatures = await verifyDeliveries(
       client,
       keys.verifier,
       market.address,
-      pending.map((c) => ({
-        commitment: c.commitment!,
-        deliveredWh: kwToWh(c.deliveredKw!),
-        proof: JSON.stringify({ market: market.address, resourceId: c.resourceId, deliveredKw: c.deliveredKw }),
-      })),
+      pending.map((c) => {
+        // Hashed on-chain and kept here so anyone can re-hash it. For
+        // model-sized homes it ties the payout to the committed baseline.
+        c.proof = JSON.stringify({
+          market: market.address,
+          resourceId: c.resourceId,
+          deliveredKw: c.deliveredKw,
+          ...(c.meter && { ...c.meter, baselineHash: market.plan?.baselineHash }),
+        });
+        return { commitment: c.commitment!, deliveredWh: kwToWh(c.deliveredKw!), proof: c.proof };
+      }),
     );
     pending.forEach((c, i) => (c.signatures.verify = signatures[i]));
     market.phase = "verified";

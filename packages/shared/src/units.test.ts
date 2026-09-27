@@ -58,13 +58,13 @@ test("home batteries split into 5 kW homes, the demo household included", async 
 
 test("zip lookup resolves demo addresses and rejects others", async () => {
   const { resolveZip, estimateFlex } = await import("./index");
-  assert.deepEqual(resolveZip("33132"), {
-    zip: "33132",
-    utility: "Florida Power & Light",
-    zone: "Downtown Miami",
-    substation: "Downtown Miami Substation",
+  assert.deepEqual(resolveZip("78701"), {
+    zip: "78701",
+    utility: "Austin Energy",
+    zone: "Downtown Austin",
+    substation: "Downtown Austin Substation",
     feeder: "DT-A",
-    coordinates: [-80.172412, 25.777404],
+    coordinates: [-97.742589, 30.270569],
   });
   assert.equal(resolveZip("10001"), null);
   // 78% charge, 40% reserve: 5.13 kWh above the reserve, capped by the per-event limit.

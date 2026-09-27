@@ -15,6 +15,7 @@ import { GRIDFLEX_PROGRAM_ADDRESS, getUsdcBalance, mintMockUsdc, sendInstruction
 
 import { addressUrl, client, cluster, config, keys, rpcUrl, txUrl } from "./env";
 import { bus, type MarketEvent } from "./events";
+import { getForecast, intelligenceStatus } from "./intelligence";
 import {
   allMarkets,
   confirmMarket,
@@ -70,9 +71,19 @@ function serializeMarket(m: MarketRecord) {
       pricePerKwh: c.pricePerKwh,
       participant: c.participant,
       deliveredKw: c.deliveredKw,
+      baselineKw: c.baselineKw,
+      meter: c.meter,
       payout: money(c.payoutBase),
       settleUrl: txUrl(c.signatures.settle),
     })),
+    plan: m.plan && {
+      source: m.plan.source,
+      window: m.plan.window,
+      baselineHash: m.plan.baselineHash,
+      modelHash: m.plan.modelHash,
+      featuresHash: m.plan.featuresHash,
+    },
+    forecast: m.forecast,
     createdAt: m.createdAt,
     settledAt: m.settledAt,
   };
@@ -85,7 +96,7 @@ const parseAddress = (value: unknown, field: string): Address => {
 
 // --- routes -------------------------------------------------------------------
 
-app.get("/health", (c) =>
+app.get("/health", async (c) =>
   c.json({
     ok: true,
     cluster,
@@ -93,8 +104,12 @@ app.get("/health", (c) =>
     programId: GRIDFLEX_PROGRAM_ADDRESS,
     usdcMint: client.usdcMint,
     verifier: keys.verifier.address,
+    intelligence: await intelligenceStatus(),
   }),
 );
+
+/** The model forecast for a zone, or null (with the dashboard on demo data) when the model service is down. */
+app.get("/forecast/:zone", async (c) => c.json({ forecast: await getForecast(c.req.param("zone")) }));
 
 app.get("/markets/current", (c) => {
   const market = currentMarket();

@@ -8,12 +8,13 @@ Hono on Node, port `8787` (`API_PORT`). State is in memory and mirrored to `.dat
 
 | Method | Path | Does |
 |---|---|---|
-| `GET` | `/health` | Cluster, RPC, program id, USDC mint, verifier. |
+| `GET` | `/health` | Cluster, RPC, program id, USDC mint, verifier, and whether the intelligence service is `online`. |
+| `GET` | `/forecast/:zone` | `{ forecast }` from the [intelligence service](intelligence.md) (P(spike), fair value, suggested price), or `{ forecast: null }` when it isn't running. |
 | `GET` | `/markets/current` | The latest funded market, or `null`. |
 | `GET` | `/markets/:id` | One market with commitments, payouts and explorer links. |
 | `POST` | `/markets` | `{ operatorWallet, maxPricePerKwh }` → unsigned `create_market` transaction (base64) with the escrow amount. |
-| `POST` | `/markets/:id/confirm` | `{ signedTransaction }` (the API broadcasts it) or `{ signature }`. Waits for the escrow on-chain, clears the market, records commitments. |
-| `POST` | `/markets/:id/verify` | Demo meter readings → `verify_delivery` for every commitment. |
+| `POST` | `/markets/:id/confirm` | `{ signedTransaction }` (the API broadcasts it) or `{ signature }`. Waits for the escrow on-chain, clears the market, records commitments (households sized by the baseline model when it's running). Confirming again after a partial failure picks up where it stopped. |
+| `POST` | `/markets/:id/verify` | Demo meter readings → `verify_delivery` for every commitment. Model-sized households are measured against their committed baseline, and the proof includes its hash. |
 | `POST` | `/markets/:id/settle` | Pays every commitment, then closes the market and refunds the operator. |
 | `GET` | `/households/:resourceId` | Managed wallet, live USDC balance, payouts, and tonight's status. |
 | `GET` | `/wallets/:address/usdc` | USDC balance of any wallet. |

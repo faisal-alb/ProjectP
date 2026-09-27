@@ -153,6 +153,10 @@ def main() -> None:
     parser.add_argument("--days", type=int, default=180, help="synthetic only")
     parser.add_argument("--threshold", type=float, default=SPIKE_THRESHOLD_MWH)
     parser.add_argument("--no-cache", action="store_true")
+    parser.add_argument(
+        "--train-end",
+        help="only use rows before this date, so a later replay window stays out of sample",
+    )
     parser.add_argument("--skip-seasonality", action="store_true")
     parser.add_argument(
         "--exclude-regimes",
@@ -181,6 +185,9 @@ def main() -> None:
         before = len(full)
         full = drop_excluded_regimes(full, horizons=HORIZONS)
         print(f"[regime] {before:,} -> {len(full):,} rows after exclusions")
+
+    if args.train_end:
+        full = full[full["ts"] < pd.Timestamp(args.train_end)].reset_index(drop=True)
 
     print(f"Source={args.source}  rows={len(full):,}  span={full['ts'].min()} -> {full['ts'].max()}")
     if args.source == "real":
@@ -218,14 +225,21 @@ def main() -> None:
     model = LightGBMSpikeModel(horizons=HORIZONS)
     model.fit(full[feature_cols], {h: full[f"spike_{h}h"] for h in HORIZONS})
 
-    out_dir = Path(__file__).resolve().parent / "artifacts"
-    out_dir.mkdir(exist_ok=True)
-    model_path = out_dir / "spike_model.pkl"
-    with open(model_path, "wb") as handle:
-        import pickle
-
-        pickle.dump(model, handle)
-    print(f"Saved model to {model_path}")
+    # Native LightGBM text plus a hashed manifest, not a pickle: the intelligence
+    # service loads this, and loading a pickle runs arbitrary code.
+    out_dir = Path(__file__).resolve().parent / "artifacts" / "spike"
+    manifest = model.save(
+        out_dir,
+        extra={
+            "source": args.source,
+            "spike_threshold_mwh": args.threshold,
+            "training_window": [str(full["ts"].min()), str(full["ts"].max())],
+            "n_train_rows": int(len(full)),
+        },
+    )
+    print(f"Saved {out_dir}")
+    for name, digest in manifest["hashes"].items():
+        print(f"  {name}  sha256={digest[:16]}...")
 
 
 if __name__ == "__main__":

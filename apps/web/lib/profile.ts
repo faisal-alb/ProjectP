@@ -64,7 +64,7 @@ export const defaultParticipantProfile: ParticipantProfile = {
 export const defaultOperatorProfile: OperatorProfile = {
   orgName: localUtility,
   orgType: "utility",
-  region: "South Florida",
+  region: "Central Texas",
   warningPercent: 85,
   strategy: "balanced",
   maxNormalPrice: 0.2,

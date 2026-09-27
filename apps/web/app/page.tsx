@@ -60,7 +60,7 @@ const workflowSteps = [
     readout: (
       <WorkflowReadout
         rows={[
-          { label: "Zone", value: "Downtown Miami" },
+          { label: "Zone", value: "Downtown Austin" },
           { label: "Need", value: "800 kW", accent: true },
           { label: "Window", value: "7:00–8:00 PM" },
         ]}
