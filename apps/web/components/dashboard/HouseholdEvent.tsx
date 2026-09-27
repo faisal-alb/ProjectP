@@ -4,6 +4,7 @@ import { Check, Info } from "lucide-react";
 import { primaryButton, secondaryButton } from "@/components/onboarding/controls";
 import { AskGridFlexButton } from "@/components/voice/AskButton";
 import { TxLink } from "./TxLink";
+import { InfoTip } from "@/components/ui/Tooltip";
 
 /** Every state a flex event can be in, from the participant's point of view. */
 export type EventState =
@@ -116,14 +117,14 @@ export function HouseholdEvent({
           {state === "settled" || state === "partial" || state === "verifying" ? (
             <>
               <Fact label="Delivered" value={kwh(ev.deliveredKwh)} mono />
-              <Fact label="Rate" value={`${money(ev.rate)}/kWh`} mono />
+              <Fact label="Rate" value={`${money(ev.rate)}/kWh`} info="What you are paid for each kWh you deliver in this event." mono />
               <Fact label={state === "verifying" ? "Pending payout" : "Paid"} value={money(earned)} mono />
             </>
           ) : (
             <>
               <Fact label="Requested from you" value={kwh(ev.requestedKwh)} mono />
-              <Fact label="Rate" value={`${money(ev.rate)}/kWh`} mono />
-              <Fact label="Estimated earnings" value={money(est)} mono />
+              <Fact label="Rate" value={`${money(ev.rate)}/kWh`} info="What you are paid for each kWh you deliver in this event." mono />
+              <Fact label="Estimated earnings" value={money(est)} info="Energy requested times the rate. You are paid for what your meter shows you delivered, up to this amount." mono />
             </>
           )}
         </dl>
@@ -215,7 +216,7 @@ function ActiveMeter({ ev, earned }: { ev: EventView; earned: number }) {
         <Fact label="Committed" value={kwh(ev.requestedKwh)} mono big />
         <Fact label="Delivered" value={kwh(ev.deliveredKwh)} mono big />
         <Fact label="Time remaining" value={`${ev.minutesLeft} min`} mono big />
-        <Fact label="Estimated earnings" value={money(earned)} mono big />
+        <Fact label="Estimated earnings" value={money(earned)} info="Energy delivered so far times the rate. It is paid out once your meter data confirms the delivery." mono big />
       </dl>
       <p className="mt-4 text-sm text-muted">
         Grid relief so far: <span className="font-mono tabular text-foreground">{ev.reliefPercent}%</span> of what{" "}
@@ -266,10 +267,25 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="tracked-caps text-xs font-medium text-muted">{children}</p>;
 }
 
-function Fact({ label, value, mono = false, big = false }: { label: string; value: string; mono?: boolean; big?: boolean }) {
+function Fact({
+  label,
+  value,
+  info,
+  mono = false,
+  big = false,
+}: {
+  label: string;
+  value: string;
+  info?: string;
+  mono?: boolean;
+  big?: boolean;
+}) {
   return (
     <div>
-      <dt className="text-xs text-muted">{label}</dt>
+      <dt className="flex items-center gap-1.5 text-xs text-muted">
+        {label}
+        {info && <InfoTip label={label}>{info}</InfoTip>}
+      </dt>
       <dd className={`mt-1 font-semibold text-foreground ${big ? "text-xl" : "text-sm"} ${mono ? "font-mono tabular" : ""}`}>
         {value}
       </dd>

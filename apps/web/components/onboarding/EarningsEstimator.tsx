@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { estimateFlex, type ResourceKey } from "@gridflex/shared";
 import { BatteryCharging, PlugZap } from "lucide-react";
 import { SliderRow, Switch } from "./controls";
+import { InfoTip } from "@/components/ui/Tooltip";
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
@@ -114,7 +115,12 @@ export function EarningsEstimator() {
       </div>
 
       <div className="mt-4 flex items-baseline justify-between gap-4 rounded-md border border-border bg-background-raised px-4 py-3">
-        <span className="text-sm text-muted">Could earn per event</span>
+        <span className="inline-flex items-center gap-1.5 text-sm text-muted">
+          Could earn per event
+          <InfoTip label="the estimate" side="bottom">
+            A range from your lowest rate up to $0.25/kWh, for a one-hour event. Real events set their own rates.
+          </InfoTip>
+        </span>
         <span
           className={`font-mono text-xl font-semibold tabular transition-colors duration-200 ${resources.length === 0 ? "text-muted-2" : "text-accent"}`}
           aria-hidden="true"

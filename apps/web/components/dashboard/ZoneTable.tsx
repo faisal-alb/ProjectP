@@ -2,6 +2,7 @@
 
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import type { Zone, ZoneStatus } from "@/lib/demo-data";
+import { InfoTip } from "@/components/ui/Tooltip";
 
 const STATUS: Record<ZoneStatus, { label: string; text: string; bar: string; rank: number }> = {
   high: { label: "Needs flexibility", text: "text-risk", bar: "bg-risk", rank: 0 },
@@ -102,9 +103,21 @@ function FullTable({ zones }: { zones: Zone[] }) {
             <th className="pb-2 pr-3 font-medium">
               <span className="sm:hidden">Peak</span>
               <span className="hidden sm:inline">Tonight&rsquo;s peak vs capacity</span>
+              <span className="ml-1.5 inline-flex align-middle">
+                <InfoTip label="peak versus capacity">
+                  The highest load forecast for tonight, as a share of what the zone can safely carry. Over 100% means the zone would be overloaded.
+                </InfoTip>
+              </span>
             </th>
             <th className="hidden pb-2 pr-3 font-medium sm:table-cell">Peak at</th>
-            <th className="pb-2 text-right font-medium">Room at peak</th>
+            <th className="pb-2 text-right font-medium">
+              <span className="inline-flex items-center gap-1.5">
+                Room at peak
+                <InfoTip label="room at peak" side="bottom">
+                  Capacity minus the forecast peak. A negative number is how far over its limit the zone is expected to go.
+                </InfoTip>
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>

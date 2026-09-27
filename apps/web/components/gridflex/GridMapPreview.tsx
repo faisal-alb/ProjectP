@@ -1,5 +1,6 @@
 import { Battery, Building2, Car, Sun, Zap } from "lucide-react";
 import { downtown, zones } from "@/lib/demo-data";
+import { InfoTip } from "@/components/ui/Tooltip";
 
 const satellites = zones.filter((zone) => zone.name !== downtown.zone).map((zone) => ({
   label: zone.name,
@@ -27,9 +28,19 @@ export function GridMapPreview() {
           <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded border border-risk/50 bg-background-raised px-2 py-0.5 text-[10px] font-medium text-risk">
             {downtown.zone}
           </span>
-          <p className="mt-1 text-xs text-muted">Forecast utilization</p>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+            Forecast utilization
+            <InfoTip label="forecast utilization" side="bottom">
+              Forecast peak load as a share of the zone&rsquo;s capacity. Over 100% means the zone would be overloaded.
+            </InfoTip>
+          </p>
           <p className="font-mono text-xl font-semibold tabular text-risk">107%</p>
-          <p className="mt-2 text-[11px] text-muted">Required flex</p>
+          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted">
+            Required flex
+            <InfoTip label="required flex" side="bottom">
+              Power that must be supplied or shifted locally to bring the zone back under its capacity.
+            </InfoTip>
+          </p>
           <p className="font-mono text-sm font-semibold tabular text-foreground">
             {downtown.requiredFlexKw} kW
           </p>

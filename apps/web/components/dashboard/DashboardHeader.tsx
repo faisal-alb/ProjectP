@@ -12,6 +12,7 @@ import { HouseholdWalletButton } from "./HouseholdWallet";
 import { OperatorWalletButton } from "./OperatorWallet";
 import { useSecretTap } from "./Simulator";
 import { useSolana } from "./SolanaProvider";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 const ROLE_DESCRIPTION: Record<Role, string> = { participant: "Flexibility provider", operator: "Grid operator" };
 
@@ -51,12 +52,16 @@ function NetworkStatus() {
   const { apiStatus, health } = useSolana();
   const online = apiStatus === "online" && health;
   return (
-    <span
-      className="hidden items-center gap-1.5 text-xs text-muted md:inline-flex"
-      title={online ? `Settling in USDC on Solana ${health.cluster}` : "Live settlement is unavailable"}
-    >
-      <span className={`h-1.5 w-1.5 rounded-full ${online ? "bg-normal" : "bg-muted-2"}`} aria-hidden="true" />
-      {online ? "Solana" : apiStatus === "loading" ? "Connecting…" : "Solana offline"}
+    <span className="hidden md:inline-flex">
+      <Tooltip
+        side="bottom"
+        content={online ? `Payments settle in USDC on Solana ${health.cluster}.` : "Live settlement is unavailable right now."}
+      >
+        <span tabIndex={0} className="inline-flex items-center gap-1.5 rounded-sm text-xs text-muted">
+          <span className={`h-1.5 w-1.5 rounded-full ${online ? "bg-normal" : "bg-muted-2"}`} aria-hidden="true" />
+          {online ? "Solana" : apiStatus === "loading" ? "Connecting…" : "Solana offline"}
+        </span>
+      </Tooltip>
     </span>
   );
 }
