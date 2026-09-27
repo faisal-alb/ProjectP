@@ -13,8 +13,8 @@ import { VoiceContext, type VoiceState } from "./context";
 import { VoiceTools } from "./VoiceTools";
 
 /**
- * One voice conversation for the whole dashboard. Any button (the floating one or an
- * inline one) drives the same session, so they all show the same state.
+ * One voice conversation for the whole dashboard. Inline buttons start it or ask into it;
+ * only the floating button shows the live state and ends it.
  */
 export function VoiceAssistantProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -85,9 +85,19 @@ function Controller({ children }: { children: React.ReactNode }) {
     [state, start, endSession],
   );
 
+  const ask = useCallback(
+    (prompt?: string) => {
+      if (state === "idle") void start(prompt);
+      else if (!prompt) return;
+      else if (status === "connected") sendUserMessage(prompt);
+      else pendingPrompt.current = prompt;
+    },
+    [state, status, start, sendUserMessage],
+  );
+
   const value = useMemo(
-    () => ({ state, toggle, error: error ?? (status === "error" ? "The voice connection failed." : null) }),
-    [state, toggle, error, status],
+    () => ({ state, toggle, ask, error: error ?? (status === "error" ? "The voice connection failed." : null) }),
+    [state, toggle, ask, error, status],
   );
 
   return <VoiceContext.Provider value={value}>{children}</VoiceContext.Provider>;

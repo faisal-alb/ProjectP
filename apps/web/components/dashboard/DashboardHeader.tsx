@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { ChevronDown, UserRound } from "lucide-react";
 import { signOut } from "@/app/actions";
@@ -16,10 +17,31 @@ import { Tooltip } from "@/components/ui/Tooltip";
 
 const ROLE_DESCRIPTION: Record<Role, string> = { participant: "Flexibility provider", operator: "Grid operator" };
 
+/**
+ * Marks the header once the page scrolls, so its edge shadow only shows when content is actually
+ * passing underneath. Written to the DOM directly: this changes on scroll, not on render.
+ */
+function useScrollEdge() {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const scrolled = window.scrollY > 2 ? "true" : "false";
+      if (el.dataset.scrolled !== scrolled) el.dataset.scrolled = scrolled;
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+  return ref;
+}
+
 export function DashboardHeader({ role, label }: { role: Role; label: string }) {
   const onLabelTap = useSecretTap();
+  const headerRef = useScrollEdge();
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background">
+    <header ref={headerRef} className="dash-chrome sticky top-0 z-40">
       <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between gap-3 px-5 sm:px-8">
         <div className="flex min-w-0 items-center gap-4">
           <Link href="/" className="shrink-0" aria-label="GridFlex home">

@@ -413,7 +413,11 @@ input[type="range"]:disabled {
   }
 }
 
+/* The floating button is chrome over content, so it's a light glass rather than a solid chip. */
 .voice-fab {
+  --voice-base: color-mix(in srgb, var(--surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
   animation: voice-fab-in 220ms var(--ease-out) both;
 }
 @keyframes voice-fab-in {
@@ -442,5 +446,107 @@ input[type="range"]:disabled {
     50% {
       opacity: 1;
     }
+  }
+}
+
+/* ── Dashboard ──────────────────────────────────────────────────────────────
+   Mostly natural: content sits on solid cards with soft depth. Glass is kept for
+   chrome that floats over content (the header, menus, the Ask button), where the
+   blur says "this is a layer above, and the page carries on underneath". */
+
+/* Header material. The blur lives on ::before, not the header, so menus inside the
+   header can still blur the page beneath them (a backdrop-filter element would
+   otherwise become their backdrop root). */
+.dash-chrome {
+  border-bottom: 1px solid var(--border);
+  transition: box-shadow 240ms var(--ease-out);
+}
+.dash-chrome::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--background) 82%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+}
+/* A scroll edge, not a heavier divider: only once content is passing underneath. */
+.dash-chrome[data-scrolled="true"] {
+  box-shadow: 0 12px 28px -20px rgba(0, 0, 0, 0.9);
+}
+
+/* The current-tab indicator: a 1px bar placed and sized with transforms from JS. */
+.nav-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 2px;
+  background: var(--foreground);
+  transform-origin: left;
+  pointer-events: none;
+}
+.nav-indicator[data-ready] {
+  transition:
+    transform 420ms var(--ease-out),
+    opacity 200ms var(--ease-out);
+}
+
+@layer utilities {
+  /* Cards: solid, softer corners, a faint lit top edge and a shadow that grounds them. */
+  .dash .panel {
+    border-radius: 14px;
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.035),
+      0 1px 2px rgba(0, 0, 0, 0.22),
+      0 10px 28px -16px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Floating menus: a heavier glass than the header, since they sit over busy content. */
+  .glass {
+    background: color-mix(in srgb, var(--background-raised) 80%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(170%);
+    backdrop-filter: blur(24px) saturate(170%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 16px 40px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Each dashboard page settles in on navigation instead of swapping in place. */
+  .page-settle {
+    animation: page-settle 360ms var(--ease-out) backwards;
+  }
+}
+@keyframes page-settle {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dash-chrome::before,
+  .glass {
+    background: var(--background-raised);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .voice-fab {
+    --voice-base: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .dash-chrome::before,
+  .glass {
+    background: var(--background-raised);
+  }
+  .dash-chrome,
+  .glass,
+  .dash .panel {
+    border-color: rgba(255, 255, 255, 0.28);
   }
 }

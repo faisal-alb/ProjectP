@@ -11,8 +11,10 @@ export function PageHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
-        <p className="mt-1 text-sm text-muted">{subtitle}</p>
+        <h1 className="text-[1.75rem] leading-[1.1] font-semibold tracking-[-0.022em] text-foreground sm:text-[2rem]">
+          {title}
+        </h1>
+        <p className="mt-1.5 text-sm text-muted">{subtitle}</p>
       </div>
       {children && <div className="flex flex-wrap items-center gap-4">{children}</div>}
     </div>
