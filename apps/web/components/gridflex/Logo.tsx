@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-/** The GridFlex mark (RebrandKit/ProjectP.png): a light ring and spokes around a hex grid node, for dark surfaces. */
+/** The GridFlex mark: a light ring and spokes around a hex grid node, for dark surfaces. */
 export function Logo({ className = "" }: { className?: string }) {
   return <Image src="/logo.png" alt="" width={32} height={32} className={className} />;
 }
