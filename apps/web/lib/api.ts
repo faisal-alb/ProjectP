@@ -50,7 +50,8 @@ export interface MarketDto {
 
 export interface HealthDto {
   cluster: "localnet" | "devnet" | "mainnet-beta";
-  rpcUrl: string;
+  /** Only sent on localnet. */
+  rpcUrl?: string;
   programId: string;
   usdcMint: string;
   intelligence?: "online" | "offline";
@@ -242,7 +243,7 @@ export function explorerAddressUrl(health: HealthDto, address: string) {
   const base = `https://explorer.solana.com/address/${address}`;
   if (health.cluster === "mainnet-beta") return base;
   if (health.cluster === "devnet") return `${base}?cluster=devnet`;
-  return `${base}?cluster=custom&customUrl=${encodeURIComponent(health.rpcUrl)}`;
+  return `${base}?cluster=custom&customUrl=${encodeURIComponent(health.rpcUrl ?? "http://localhost:8899")}`;
 }
 
 export const clusterLabel = (cluster: HealthDto["cluster"]) =>

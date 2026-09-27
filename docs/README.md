@@ -11,6 +11,7 @@ Start with [Product](product.md) for what we're building and why, then [Architec
 | [Product](product.md) | The problem, the users, what a "Flex" is, the demo scenario | Reference |
 | [Architecture](architecture.md) | The components, what's built and what isn't, the boundaries between them | Reference |
 | [API and data](api-and-data.md) | The running HTTP API and SSE events, plus the planned data model | API built, data model planned |
+| [Deployment](deployment.md) | Docker Compose, Dokploy, secrets, persistence and operations | Devnet demo |
 | [Solana settlement](solana.md) | The on-chain program, USDC escrow, wallets, and how to run it | Built |
 | [Voice agent](voice-agent.md) | The household voice assistant and the Power Plan | Built |
 | [Location map](location-map.md) | The onboarding zone map and its boundary data | Built |

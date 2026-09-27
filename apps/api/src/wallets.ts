@@ -2,10 +2,11 @@
 // manage keys (households, and the other demo resources). Payouts only need
 // the address; the seed is kept encrypted for a future "withdraw" feature.
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createKeyPairSignerFromPrivateKeyBytes, type Address, type KeyPairSigner } from "@solana/kit";
 
+import { writeFileAtomic } from "./files";
 import { cluster, config } from "./env";
 
 interface StoredWallet {
@@ -18,8 +19,7 @@ const file = path.join(config.dataDir, `wallets.${cluster}.json`);
 const wallets: Record<string, StoredWallet> = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
 
 function persist() {
-  mkdirSync(config.dataDir, { recursive: true });
-  writeFileSync(file, JSON.stringify(wallets, null, 2), { mode: 0o600 });
+  writeFileAtomic(file, JSON.stringify(wallets, null, 2), 0o600);
 }
 
 function encrypt(seed: Uint8Array): string {
@@ -42,6 +42,8 @@ export async function managedWallet(resourceId: string): Promise<Address> {
   if (existing) return existing.address;
   const seed = new Uint8Array(randomBytes(32));
   const signer = await createKeyPairSignerFromPrivateKeyBytes(seed);
+  // Another request may have created this wallet while key derivation awaited.
+  if (wallets[resourceId]) return wallets[resourceId].address;
   wallets[resourceId] = { address: signer.address, seed: encrypt(seed) };
   persist();
   return signer.address;

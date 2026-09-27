@@ -1,0 +1,69 @@
+# GridFlex on Dokploy (Docker Compose). See docs/deployment.md.
+#
+# - Domains are attached in Dokploy's Domains tab (web -> 3000, api -> 8787), so
+#   no ports are published here. The intelligence service stays internal.
+# - Values come from Dokploy's Environment tab. Required ones use ${VAR:?}, so a
+#   missing value stops the deploy instead of starting a half-configured app.
+#   Optional ones default explicitly: the code treats an empty string as set.
+# - ../files/ sits next to Dokploy's checkout and survives redeploys; the Mounts
+#   tab writes files there too.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    init: true
+    expose:
+      - "8787"
+    environment:
+      API_PORT: "8787"
+      WEB_ORIGIN: ${WEB_ORIGIN:?set WEB_ORIGIN to the web app's public URL}
+      SOLANA_CLUSTER: ${SOLANA_CLUSTER:-devnet}
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL:-https://api.devnet.solana.com}
+      USDC_MINT: ${USDC_MINT:?set USDC_MINT}
+      WALLET_ENCRYPTION_KEY: ${WALLET_ENCRYPTION_KEY:?set WALLET_ENCRYPTION_KEY}
+      DEPLOYER_KEYPAIR_PATH: /run/keys/deployer.keypair.json
+      VERIFIER_KEYPAIR_PATH: /run/keys/verifier.keypair.json
+      MINT_AUTHORITY_KEYPAIR_PATH: /run/keys/mint-authority.keypair.json
+      INTELLIGENCE_URL: http://intelligence:8000
+      # Behind Dokploy's Traefik: trust X-Forwarded-For for per-client rate limits.
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+    volumes:
+      - ${FILES_DIR:-../files}/api-data:/app/.data
+      - ${FILES_DIR:-../files}/keys:/run/keys:ro
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?set NEXT_PUBLIC_API_URL to the API's public URL}
+        NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
+    restart: unless-stopped
+    init: true
+    expose:
+      - "3000"
+    environment:
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?set BETTER_AUTH_URL to the web app's public URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      ELEVENLABS_AGENT_ID: ${ELEVENLABS_AGENT_ID:-}
+    volumes:
+      - ${FILES_DIR:-../files}/web-data:/app/apps/web/.data
+
+  intelligence:
+    build:
+      context: .
+      dockerfile: services/intelligence/Dockerfile
+    restart: unless-stopped
+    init: true
+    expose:
+      - "8000"
+    environment:
+      REPLAY_AT: ${REPLAY_AT:-}
+    # Trained models (npm run ml:train). Without them the service answers with
+    # placeholder models and says so.
+    volumes:
+      - ${FILES_DIR:-../files}/models:/app/ml/artifacts:ro

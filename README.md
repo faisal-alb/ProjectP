@@ -59,3 +59,5 @@ Optional settings, all in the root `.env`:
 ## Learn more
 
 Start with the [docs index](docs/README.md): [Product](docs/product.md), [Architecture](docs/architecture.md), [API and data](docs/api-and-data.md), [Solana settlement](docs/solana.md).
+
+Deploy the three-service devnet demo with [Docker Compose and Dokploy](docs/deployment.md).
