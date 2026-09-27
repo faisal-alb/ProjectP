@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "e2e": "tsx e2e/settlement.mts"
+    "e2e": "tsx e2e/run.mts",
+    "e2e:legacy": "tsx e2e/settlement.mts"
   },
   "dependencies": {
     "@elevenlabs/react": "^1.15.2",

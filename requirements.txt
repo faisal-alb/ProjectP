@@ -9,3 +9,5 @@ gridstatus>=0.29.1
 requests>=2.31
 pyarrow>=14.0
 s3fs>=2024.2
+# Public ERCOT historical load spreadsheets.
+openpyxl>=3.1

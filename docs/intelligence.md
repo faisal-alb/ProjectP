@@ -1,5 +1,7 @@
 # Intelligence service
 
+The shared dashboard now runs full-day causal forecasting and rolling-horizon dispatch. See [Shared energy day](showcase.md#models-and-physical-response) for current data sources, constraints, assistant tools and validation commands.
+
 The models in `ml/`, served to the app. `services/intelligence` is a small internal Python service (FastAPI). The Node API calls it at fixed points in the market lifecycle and stays the only thing that talks to the browser or to Solana. Models predict here; the API decides what to commit.
 
 ## Where the data comes from

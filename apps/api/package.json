@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.19.0",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
@@ -20,6 +21,7 @@
     "@solana-program/system": "^0.15.0",
     "@solana-program/token": "^0.17.0",
     "@solana/kit": "^8.3.0",
+    "better-sqlite3": "^13.0.3",
     "hono": "^4.13.9"
   }
 }

@@ -132,7 +132,7 @@ export function EarningsEstimator() {
         </span>
       </div>
       <p className="mt-2 text-xs text-muted-2">
-        Illustrative estimate for a one-hour event, from demo rates. Not a promise of payment.
+        Estimated test-token earnings for a one-hour event. Actual payments depend on verified delivery.
       </p>
     </div>
   );

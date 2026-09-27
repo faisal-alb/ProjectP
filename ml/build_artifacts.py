@@ -54,6 +54,7 @@ def main() -> None:
         "--save",
     )
     run("ml.export_replay", "homes", "--horizon", str(BASELINE_HORIZON_H))
+    run("ml.build_run_bundle")
     print("\nDone. Artifacts are in ml/artifacts/.")
 
 

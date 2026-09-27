@@ -101,7 +101,7 @@ export class ApiError extends Error {}
 export async function api<T>(path: string, init?: { method?: "GET" | "POST"; body?: unknown }): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method: init?.method ?? "GET",
-    headers: init?.body ? { "content-type": "application/json" } : undefined,
+    headers: init?.body ? { "content-type": "application/json", Authorization: `Bearer ${sessionStorage.getItem("gridflex-presenter") ?? ""}` } : undefined,
     body: init?.body ? JSON.stringify(init.body) : undefined,
   });
   const json = await res.json().catch(() => ({}));

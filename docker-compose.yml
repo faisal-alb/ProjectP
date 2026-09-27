@@ -19,6 +19,9 @@ services:
       - "8787"
     environment:
       API_PORT: "8787"
+      PRESENTER_ACCESS_CODE: ${PRESENTER_ACCESS_CODE:?set a private presenter access code}
+      RUN_SPEND_LIMIT_BASE: ${RUN_SPEND_LIMIT_BASE:-1000000000}
+      RUN_EVENT_LIMIT_BASE: ${RUN_EVENT_LIMIT_BASE:-100000000}
       WEB_ORIGIN: ${WEB_ORIGIN:?set WEB_ORIGIN to the web app's public URL}
       SOLANA_CLUSTER: ${SOLANA_CLUSTER:-devnet}
       SOLANA_RPC_URL: ${SOLANA_RPC_URL:-https://api.devnet.solana.com}

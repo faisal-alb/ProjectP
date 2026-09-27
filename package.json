@@ -23,7 +23,16 @@
     "solana:faucet": "tsx scripts/solana/faucet.ts",
     "solana:demo": "tsx scripts/solana/demo-flow.ts",
     "solana:generate": "npm run generate -w @gridflex/solana",
-    "solana:api-smoke": "tsx scripts/solana/api-smoke.ts"
+    "solana:api-smoke": "tsx scripts/solana/api-smoke.ts",
+    "run:prepare": ".venv/bin/python -m ml.build_run_bundle",
+    "run:setup": "tsx scripts/solana/setup-run.ts",
+    "test:run": "tsx --test apps/api/src/run-engine.test.ts",
+    "run:rehearse": "node scripts/run-rehearsal.mjs",
+    "run:agent": "node scripts/configure-run-agent.mjs",
+    "test:run-ui": "tsx apps/web/e2e/run.mts",
+    "test:run-models": "tsx scripts/run-model-check.mts",
+    "test:run-scenarios": "tsx scripts/check-scenarios.mts",
+    "test:run-api": "node scripts/check-run-api.mjs"
   },
   "devDependencies": {
     "@gridflex/shared": "*",

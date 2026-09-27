@@ -139,7 +139,7 @@ export function OperatorFlow() {
           )}
           {step < STEPS.length - 1 ? (
             <button type="button" className={primaryButton} disabled={!canContinue} onClick={() => setStep(step + 1)}>
-              {step === 1 ? "Continue with sample data" : "Continue"}
+              {step === 1 ? "Continue with Austin configuration" : "Continue"}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
           ) : (
@@ -268,7 +268,7 @@ function NetworkStep({ profile, patch, heading }: StepProps) {
 
       <h2 className="mt-10 text-lg font-semibold text-foreground">Where GridFlex gets its data</h2>
       <ul className="mt-3 divide-y divide-border border-y border-border">
-        {["Grid simulator", "Weather feed", "Simulated resource network"].map((name) => (
+        {["Grid intelligence", "Historical weather", "Modeled resource network"].map((name) => (
           <li key={name} className="flex items-center justify-between gap-3 py-2.5 text-sm">
             <span className="flex items-center gap-2 text-foreground">
               <Check className="h-4 w-4 text-normal" aria-hidden="true" />

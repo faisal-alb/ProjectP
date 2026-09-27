@@ -9,13 +9,15 @@ import { Logo, Wordmark } from "@/components/gridflex/Logo";
 import { DashboardNav } from "./DashboardNav";
 import { Dropdown } from "./Dropdown";
 import { NotificationBell } from "./Notifications";
-import { HouseholdWalletButton } from "./HouseholdWallet";
-import { OperatorWalletButton } from "./OperatorWallet";
+
 import { useSecretTap } from "./Simulator";
 import { useSolana } from "./SolanaProvider";
 import { Tooltip } from "@/components/ui/Tooltip";
 
-const ROLE_DESCRIPTION: Record<Role, string> = { participant: "Flexibility provider", operator: "Grid operator" };
+const ROLE_DESCRIPTION: Record<Role, string> = {
+  participant: "Flexibility provider",
+  operator: "Grid operator",
+};
 
 /**
  * Marks the header once the page scrolls, so its edge shadow only shows when content is actually
@@ -37,7 +39,13 @@ function useScrollEdge() {
   return ref;
 }
 
-export function DashboardHeader({ role, label }: { role: Role; label: string }) {
+export function DashboardHeader({
+  role,
+  label,
+}: {
+  role: Role;
+  label: string;
+}) {
   const onLabelTap = useSecretTap();
   const headerRef = useScrollEdge();
   return (
@@ -50,15 +58,21 @@ export function DashboardHeader({ role, label }: { role: Role; label: string }) 
             </span>
             <Logo className="h-6 w-6 text-foreground sm:hidden" />
           </Link>
-          <span className="hidden h-4 w-px bg-border sm:block" aria-hidden="true" />
-          <span className="select-none truncate text-sm text-muted" onClick={onLabelTap}>
+          <span
+            className="hidden h-4 w-px bg-border sm:block"
+            aria-hidden="true"
+          />
+          <span
+            className="select-none truncate text-sm text-muted"
+            onClick={onLabelTap}
+          >
             {label}
           </span>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
           <NetworkStatus />
-          {role === "participant" ? <HouseholdWalletButton /> : <OperatorWalletButton />}
+
           <NotificationBell />
           <AccountMenu role={role} label={label} />
         </div>
@@ -77,11 +91,25 @@ function NetworkStatus() {
     <span className="hidden md:inline-flex">
       <Tooltip
         side="bottom"
-        content={online ? `Payments settle in USDC on Solana ${health.cluster}.` : "Live settlement is unavailable right now."}
+        content={
+          online
+            ? `Payments settle in USDC on Solana ${health.cluster}.`
+            : "Live settlement is unavailable right now."
+        }
       >
-        <span tabIndex={0} className="inline-flex items-center gap-1.5 rounded-sm text-xs text-muted">
-          <span className={`h-1.5 w-1.5 rounded-full ${online ? "bg-normal" : "bg-muted-2"}`} aria-hidden="true" />
-          {online ? "Solana" : apiStatus === "loading" ? "Connecting…" : "Solana offline"}
+        <span
+          tabIndex={0}
+          className="inline-flex items-center gap-1.5 rounded-sm text-xs text-muted"
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${online ? "bg-normal" : "bg-muted-2"}`}
+            aria-hidden="true"
+          />
+          {online
+            ? `Solana ${health.cluster}`
+            : apiStatus === "loading"
+              ? "Connecting…"
+              : "Solana offline"}
         </span>
       </Tooltip>
     </span>
@@ -94,7 +122,11 @@ function AccountMenu({ role, label }: { role: Role; label: string }) {
       label="Account"
       trigger={
         <>
-          <UserRound className="h-4 w-4 text-muted" strokeWidth={1.5} aria-hidden="true" />
+          <UserRound
+            className="h-4 w-4 text-muted"
+            strokeWidth={1.5}
+            aria-hidden="true"
+          />
           <ChevronDown className="h-3.5 w-3.5 text-muted" aria-hidden="true" />
         </>
       }
@@ -104,7 +136,9 @@ function AccountMenu({ role, label }: { role: Role; label: string }) {
           <p className="text-xs text-muted">Signed in as</p>
           <p className="mt-0.5 text-sm font-medium text-foreground">{label}</p>
           <p className="mt-0.5 text-xs text-muted">{ROLE_DESCRIPTION[role]}</p>
-          <p className="mt-2 text-xs text-muted-2">All figures on this dashboard are illustrative.</p>
+          <p className="mt-2 text-xs text-muted-2">
+            All figures on this dashboard are illustrative.
+          </p>
           <div className="mt-4 space-y-2 border-t border-border pt-3">
             <form action={signOut}>
               <button

@@ -20,7 +20,7 @@ export function CTASection() {
           <span className="text-volt-gradient">in real time.</span>
         </h2>
         <p className="mx-auto mt-5 max-w-xl text-balance text-muted">
-          Explore the grid simulation and watch GridFlex predict congestion,
+          Explore a complete energy day and watch GridFlex predict congestion,
           coordinate distributed resources, verify delivery, and settle the
           market.
         </p>

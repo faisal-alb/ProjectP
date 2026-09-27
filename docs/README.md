@@ -2,12 +2,13 @@
 
 GridFlex predicts local grid congestion, then lets a grid operator buy flexibility from nearby batteries, EVs, buildings, solar and generators, paid in USDC on Solana.
 
-Start with [Product](product.md) for what we're building and why, then [Architecture](architecture.md) for how the pieces fit.
+Start with [Shared energy day](showcase.md) for the current implementation, setup and validation. [Product](product.md) and [Architecture](architecture.md) retain the original product and system context.
 
 ## Contents
 
 | Doc | Read it to learn | Status |
 |---|---|---|
+| [Shared energy day](showcase.md) | Historical inputs, causal models, shared clock, presenter controls and settlement | Built |
 | [Product](product.md) | The problem, the users, what a "Flex" is, the demo scenario | Reference |
 | [Architecture](architecture.md) | The components, what's built and what isn't, the boundaries between them | Reference |
 | [API and data](api-and-data.md) | The running HTTP API and SSE events, plus the planned data model | API built, data model planned |
@@ -15,7 +16,7 @@ Start with [Product](product.md) for what we're building and why, then [Architec
 | [Solana settlement](solana.md) | The on-chain program, USDC escrow, wallets, and how to run it | Built |
 | [Voice agent](voice-agent.md) | The household voice assistant and the Power Plan | Built |
 | [Location map](location-map.md) | The onboarding zone map and its boundary data | Built |
-| [Forecasting and simulation](forecasting-and-simulation.md) | The grid simulator and forecasting design | Planned (the dashboard uses static demo data) |
+| [Forecasting and simulation](forecasting-and-simulation.md) | The grid simulator and forecasting design | Original design; implemented behavior is in Shared energy day |
 | [Model orchestration](model-orchestration.md) | The Python spike model, valuation, dispatch and event lifecycle | Partly built (models in `ml/`, served by the intelligence service) |
 | [Intelligence service](intelligence.md) | How the trained models reach the app: the forecast, per-home baselines, the replay clock | Built |
 | [Demo and pitch](demo-and-pitch.md) | The two-minute demo script and answers to judges' questions | Reference |
@@ -26,19 +27,17 @@ The design system lives with the web app: [`apps/web/DESIGN.md`](../apps/web/DES
 ## What's built
 
 - **Web app** (`apps/web`): landing page, onboarding for both roles, household and operator dashboards, wallet connection, the voice assistant, the Power Plan, and in-app notifications.
-- **API** (`apps/api`): the market lifecycle (create, commit, verify, settle) over HTTP, with live events over SSE.
+- **API** (`apps/api`): a durable SQLite shared run, minute-level device physics, scenario orchestration, autonomous devnet market lifecycle and SSE snapshots.
 - **Solana program** (`programs/gridflex`): escrow, commitments, verification and payout in USDC.
 - **Shared code** (`packages/shared`, `packages/solana`): unit maths, the Power Plan optimizer, onboarding data and the Solana client.
 - **Models** (`ml/`): an ERCOT price-spike classifier, fair-value price statistics and a per-home baseline, trained on public Austin data.
-- **Intelligence service** (`services/intelligence`): serves those models to the API on a replayed real evening. See [Intelligence service](intelligence.md).
+- **Intelligence service** (`services/intelligence`): causal load and household forecasts, price-spike inference and constrained six-hour dispatch throughout a full historical day.
 
 ## What's not built
 
-- A database. State is in memory and mirrored to `.data/` files; sessions use SQLite (better-auth).
-- The grid simulator and the orchestrator. Zone loads, the congestion forecast and resource lists on the dashboards are illustrative demo data from `packages/shared/src/demo-data.ts`; the price spike outlook and household sizing come from the models.
 - Real utility or meter integrations.
 
-Everything shown in the product is illustrative. Don't present it as real pilots, customers or measurements.
+Historical regional/weather inputs and devnet transactions are real; neighborhood topology, device response and meter delivery are modeled. Source dates and estimates remain visible. There are no connected pilots or physical customer meters.
 
 ## Conventions
 

@@ -166,7 +166,7 @@ export default function Home() {
               <HeroConsole />
             </div>
             <p className="mt-2 text-center text-xs text-muted-2">
-              Console preview with illustrative demo data
+              Energy console · modeled local grid
             </p>
           </div>
         </div>

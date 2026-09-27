@@ -1,11 +1,6 @@
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { HouseholdSettings } from "@/components/dashboard/HouseholdSettings";
+import { RunDashboard } from "@/components/dashboard/RunDashboard";
 import { getRole } from "@/lib/session";
-
-export const metadata: Metadata = { title: "Settings | GridFlex" };
-
-export default async function SettingsPage() {
-  if ((await getRole()) !== "participant") redirect("/dashboard");
-  return <HouseholdSettings />;
+export default async function Page() {
+  const role = await getRole();
+  return <RunDashboard role={role === "operator" ? "operator" : "participant"} view="settings" />;
 }

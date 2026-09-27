@@ -1,11 +1,9 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
 import { Bell, CheckCircle2, Info, TriangleAlert } from "lucide-react";
-import { useMarketStream } from "@/lib/api";
+import { useRun } from "./RunProvider";
 import {
-  addNotification,
-  notificationFor,
   unreadCount,
   type AppNotification,
   type NotificationTone,
@@ -69,10 +67,19 @@ export function NotificationsProvider({ role, children }: { role: Role; children
   const raw = useSyncExternalStore(subscribe, () => read(role), () => EMPTY);
   const notifications = useMemo(() => parse(raw), [raw]);
 
-  useMarketStream((event) => {
-    const next = notificationFor(event, role);
-    if (next) write(role, addNotification(parse(read(role)), next));
-  }, true);
+  const { run } = useRun();
+  useEffect(() => {
+    if (!run) return;
+    const prior = parse(read(role));
+    const items = run.log.filter(e => e.type.startsWith("event.") || e.type === "settlement.pending" || e.type === "telemetry.recovered").slice(-50);
+    const merged = items.map(e => {
+      const id = `${run.id}:${e.seq}`;
+      return { id, title: e.type.replaceAll(".", " "), body: e.message,
+        tone: (e.type === "event.completed" ? "success" : e.type === "settlement.pending" ? "warning" : "info") as NotificationTone,
+        at: prior.find(p => p.id === id)?.at ?? Date.now(), read: prior.find(p => p.id === id)?.read ?? false };
+    }).reverse();
+    if (JSON.stringify(prior) !== JSON.stringify(merged)) write(role, merged);
+  }, [run, role]);
 
   const markAllRead = useCallback(
     () => write(role, parse(read(role)).map((n) => ({ ...n, read: true }))),

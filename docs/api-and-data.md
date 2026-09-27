@@ -1,5 +1,7 @@
 # API and data
 
+The dashboard now uses the durable shared-run API documented in [Shared energy day](showcase.md#apis-and-persistence). The market endpoints below remain available for presenter-authorized manual operations; all market/faucet POST requests require the presenter bearer token.
+
 The HTTP API in `apps/api` runs the market lifecycle and streams live events. The data model and the forecast, grid and resource endpoints further down are the planned design.
 
 ## API

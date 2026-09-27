@@ -32,6 +32,8 @@ import {
 import { rateLimit } from "./rate-limit";
 import { managedWallet } from "./wallets";
 
+import { runRoutes, isPresenter } from "./run-routes";
+
 const app = new Hono();
 app.use("*", cors({ origin: config.webOrigin }));
 app.use("*", bodyLimit({ maxSize: 64 * 1024 }));
@@ -104,6 +106,14 @@ const parseAddress = (value: unknown, field: string): Address => {
   return address(value);
 };
 
+// All money-moving and market mutation routes require presenter authority.
+app.use("*", async (c, next) => {
+  if (c.req.method === "POST" && !c.req.path.startsWith("/runs/") && !isPresenter(c.req.header("Authorization"))) {
+    return c.json({ error: "Presenter access required." }, 401);
+  }
+  await next();
+});
+app.route("/runs", runRoutes);
 // --- routes -------------------------------------------------------------------
 
 app.get("/health", async (c) =>

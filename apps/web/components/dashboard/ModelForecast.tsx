@@ -53,8 +53,7 @@ export function ModelForecast({
       {state.status === "loading" && <p className="mt-2 text-sm text-muted">Loading the forecast…</p>}
       {state.status === "unavailable" && (
         <p className="mt-2 text-sm text-muted">
-          The forecasting service isn&rsquo;t running, so this page shows demo figures. Start it with{" "}
-          <code className="font-mono text-foreground/85">npm run dev</code> once the models are set up.
+          The forecasting service is unavailable. Existing commitments continue; new forecasts will appear when service recovers.
         </p>
       )}
       {state.status === "ready" && (
@@ -65,7 +64,7 @@ export function ModelForecast({
 }
 
 function SourceBadge({ source }: { source: ForecastDto["source"] }) {
-  const label = source === "model" ? "Trained models" : source === "mixed" ? "Partly placeholder" : "Placeholder models";
+  const label = source === "model" ? "Trained models" : source === "mixed" ? "Limited model coverage" : "Forecast unavailable";
   const tone = source === "model" ? "text-normal" : "text-watch";
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${tone}`}>

@@ -7,7 +7,7 @@ import type { Role } from "@/lib/profile";
 
 const TABS: Record<Role, { href: string; label: string }[]> = {
   participant: [
-    { href: "/dashboard", label: "Tonight" },
+    { href: "/dashboard", label: "Overview" },
     { href: "/dashboard/devices", label: "Devices" },
     { href: "/dashboard/earnings", label: "Earnings" },
     { href: "/dashboard/settings", label: "Settings" },

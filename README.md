@@ -2,7 +2,7 @@
 
 A local grid-flexibility market. GridFlex predicts where the grid is about to be congested, lets a grid operator buy relief from nearby batteries, EVs, buildings, solar and generators, and pays participants in USDC on Solana once delivery is verified.
 
-All zone, load and pricing figures in the app are illustrative demo data.
+The dashboard runs a shared 24-hour energy day using public historical data, trained forecasts, modeled devices, and real test-network settlement. See [Shared energy day](docs/showcase.md) for preparation, hidden presenter controls, and validation.
 
 ## Repo layout
 

@@ -302,3 +302,90 @@ def size_event(req: SizeRequest):
         "modelHash": model_hash,
         "featuresHash": features_hash,
     }
+
+# The environment is prepared offline. Public responses never include future rows
+# in decision requests; the run engine alone consumes realized observations.
+_run_bundle = None
+
+def run_bundle():
+    global _run_bundle
+    if _run_bundle is None:
+        import os
+        from .registry import sha256_file
+        folder = Path(os.environ.get('MODEL_DIR', ROOT / 'ml/artifacts')) / 'run'
+        try:
+            manifest = json.loads((folder / 'manifest.json').read_text())
+            if sha256_file(folder / 'bundle.json') != manifest['sha256']:
+                raise ValueError('Bundle checksum mismatch')
+            _run_bundle = json.loads((folder / 'bundle.json').read_text())
+            points = _run_bundle['points']
+            if len(points) != 96 or any(pd.Timestamp(b['at']) - pd.Timestamp(a['at']) != pd.Timedelta(minutes=15) for a,b in zip(points,points[1:])):
+                raise ValueError('Incomplete day')
+        except (OSError, ValueError, KeyError) as error:
+            raise HTTPException(503, 'Historical run bundle is missing or invalid') from error
+    return _run_bundle
+
+@app.get('/run/bundle')
+def get_run_bundle():
+    bundle = dict(run_bundle())
+    bundle['modelHealth'] = {k:v.source for k,v in reg().status.items()}
+    bundle.pop('loadForecasts', None)
+    bundle.pop('baselineForecasts', None)
+    return bundle
+
+class DecisionRequest(BaseModel):
+    at: str
+    minute: int = Field(ge=0,le=1440)
+    zone: str
+    devices: list[dict]
+    state: dict
+    environment: dict
+    faults: list[str] = []
+    maxPricePerKwh: float = Field(.6,ge=.01,le=1)
+
+@app.post('/run/decide')
+def decide_run(req: DecisionRequest):
+    from .optimizer import optimize
+    if req.zone not in ('downtown','north','south','east'):
+        raise HTTPException(404, 'Unknown zone')
+    at = pd.Timestamp(req.at).tz_convert('America/Chicago').tz_localize(None)
+    bundle = run_bundle()
+    f = forecast('downtown', at.isoformat())
+    regional = bundle['loadForecasts'].get(at.floor('15min').isoformat())
+    if regional is None:
+        raise HTTPException(422, 'Forecast timestamp is outside the prepared day')
+    # Ratios transfer regional shape to modeled local load. The geographic
+    # downscaling is explicitly an estimate, not measured feeder demand.
+    current = max(1, req.environment['regionalLoadMw'])
+    zone_load = req.state['loadKw']
+    hourly = [max(0,zone_load * v/current) for v in regional]
+    if 'forecast-error' in req.faults: hourly = [v * .6 for v in hourly]
+    horizon = [hourly[min(i//4,len(hourly)-1)] for i in range(24)]
+    required = [max(0,v - req.state['capacityKw']) for v in horizon]
+    price = min(.6, max(.05, f['valuation']['lockedPricePerKwh'] or .05))
+    if f['source'] != 'model': raise HTTPException(503, 'Trained forecast unavailable')
+    if required[0] > 0:
+        # Congestion procurement has a reliability budget independent of price-spike value.
+        price = max(price, .35)
+    if req.environment['priceMwh'] < 0 and required[0] == 0:
+        price = .05
+    elif f['pSpike'] >= .5 and max(required) == 0:
+        required = [5.0]*24
+    # Baselines use frozen model predictions when available. The known present
+    # load is the causal persistence fallback, identified in the decision.
+    devices = [dict(d) for d in req.devices]
+    source = 'price + load models; persistence device baselines'
+    causal = bundle.get('baselineForecasts', {}).get(at.floor('15min').isoformat())
+    if causal:
+        zone_index = ('downtown','north','south','east').index(req.zone)
+        for i,d in enumerate(devices):
+            if d['kind'] == 'battery': d['baselineKw'] = causal[(i*4+zone_index) % len(causal)]
+        source = 'price + load + causal household baseline models'
+    price = min(price, req.maxPricePerKwh)
+    plan = optimize(devices, required, price, req.minute, req.environment['radiationWm2'], req.faults)
+    return {'id':'', 'at':req.at,'zone':req.zone,'source':source,'modelVersion':bundle['version'],
+      'pSpike':f['pSpike'],'price':price,'requiredKw':round(required[0],3),
+      'uncoveredKw':round(plan['uncoveredKw'],3),'dispatch':plan['dispatch'],
+      'horizonKw':[round(v,3) for v in horizon],
+      'constraints':['Battery reserve and efficiency','EV departure energy','HVAC comfort and rebound','Fuel and solar availability','Offer price limits','Six-hour energy budget'],
+      'reasons':[f['recommendation']['reason'],f"Local forecast {hourly[0]:.1f} kW; modeled limit {req.state['capacityKw']:.1f} kW",f"Optimizer: {plan['status']}"]}
