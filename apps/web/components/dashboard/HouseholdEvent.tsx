@@ -44,6 +44,9 @@ export interface EventView {
   reliefPercent: number;
   paidLabel?: string;
   receiptUrl?: string;
+  /** Plain-language reason for the event, and the conditions behind it. */
+  why?: string;
+  drivers?: string[];
 }
 
 const money = (n: number) => `$${n.toFixed(2)}`;
@@ -64,8 +67,8 @@ export function HouseholdEvent({
   onDecline,
 }: {
   ev: EventView;
-  onParticipate: () => void;
-  onDecline: () => void;
+  onParticipate?: () => void;
+  onDecline?: () => void;
 }) {
   const { state } = ev;
   const est = ev.requestedKwh * ev.rate;
@@ -103,10 +106,10 @@ export function HouseholdEvent({
         {state === "settled" && `You earned ${ev.paidLabel ?? money(earned)}`}
         {state === "partial" && `You earned ${ev.paidLabel ?? money(earned)} for a partial delivery`}
         {state === "verifying" && "Confirming what you delivered"}
-        {state === "active" && `${ev.zone} is drawing on your battery`}
+        {state === "active" && `${ev.zone} is drawing on your energy`}
         {state === "declined" && "You're sitting this one out"}
         {(state === "upcoming" || state === "awaiting" || state === "accepted") &&
-          `${ev.zone} needs flexibility tonight`}
+          `${ev.zone} needs flexibility`}
       </h2>
 
       {state === "active" ? (
@@ -147,7 +150,9 @@ export function HouseholdEvent({
       {state === "accepted" && (
         <p className="mt-4 text-sm text-muted">
           {ev.auto ? "AutoFlex accepted this for you because it matches your rules. " : "You're in. "}
-          Your battery stays above {ev.reserve}% and ends around {ev.batteryAfter}%.
+          {ev.batteryAfter >= 0
+            ? `Your battery stays above ${ev.reserve}% and ends around ${ev.batteryAfter}%.`
+            : "Your devices only help within the limits you set."}
         </p>
       )}
 
@@ -180,18 +185,20 @@ export function HouseholdEvent({
       {STEP_AT[state] !== undefined && <Steps at={STEP_AT[state]!} />}
 
       <div className="mt-5">
-        <AskGridFlexButton prompt="Why is there a grid event tonight, and what does it mean for me?" label="Ask about this event" />
+        <AskGridFlexButton prompt="Why is there a grid event, and what does it mean for me?" label="Ask about this event" />
       </div>
 
       <div className="mt-6 flex gap-2.5 rounded-md border border-border bg-background-raised p-3 text-sm text-muted">
         <Info className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
         <div>
           <p>
-            <span className="font-medium text-foreground">Why this event?</span> {ev.zone}&rsquo;s demand is expected
-            to exceed local capacity around {ev.window.replace(" – ", " and ")}. Your battery is connected to the
-            affected grid zone, so it can help.
+            <span className="font-medium text-foreground">Why this event?</span>{" "}
+            {ev.why ??
+              `${ev.zone}'s demand is expected to exceed local capacity around ${ev.window.replace(" – ", " and ")}. Your battery is connected to the affected grid zone, so it can help.`}
           </p>
-          <p className="mt-1.5 text-xs text-muted-2">High demand · High temperature · Evening peak</p>
+          {ev.drivers && ev.drivers.length > 0 && (
+            <p className="mt-1.5 text-xs text-muted-2">{ev.drivers.join(" · ")}</p>
+          )}
         </div>
       </div>
     </section>
