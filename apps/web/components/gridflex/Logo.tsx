@@ -1,8 +1,8 @@
 import Image from "next/image";
 
-/** The GridFlex mark: ring and spokes in the foreground tone, a green node at the centre. */
+/** The GridFlex mark (RebrandKit/ProjectP.png): a light ring and spokes around a hex grid node, for dark surfaces. */
 export function Logo({ className = "" }: { className?: string }) {
-  return <Image src="/logo.svg" alt="" width={32} height={32} unoptimized className={className} />;
+  return <Image src="/logo.png" alt="" width={32} height={32} className={className} />;
 }
 
 export function Wordmark({ className = "" }: { className?: string }) {
