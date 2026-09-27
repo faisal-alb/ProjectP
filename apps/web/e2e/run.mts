@@ -182,14 +182,16 @@ try {
     await page.getByLabel("Playback speed").selectOption("0");
     await page.getByText("Automatic playback is paused.", { exact: false }).waitFor();
     await page.keyboard.press("Escape");
-    const next = page.getByRole("button", { name: "Next event", exact: true });
+    const guide = page.getByRole("region", { name: "Demo guide" });
+    const next = guide.getByRole("button", { name: /^Next: / });
+    await guide.getByRole("heading", { name: "Fast-forward to the next grid stress" }).waitFor();
     await next.click();
-    await page.getByRole("button", { name: "Advancing…" }).waitFor();
+    await guide.getByRole("button", { name: "Fast-forwarding the day…" }).waitFor();
     await next.waitFor();
     if (advances !== 1) throw Error("Next event was not requested exactly once");
     await page.screenshot({ path: path.join(out, "run-manual-desktop.png"), animations: "disabled" });
     await page.setViewportSize({ width: 390, height: 844 });
-    const a = await next.boundingBox();
+    const a = await guide.boundingBox();
     const b = await page.getByRole("button", { name: "Ask GridFlex with your voice" }).boundingBox();
     if (!a || !b || !(a.y + a.height <= b.y || a.x + a.width <= b.x))
       throw Error("Manual control overlaps the voice button");

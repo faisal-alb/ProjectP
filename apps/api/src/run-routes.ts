@@ -16,9 +16,25 @@ const updates = new EventEmitter();
 updates.setMaxListeners(200);
 const store = new RunStore(config.dataDir);
 store.importLegacy(allMarkets());
-export const runs = new RunEngine(store, runServices, (state) =>
-  updates.emit("snapshot", state),
-);
+// Fast-forwarding saves every simulated minute. Dashboards re-render the whole run per
+// snapshot, so send at most one per interval, always ending on the latest state.
+const SNAPSHOT_INTERVAL_MS = 120;
+let lastSnapshot = 0;
+let trailingSnapshot: NodeJS.Timeout | undefined;
+let latest: RunState | undefined;
+const publish = (state: RunState) => {
+  latest = state;
+  if (trailingSnapshot) return;
+  const wait = SNAPSHOT_INTERVAL_MS - (Date.now() - lastSnapshot);
+  const send = () => {
+    trailingSnapshot = undefined;
+    lastSnapshot = Date.now();
+    updates.emit("snapshot", latest);
+  };
+  if (wait <= 0) send();
+  else trailingSnapshot = setTimeout(send, wait);
+};
+export const runs = new RunEngine(store, runServices, publish);
 runs.startWorker();
 export const runRoutes = new Hono();
 const sessions = new Map<string, number>();

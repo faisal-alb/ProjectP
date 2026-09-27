@@ -7,9 +7,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { FastForward, X } from "lucide-react";
+import { X } from "lucide-react";
 import { SCENARIOS } from "@gridflex/shared";
 import { presenterRequest, useRun } from "./RunProvider";
+import { DemoGuide } from "./DemoGuide";
 import { OperatorWalletButton } from "./OperatorWallet";
 const Context = createContext({
   open: false,
@@ -84,24 +85,14 @@ export function SimulatorPanel() {
   if (!open) {
     if (!unlocked || run?.speed !== 0) return null;
     return (
-      <div className="fixed bottom-24 left-5 z-40 flex max-w-[calc(100vw-2.5rem)] flex-col items-start gap-2 sm:bottom-8 sm:left-8 sm:max-w-80">
-        {error && (
-          <p role="alert" className="rounded-md bg-background-raised px-3 py-2 text-sm text-watch">
-            {error}
-          </p>
-        )}
-        <button
-          type="button"
-          disabled={busy || !connected || run.status === "completed"}
-          aria-busy={busy}
-          onClick={() => void perform("next-event")}
-          className="flex h-12 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-medium text-background shadow-lg disabled:cursor-not-allowed disabled:opacity-50 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
-        >
-          <FastForward size={18} aria-hidden="true" />
-          <span aria-live="polite">
-            {busy ? "Advancing…" : run.status === "completed" ? "Day complete" : "Next event"}
-          </span>
-        </button>
+      <div className="fixed bottom-24 left-5 z-40 max-w-[calc(100vw-2.5rem)] sm:bottom-8 sm:left-8">
+        <DemoGuide
+          run={run}
+          busy={busy}
+          error={error}
+          disabled={!connected}
+          onNext={() => void perform("next-event")}
+        />
       </div>
     );
   }
