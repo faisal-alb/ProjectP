@@ -28,7 +28,7 @@ export function FloatingAskButton() {
         onClick={() => toggle()}
         aria-label={active ? "End voice assistant" : "Ask GridFlex with your voice"}
         data-state={state}
-        className="voice-button voice-fab flex h-12 min-w-44 items-center gap-3 rounded-lg border px-4 text-left shadow-lg shadow-black/30 [--voice-base:var(--surface)]"
+        className="voice-button voice-fab flex h-12 min-w-44 items-center gap-3 rounded-xl border px-4 text-left shadow-lg shadow-black/30"
       >
         <VoiceMeter state={state} />
         <span className="flex flex-col leading-tight">
@@ -44,7 +44,9 @@ export function FloatingAskButton() {
 
 /**
  * An in-page button that opens the same assistant. Pass `prompt` to open with a question,
- * so it's a one-tap "ask about this".
+ * so it's a one-tap "ask about this". It always looks at rest: the floating button is the one
+ * place that shows the live session, and if a session is already running this asks into it
+ * rather than ending it.
  */
 export function AskGridFlexButton({
   prompt,
@@ -55,20 +57,17 @@ export function AskGridFlexButton({
   label?: string;
   className?: string;
 }) {
-  const { state, toggle } = useVoiceAssistant();
-  const active = state !== "idle";
+  const { ask } = useVoiceAssistant();
   return (
     <button
       type="button"
-      onClick={() => toggle(prompt)}
-      aria-label={active ? "End voice assistant" : `${label} with your voice`}
-      data-state={state}
+      onClick={() => ask(prompt)}
+      aria-label={`${label} with your voice`}
+      data-state="idle"
       className={`voice-button inline-flex items-center justify-center gap-2.5 rounded-md border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
-      <VoiceMeter state={state} size="sm" />
-      <span className="min-w-[4.75rem] text-left" aria-live="polite">
-        <StateText state={state} text={active ? STATE_LABEL[state] : label} />
-      </span>
+      <VoiceMeter state="idle" size="sm" />
+      <span className="text-left">{label}</span>
     </button>
   );
 }

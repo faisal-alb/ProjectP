@@ -9,6 +9,8 @@ export interface VoiceAssistant {
   error: string | null;
   /** Start the assistant (optionally opening with a question), or end it if it's running. */
   toggle: (prompt?: string) => void;
+  /** Start the assistant with a question, or ask it into the running session. Never ends it. */
+  ask: (prompt?: string) => void;
 }
 
 export const VoiceContext = createContext<VoiceAssistant | null>(null);
