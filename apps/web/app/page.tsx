@@ -112,7 +112,7 @@ const workflowSteps = [
 
 export default function Home() {
   return (
-    <div id="top" className="home flex flex-1 flex-col">
+    <div className="home flex flex-1 flex-col">
       <Navbar />
 
       {/* HERO */}

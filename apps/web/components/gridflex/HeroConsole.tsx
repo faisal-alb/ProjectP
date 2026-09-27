@@ -1,190 +1,89 @@
+import { Bell, Check, ChevronDown, ChevronRight, Info, Sparkles, UserRound, Wallet } from "lucide-react";
 import {
-  Bell,
-  LayoutGrid,
-  Map as MapIcon,
-  Search,
-  Layers,
-  HandCoins,
-  Cpu,
-  Zap,
-  ShieldCheck,
-} from "lucide-react";
-import {
-  downtown,
-  downtownLoadCurve,
-  flexResources,
-  marketTotals,
+  BATTERY_CHARGE_PERCENT,
+  BATTERY_KWH,
+  BATTERY_MAX_DISCHARGE_KW,
+  defaultZip,
+  household,
+  resolveZip,
   zones,
-  NOW_MINUTES,
-  WINDOW_START_MINUTES,
-  WINDOW_END_MINUTES,
 } from "@/lib/demo-data";
-import { Logo } from "./Logo";
+import { Wordmark } from "./Logo";
 
-/* ── Chart geometry ─────────────────────────────────────────────────────── */
+/*
+ * A static preview of the household dashboard's Tonight page (HouseholdView), in the
+ * app's own tokens (.console-app). Figures are derived the same way the dashboard
+ * derives them for a default participant, so the two stay in step.
+ */
 
-const CW = 620;
-const CH = 220;
-const PAD = { l: 8, r: 40, t: 16, b: 22 };
-const T0 = 14 * 60;
-const T1 = 23 * 60;
-const Y0 = 8.5;
-const Y1 = 13.5;
-const FLEX_CEILING = downtown.capacityMw - 0.15;
+const reserve = household.defaults.reservePercent;
+const availableKwh = ((BATTERY_CHARGE_PERCENT - reserve) / 100) * BATTERY_KWH;
+const requestedKwh =
+  Math.round(Math.min(household.defaults.maxKwhPerEvent, availableKwh, BATTERY_MAX_DISCHARGE_KW) * 10) / 10;
+const batteryAfter = Math.round(BATTERY_CHARGE_PERCENT - (requestedKwh / BATTERY_KWH) * 100);
+const rate = household.eventPricePerKwh;
+const estimated = requestedKwh * rate;
+const month = household.history
+  .filter((h) => h.status === "paid")
+  .reduce((sum, h) => sum + h.kwh * h.pricePerKwh, 0);
+// Earned before this month, as in HouseholdState's EARLIER_EARNINGS.
+const lifetime = month + 61.59;
+const location = resolveZip(defaultZip);
+const feeder = location?.feeder ?? "DT-A";
+const zone = zones.find((z) => z.name === household.zone) ?? zones[0];
 
-const x = (m: number) => PAD.l + ((m - T0) / (T1 - T0)) * (CW - PAD.l - PAD.r);
-const y = (mw: number) => PAD.t + (1 - (mw - Y0) / (Y1 - Y0)) * (CH - PAD.t - PAD.b);
+const money = (n: number) => `$${n.toFixed(2)}`;
 
-type Pt = [number, number];
+const steps = ["Requested", "Accepted", "Delivering", "Verified", "Paid"];
+const DONE = 2;
 
-/** Catmull-Rom through the points, as cubic Béziers. */
-function smooth(pts: Pt[]) {
-  if (pts.length < 2) return "";
-  let d = `M${pts[0][0]},${pts[0][1]}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] ?? pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[i + 2] ?? p2;
-    const c1: Pt = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
-    const c2: Pt = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-    d += ` C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
-  }
-  return d;
-}
-
-const measured = downtownLoadCurve.filter((p) => p.minutes <= NOW_MINUTES);
-const forecast = downtownLoadCurve.filter((p) => p.minutes >= NOW_MINUTES);
-const withFlex = forecast.map((p) => ({
-  minutes: p.minutes,
-  mw:
-    p.minutes >= WINDOW_START_MINUTES - 30 && p.minutes <= WINDOW_END_MINUTES + 30
-      ? Math.min(p.mw, FLEX_CEILING)
-      : p.mw,
-}));
-const toPts = (s: { minutes: number; mw: number }[]): Pt[] => s.map((p) => [x(p.minutes), y(p.mw)]);
-
-const measuredPath = smooth(toPts(measured));
-const forecastPath = smooth(toPts(forecast));
-const flexPath = smooth(toPts(withFlex));
-const areaUnderForecast = `${forecastPath} L${x(forecast.at(-1)!.minutes)},${CH - PAD.b} L${x(forecast[0].minutes)},${CH - PAD.b} Z`;
-
-const peak = downtownLoadCurve.reduce((a, b) => (b.mw > a.mw ? b : a));
-const capY = y(downtown.capacityMw);
-
-const hourTicks = [15, 17, 19, 21].map((h) => ({
-  x: x(h * 60),
-  label: `${h > 12 ? h - 12 : h} PM`,
-}));
-
-/* ── Pieces ─────────────────────────────────────────────────────────────── */
-
-const statusDot = { high: "bg-risk", watch: "bg-watch", normal: "bg-normal" } as const;
-
-const navItems = [
-  { icon: LayoutGrid, label: "Overview", active: true },
-  { icon: MapIcon, label: "Zones" },
-  { icon: Layers, label: "Flex market" },
-  { icon: HandCoins, label: "Settlement" },
-  { icon: Cpu, label: "Devices" },
-];
-
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+/** The voice meter's resting bars, as on the Ask GridFlex button. */
+function Meter() {
   return (
-    <div
-      className={`rounded-xl border border-white/[0.07] bg-gradient-to-b from-white/[0.035] to-white/[0.01] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${className}`}
-    >
-      {children}
-    </div>
-  );
-}
-
-function IconChip({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-muted">
-      {children}
+    <span className="flex h-3 items-center gap-[2px]" aria-hidden="true">
+      {[0.35, 0.6, 1, 0.6, 0.35].map((h, i) => (
+        <span key={i} className="w-[2px] rounded-full bg-accent" style={{ height: `${h * 100}%` }} />
+      ))}
     </span>
   );
 }
 
-function LoadChart() {
+function AskButton({ label }: { label: string }) {
   return (
-    <svg viewBox={`0 0 ${CW} ${CH}`} className="h-auto w-full" aria-hidden="true">
-      <defs>
-        <linearGradient id="hc-area" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#7fb4cc" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#7fb4cc" stopOpacity="0" />
-        </linearGradient>
-        <clipPath id="hc-over">
-          <rect x="0" y="0" width={CW} height={capY} />
-        </clipPath>
-      </defs>
-
-      {/* Gridlines */}
-      {[9, 10, 11, 12, 13].map((mw) => (
-        <g key={mw}>
-          <line x1={PAD.l} x2={CW - PAD.r} y1={y(mw)} y2={y(mw)} stroke="rgba(255,255,255,0.05)" />
-          <text x={CW - PAD.r + 8} y={y(mw) + 3} fontSize="9" fill="#6d6e75" className="font-mono">
-            {mw} MW
-          </text>
-        </g>
-      ))}
-
-      {/* Flex window */}
-      <rect
-        x={x(WINDOW_START_MINUTES)}
-        y={PAD.t}
-        width={x(WINDOW_END_MINUTES) - x(WINDOW_START_MINUTES)}
-        height={CH - PAD.t - PAD.b}
-        fill="rgba(255,255,255,0.035)"
-      />
-      <text x={x(WINDOW_START_MINUTES) + 5} y={CH - PAD.b - 5} fontSize="8.5" fill="#a0a1a8">
-        Flex window
-      </text>
-
-      {/* Now */}
-      <line x1={x(NOW_MINUTES)} x2={x(NOW_MINUTES)} y1={PAD.t} y2={CH - PAD.b} stroke="rgba(255,255,255,0.14)" strokeDasharray="2 3" />
-      <text x={x(NOW_MINUTES) + 4} y={CH - PAD.b - 5} fontSize="8.5" fill="#6d6e75">
-        Now
-      </text>
-
-      {/* Forecast area, and the part that would breach capacity */}
-      <path d={areaUnderForecast} fill="url(#hc-area)" />
-      <path d={areaUnderForecast} fill="#e07a66" opacity="0.28" clipPath="url(#hc-over)" />
-
-      {/* Capacity */}
-      <line x1={PAD.l} x2={CW - PAD.r} y1={capY} y2={capY} stroke="#e07a66" strokeWidth="1.2" />
-      <text x={PAD.l + 2} y={capY - 5} fontSize="8.5" fill="#e07a66">
-        Capacity {downtown.capacityMw.toFixed(1)} MW
-      </text>
-
-      {/* Series */}
-      <path d={measuredPath} fill="none" stroke="#a0a1a8" strokeWidth="1.6" />
-      <path d={forecastPath} fill="none" stroke="#7fb4cc" strokeWidth="1.6" strokeDasharray="4 3" />
-      <path d={flexPath} fill="none" stroke="#eaf5fa" strokeWidth="1.8" />
-
-      {/* Peak marker */}
-      <circle cx={x(peak.minutes)} cy={y(peak.mw)} r="7" fill="#7fb4cc" opacity="0.2" />
-      <circle cx={x(peak.minutes)} cy={y(peak.mw)} r="3" fill="#cfe6f0" stroke="#0c0c0e" strokeWidth="1.5" />
-
-      {/* Axis */}
-      {hourTicks.map((t) => (
-        <text key={t.label} x={t.x} y={CH - 6} fontSize="9" fill="#6d6e75" textAnchor="middle" className="font-mono">
-          {t.label}
-        </text>
-      ))}
-    </svg>
+    <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1.5 text-[12px] font-medium text-foreground">
+      <Meter />
+      {label}
+    </span>
   );
 }
 
-/* ── Console ────────────────────────────────────────────────────────────── */
+function Tile({ label, link, children }: { label: string; link?: string; children: React.ReactNode }) {
+  return (
+    <div className="panel p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="tracked-caps flex items-center gap-1.5 truncate text-[10px] font-medium text-muted">{label}</p>
+        {link && (
+          <span className="flex shrink-0 items-center gap-0.5 text-[10.5px] text-muted">
+            {link}
+            <ChevronRight className="h-3 w-3" />
+          </span>
+        )}
+      </div>
+      <div className="mt-2.5">{children}</div>
+    </div>
+  );
+}
+
+function Stat({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div>
+      <p className="text-[10.5px] text-muted">{label}</p>
+      <p className={`mt-1 text-[13px] font-semibold text-foreground ${mono ? "font-mono tabular" : ""}`}>{value}</p>
+    </div>
+  );
+}
 
 export function HeroConsole() {
-  const committed = marketTotals.committedKw;
-  const cost = marketTotals.estimatedCost;
-  const peakLeft = ((x(peak.minutes) - 0) / CW) * 100;
-  const peakTop = (y(peak.mw) / CH) * 100;
-
   return (
     <div className="relative">
       {/* Lit top edge of the frame */}
@@ -199,223 +98,157 @@ export function HeroConsole() {
 
       <div
         role="img"
-        aria-label={`Preview of the GridFlex operator console: ${downtown.zone} is forecast to reach ${downtown.forecastLoadMw} MW against ${downtown.capacityMw} MW capacity at ${downtown.peakTime}, and ${committed} kW of local flexibility is committed to keep it under the limit.`}
-        className="relative overflow-hidden rounded-[20px] border border-white/[0.09] bg-[#0c0c0e] p-3 shadow-[0_40px_120px_-40px_rgba(127,180,204,0.25)] sm:p-4"
+        aria-label={`Preview of a household's GridFlex dashboard: ${household.zone} needs flexibility tonight from ${household.eventWindow}. AutoFlex accepted ${requestedKwh} kWh from the home battery at ${money(rate)} per kWh, an estimated ${money(estimated)}, keeping the battery above its ${reserve}% reserve.`}
+        className="console-app relative overflow-hidden rounded-[20px] border border-white/[0.09] shadow-[0_40px_120px_-40px_rgba(127,180,204,0.25)]"
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(60%_100%_at_50%_0%,rgba(127,180,204,0.12),transparent)]"
-        />
-
-        <div aria-hidden="true" className="relative grid gap-3 lg:grid-cols-[180px_1fr]">
-          {/* Sidebar */}
-          <aside className="hidden flex-col gap-5 px-2 py-2 lg:flex">
-            <div className="flex items-center gap-2">
-              <Logo className="h-5 w-5" />
-              <span className="tracked-caps text-[12px] font-semibold text-foreground">GridFlex</span>
-            </div>
-            <div>
-              <p className="px-2 text-[10px] font-medium text-muted-2">Console</p>
-              <ul className="mt-2 space-y-0.5">
-                {navItems.map(({ icon: Icon, label, active }) => (
-                  <li
-                    key={label}
-                    className={`flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[12px] ${
-                      active
-                        ? "border border-white/[0.08] bg-white/[0.06] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                        : "border border-transparent text-muted"
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5" strokeWidth={1.6} />
-                    {label}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="px-2 text-[10px] font-medium text-muted-2">Zones</p>
-              <ul className="mt-2 space-y-0.5">
-                {zones.map((z) => (
-                  <li key={z.name} className="flex items-center justify-between px-2 py-1.5 text-[12px] text-muted">
-                    <span className="flex items-center gap-2">
-                      <span className={`h-1.5 w-1.5 rounded-full ${statusDot[z.status]}`} />
-                      {z.name}
-                    </span>
-                    <span className="font-mono text-[10px] tabular text-muted-2">
-                      {Math.round((z.forecastMw / z.capacityMw) * 100)}%
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
-
-          <div className="min-w-0">
-            {/* Top bar */}
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 text-[12px] text-muted-2 sm:max-w-xs">
-                <Search className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">Search zones, feeders, resources</span>
+        <div aria-hidden="true">
+          {/* Header, as DashboardHeader */}
+          <div className="border-b border-border">
+            <div className="flex h-12 items-center justify-between gap-3 px-4 sm:px-6">
+              <div className="flex min-w-0 items-center gap-3">
+                <Wordmark className="scale-90 origin-left" />
+                <span className="hidden h-3.5 w-px bg-border sm:block" />
+                <span className="hidden truncate text-[12px] text-muted sm:block">My energy</span>
               </div>
-              <div className="ml-auto hidden items-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-[11px] text-muted sm:flex">
-                <span className="h-1.5 w-1.5 rounded-full bg-solana-green" />
-                Solana devnet
+              <div className="flex items-center gap-2">
+                <span className="hidden items-center gap-1.5 text-[11px] text-muted md:flex">
+                  <span className="h-1.5 w-1.5 rounded-full bg-normal" />
+                  Solana devnet
+                </span>
+                <span className="hidden items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-[11px] text-foreground sm:flex">
+                  <Wallet className="h-3.5 w-3.5 text-muted" strokeWidth={1.5} />
+                  <span className="font-mono tabular">{lifetime.toFixed(2)}</span>
+                </span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted">
+                  <Bell className="h-3.5 w-3.5" strokeWidth={1.5} />
+                </span>
+                <span className="flex h-7 items-center gap-1 rounded-md border border-border px-2 text-muted">
+                  <UserRound className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  <ChevronDown className="h-3 w-3" />
+                </span>
               </div>
-              <span className="hidden h-9 w-9 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03] text-muted sm:flex">
-                <Bell className="h-3.5 w-3.5" />
+            </div>
+            <div className="flex gap-4 px-4 text-[12px] font-medium sm:px-6">
+              {["Tonight", "Devices", "Earnings", "Settings"].map((t, i) => (
+                <span
+                  key={t}
+                  className={`py-2 ${i === 0 ? "border-b-2 border-foreground text-foreground" : "text-muted"}`}
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="px-4 pt-6 pb-8 sm:px-6">
+            {/* Page header */}
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-2xl font-semibold tracking-tight text-foreground">Good evening</p>
+                <p className="mt-1 text-[12px] text-muted">Your energy is ready to support the grid.</p>
+              </div>
+              <span className="hidden sm:block">
+                <AskButton label="Ask GridFlex" />
               </span>
-              <div className="flex items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] py-1 pl-1 pr-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-b from-[#a9cfe0] to-[#3f6f84] text-[10px] font-semibold text-[#0a1a22]">
-                  CU
-                </span>
-                <span className="text-[11px] leading-tight">
-                  <span className="block font-medium text-foreground">Coastal Utility</span>
-                  <span className="block text-muted-2">Grid operator</span>
-                </span>
+            </div>
+
+            {/* At a glance */}
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <Tile label="Your available flex" link="Devices">
+                <p className="font-mono text-2xl font-semibold tabular text-foreground">{availableKwh.toFixed(1)} kWh</p>
+                <p className="mt-1 text-[10.5px] text-muted">From your battery, above your reserve</p>
+              </Tile>
+              <Tile label="Earned this month" link="History">
+                <p className="font-mono text-2xl font-semibold tabular text-foreground">{money(month)}</p>
+                <p className="mt-1 text-[10.5px] text-muted">
+                  Today $0.00 · Lifetime {money(lifetime)}
+                </p>
+              </Tile>
+              <Tile label={`Grid status · ${household.zone} ${feeder}`}>
+                <p className="text-2xl font-semibold tracking-tight text-watch">WATCH</p>
+                <p className="mt-1 text-[10.5px] text-muted">
+                  Load {zone.currentMw.toFixed(1)} MW, peaking {zone.peakTime}
+                </p>
+              </Tile>
+            </div>
+
+            {/* Tonight's event, as HouseholdEvent */}
+            <div className="panel mt-3 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="tracked-caps text-[10px] font-medium text-muted">GridFlex event</p>
+                <p className="flex items-center gap-1.5 text-[11px] font-medium text-normal">
+                  <span className="h-1.5 w-1.5 rounded-full bg-normal" />
+                  Automatically accepted
+                </p>
+              </div>
+              <p className="mt-2 text-lg font-semibold tracking-tight text-foreground">
+                {household.zone} needs flexibility tonight
+              </p>
+
+              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <Stat label="When" value={household.eventWindow.replace(" – ", "–")} mono={false} />
+                <Stat label="Requested from you" value={`${requestedKwh.toFixed(1)} kWh`} />
+                <Stat label="Rate" value={`${money(rate)}/kWh`} />
+                <Stat label="Estimated earnings" value={money(estimated)} />
+              </div>
+
+              <p className="mt-4 text-[12px] text-muted">
+                AutoFlex accepted this for you because it matches your rules. Your battery stays above {reserve}% and
+                ends around {batteryAfter}%.
+              </p>
+
+              <div className="mt-4 grid grid-cols-5 gap-1.5">
+                {steps.map((step, i) => (
+                  <div key={step}>
+                    <div className={`h-0.5 rounded-full ${i < DONE ? "bg-normal" : "bg-white/[0.1]"}`} />
+                    <p className={`mt-1.5 flex min-w-0 items-center gap-1 text-[9.5px] sm:text-[10.5px] ${i < DONE ? "text-foreground" : "text-muted-2"}`}>
+                      {i === 0 && <Check className="hidden h-3 w-3 shrink-0 text-muted sm:block" />}
+                      <span className="truncate">{step}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 flex gap-2 rounded-md border border-border p-3 text-[11.5px]">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted" strokeWidth={1.5} />
+                <p className="text-muted">
+                  <span className="font-medium text-foreground">Why this event?</span> {household.zone}&rsquo;s demand is
+                  expected to exceed local capacity around 7:00 and 8:00 PM. Your battery is connected to the affected grid
+                  zone, so it can help.
+                </p>
               </div>
             </div>
 
-            <div className="mt-3 grid gap-3 md:grid-cols-[1fr_260px]">
-              {/* Forecast card */}
-              <Card className="min-w-0 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <IconChip>
-                      <Zap className="h-3.5 w-3.5" strokeWidth={1.6} />
-                    </IconChip>
-                    <div>
-                      <p className="text-[13px] font-semibold text-foreground">{downtown.zone} load</p>
-                      <p className="text-[10.5px] text-muted-2">Forecast updated 4:30 PM</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1 rounded-lg border border-white/[0.07] bg-white/[0.02] p-0.5 font-mono text-[10px]">
-                    {["1h", "6h", "Today", "7d"].map((t) => (
-                      <span
-                        key={t}
-                        className={`rounded-md px-2 py-1 ${t === "Today" ? "bg-white/[0.08] text-foreground" : "text-muted-2"}`}
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-                  <div>
-                    <p className="text-[10.5px] text-muted-2">Forecast peak</p>
-                    <p className="font-mono text-xl font-semibold tabular text-foreground">
-                      {downtown.forecastLoadMw.toFixed(1)}
-                      <span className="ml-1 text-xs text-muted">MW</span>
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10.5px] text-muted-2">Overload risk</p>
-                    <p className="font-mono text-xl font-semibold tabular text-risk">{downtown.riskPercent}%</p>
-                  </div>
-                  <div>
-                    <p className="text-[10.5px] text-muted-2">With GridFlex</p>
-                    <p className="font-mono text-xl font-semibold tabular text-volt-bright">
-                      {FLEX_CEILING.toFixed(2)}
-                      <span className="ml-1 text-xs text-muted">MW</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="relative mt-3">
-                  <LoadChart />
-                  <div
-                    className="absolute hidden -translate-x-1/2 -translate-y-[calc(100%+12px)] rounded-lg border border-white/[0.1] bg-[#18181b]/95 px-2.5 py-1.5 shadow-lg sm:block"
-                    style={{ left: `${peakLeft}%`, top: `${peakTop}%` }}
-                  >
-                    <p className="font-mono text-[11px] font-semibold tabular text-foreground">
-                      {peak.mw.toFixed(1)} MW
-                    </p>
-                    <p className="text-[9.5px] text-muted-2">{downtown.peakTime} forecast</p>
-                  </div>
-                </div>
-
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-muted">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-px w-3 bg-muted" /> Measured
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-px w-3 border-t border-dashed border-volt" /> Forecast
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-0.5 w-3 bg-[#eaf5fa]" /> With committed flexibility
-                  </span>
-                </div>
-              </Card>
-
-              {/* Right column */}
-              <div className="flex min-w-0 flex-col gap-3">
-                <Card className="p-4">
-                  <div className="flex items-center gap-2.5">
-                    <IconChip>
-                      <Layers className="h-3.5 w-3.5" strokeWidth={1.6} />
-                    </IconChip>
-                    <div>
-                      <p className="text-[13px] font-semibold text-foreground">Flexibility request</p>
-                      <p className="text-[10.5px] text-muted-2">{downtown.window}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex items-baseline justify-between">
-                    <span className="text-[11px] text-muted">Committed</span>
-                    <span className="font-mono text-[12px] tabular text-foreground">
-                      {committed}
-                      <span className="text-muted-2"> / {marketTotals.requestedKw} kW</span>
-                    </span>
-                  </div>
-                  <div className="mt-2 flex h-1.5 gap-0.5 overflow-hidden rounded-full">
-                    {flexResources.map((r, i) => (
-                      <span
-                        key={r.label}
-                        className="h-full"
-                        style={{
-                          width: `${(r.kw / marketTotals.requestedKw) * 100}%`,
-                          background: `color-mix(in srgb, #7fb4cc ${100 - i * 16}%, #1c2b33)`,
-                        }}
-                      />
-                    ))}
-                  </div>
-
-                  <ul className="mt-3 space-y-1.5">
-                    {flexResources.map((r, i) => (
-                      <li key={r.label} className="flex items-center justify-between text-[11px]">
-                        <span className="flex min-w-0 items-center gap-2 text-muted">
-                          <span
-                            className="h-1.5 w-1.5 shrink-0 rounded-sm"
-                            style={{ background: `color-mix(in srgb, #7fb4cc ${100 - i * 16}%, #1c2b33)` }}
-                          />
-                          <span className="truncate">{r.label}</span>
-                        </span>
-                        <span className="font-mono tabular text-foreground/85">{r.kw} kW</span>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-
-                <Card className="p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2.5">
-                      <IconChip>
-                        <ShieldCheck className="h-3.5 w-3.5 text-solana-purple" strokeWidth={1.6} />
-                      </IconChip>
-                      <span className="text-[13px] font-semibold text-foreground">USDC escrow</span>
-                    </span>
-                    <span className="rounded-md border border-normal/30 px-1.5 py-0.5 text-[9.5px] font-medium text-normal">
-                      Locked
-                    </span>
-                  </div>
-                  <p className="mt-3 font-mono text-xl font-semibold tabular text-foreground">
-                    {cost.toFixed(2)}
-                    <span className="ml-1 text-xs text-muted">USDC</span>
+            {/* Tonight's Power Plan, as PowerPlan (fades out below) */}
+            <div className="panel mt-3 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="tracked-caps flex items-center gap-1.5 text-[10px] font-medium text-accent">
+                    <Sparkles className="h-3 w-3" strokeWidth={1.5} />
+                    Energy copilot
                   </p>
-                  <p className="mt-1 text-[10.5px] text-muted-2">
-                    Paid on verified delivery · recorded on Solana
+                  <p className="mt-2 text-base font-semibold text-foreground">Tonight&rsquo;s Power Plan</p>
+                  <p className="mt-0.5 text-[11.5px] text-muted">
+                    Grid stress 7:00 to 8:00 PM · about <span className="font-mono text-foreground">$0.90</span> if you follow it
                   </p>
-                </Card>
+                </div>
+                <AskButton label="Explain plan" />
+              </div>
+              <div className="mt-4 flex items-start justify-between gap-3 border-t border-border pt-4">
+                <div className="flex gap-3">
+                  <span className="text-[11px] text-muted-2">1</span>
+                  <div>
+                    <p className="text-[12.5px] font-medium text-foreground">
+                      Discharge your battery{" "}
+                      <span className="tracked-caps ml-1 text-[9px] font-semibold text-accent">Best</span>
+                    </p>
+                    <p className="mt-0.5 text-[11.5px] text-muted">
+                      Share {requestedKwh.toFixed(1)} kWh during the event. Battery ends around {batteryAfter}%, above your{" "}
+                      {reserve}% reserve.
+                    </p>
+                  </div>
+                </div>
+                <span className="font-mono text-[12.5px] font-semibold tabular text-foreground">+{money(estimated)}</span>
               </div>
             </div>
           </div>
