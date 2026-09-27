@@ -1,17 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, BatteryCharging, ShieldCheck, Wallet } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { EarningsEstimator } from "@/components/onboarding/EarningsEstimator";
 import { getRole } from "@/lib/session";
 
 export const metadata = {
   title: "Get started | GridFlex",
 };
-
-const facts = [
-  { icon: BatteryCharging, label: "Batteries, EVs, solar and flexible loads" },
-  { icon: ShieldCheck, label: "You set the limits, GridFlex stays inside them" },
-  { icon: Wallet, label: "Paid in USDC for the flexibility you deliver" },
-];
 
 const rise = (ms: number) => ({ "--rise-delay": `${ms}ms` }) as React.CSSProperties;
 
@@ -32,9 +27,12 @@ export default async function OnboardingPage() {
           Put your battery, EV, solar, or flexible energy use to work. Choose what to share,
           set your limits, and earn for the flexibility you provide.
         </p>
+        <div className="rise mt-8" style={rise(160)}>
+          <EarningsEstimator />
+        </div>
         <div
-          className="rise mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4"
-          style={rise(160)}
+          className="rise mt-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4"
+          style={rise(240)}
         >
           <Link
             href="/onboarding/participant"
@@ -45,14 +43,6 @@ export default async function OnboardingPage() {
           </Link>
           <p className="text-sm text-muted">About 2 minutes to set up</p>
         </div>
-        <ul className="rise mt-10 divide-y divide-border border-y border-border" style={rise(240)}>
-          {facts.map(({ icon: Icon, label }) => (
-            <li key={label} className="flex items-center gap-3 py-3 text-sm text-muted">
-              <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-              {label}
-            </li>
-          ))}
-        </ul>
       </section>
 
       <section
