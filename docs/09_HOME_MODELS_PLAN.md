@@ -253,10 +253,41 @@ storage keyed by hash.
 
 ---
 
+### 2.6 p10 coverage: accepted risk, not a defect
+
+Walk-forward p10 coverage runs **8.3-19.3% against a 10% target** (macro 12.6%).
+Cause is seasonal distribution shift: one calendar year of ResStock means every
+test fold lands in a season absent from training, and coverage tracks the
+train/test load-level gap almost directly (fold 3, +3% shift -> 8.3%; fold 4,
+-32% shift -> 19.3%).
+
+Measured cost is small, because the misses are shallow:
+
+| fold | coverage | shortfall as % of committed kWh |
+|---|---|---|
+| 2 | 16.3% | 1.1% |
+| 4 | 19.3% | 3.0% |
+| macro | 12.6% | **1.9%** |
+
+Note fold 2 has near-worst coverage and the *lowest* shortfall -- frequency and
+magnitude are different quantities, and sizing off frequency alone overstates
+the exposure by roughly 10x.
+
+**Decision: do not fix.** Committing `OVER_PROCUREMENT_FACTOR = 1.03` absorbs
+the worst observed fold. Conformal calibration would tighten coverage to 10.7%
+but costs 4.7% MAE on the settlement baseline -- the number behind every payout
+-- to recover ~2% on commitment sizing. The 3% premium is cheaper than the fix.
+
+Revisit if metered data replaces ResStock, or if multi-year history makes the
+seasonal shift disappear on its own.
+
+---
+
 ## 5. Open decisions
 
-1. **Household data source** — ResStock, Pecan Street, or accept simulator-only
-   for the demo with accuracy claims explicitly scoped out. Blocks §2.
+1. ~~**Household data source**~~ — resolved: ResStock AMY2018, 50 Travis County
+   homes. AMY2012 evaluated and rejected (different homes, ~20% file coverage,
+   no measured gain).
 2. **Price estimator** — mean ($1,033), median ($627), or trimmed ($882), and
    how much of the gap is declared as `risk_buffer` versus margin.
 3. **Threshold** — 0.50 recommended; 0.70 if participant retention dominates.

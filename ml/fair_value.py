@@ -52,6 +52,18 @@ BLOCK_LABELS = ["night", "midday", "peak", "evening"]
 
 MIN_STRATUM_OBS = 30
 
+# Accepted risk, not a defect. The baseline model's p10 coverage runs 8.3-19.3%
+# across walk-forward folds against a 10% target, because a single calendar year
+# of ResStock means every test fold is a season absent from training. The misses
+# are shallow, though: measured shortfall is 1.1-3.0% of committed kWh (macro
+# 1.9%), so committing slightly above the requirement absorbs it.
+#
+# Deliberately not fixed. Conformal calibration tightens coverage to 10.7% but
+# costs 4.7% MAE on the settlement baseline -- the number that sets every payout
+# -- to recover ~2% on commitment sizing. Bad trade. This factor is the
+# insurance premium paid instead.
+OVER_PROCUREMENT_FACTOR = 1.03
+
 
 def add_strata(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
@@ -218,12 +230,53 @@ def value_event(
     )
 
 
+def select_homes(
+    offerable_kw: pd.Series,
+    required_flex_kw: float,
+    window_hours: float,
+    last_dispatched: pd.Series | None = None,
+    events_this_month: pd.Series | None = None,
+    fatigue_cap: int = 4,
+    over_procurement: float = OVER_PROCUREMENT_FACTOR,
+) -> pd.Series:
+    """Pick enough homes to cover the requirement, respecting fatigue caps.
+
+    Greedy by least-recently-dispatched rather than by cheapest: at this fleet
+    size greedy lands within a percent of an LP optimum, it is trivially
+    auditable on-chain, and rotating is defensible to a participant in a way
+    that "the optimiser picked you again" is not.
+
+    Targets ``required_flex_kw x over_procurement`` because commitments are not
+    always met; see ``OVER_PROCUREMENT_FACTOR``.
+    """
+    eligible = offerable_kw[offerable_kw > 0]
+    if events_this_month is not None:
+        under_cap = events_this_month.reindex(eligible.index).fillna(0) < fatigue_cap
+        eligible = eligible[under_cap]
+
+    if last_dispatched is not None:
+        order = last_dispatched.reindex(eligible.index).fillna(pd.Timestamp.min).sort_values().index
+    else:
+        order = eligible.sort_values(ascending=False).index
+
+    target_kw = required_flex_kw * over_procurement
+    running, chosen = 0.0, []
+    for home in order:
+        if running >= target_kw:
+            break
+        chosen.append(home)
+        running += eligible[home]
+    return eligible[chosen]
+
+
 def size_event(
     valuation: Valuation,
     offerable_kw: np.ndarray,
     window_hours: float,
     min_locked_price: float = 0.02,
     min_event_kwh: float = 10.0,
+    required_flex_kw: float | None = None,
+    over_procurement: float = OVER_PROCUREMENT_FACTOR,
 ) -> dict:
     """Turn a valuation plus per-home offers into a committed event.
 
@@ -234,15 +287,31 @@ def size_event(
     total_kwh = float(committed.sum())
     collateral = valuation.locked_price * total_kwh
 
+    # The fleet may be unable to cover the requirement -- too small, or too many
+    # homes at their fatigue cap. Report it rather than quietly committing less
+    # than the zone needs.
+    target_kwh = None
+    coverage = None
+    if required_flex_kw is not None:
+        target_kwh = required_flex_kw * over_procurement * window_hours
+        coverage = total_kwh / target_kwh if target_kwh else float("nan")
+
     skip = None
     if valuation.locked_price <= min_locked_price:
         skip = f"locked_price {valuation.locked_price:.4f} <= min {min_locked_price}"
     elif total_kwh < min_event_kwh:
         skip = f"committed {total_kwh:.1f} kWh < min {min_event_kwh}"
+    elif coverage is not None and coverage < 1.0:
+        skip = (
+            f"fleet covers {total_kwh:.1f} of {target_kwh:.1f} kWh needed "
+            f"({coverage:.0%}); requirement unmet"
+        )
 
     return {
         "n_homes": int(len(committed)),
         "committed_kwh": total_kwh,
+        "target_kwh": target_kwh,
+        "coverage": coverage,
         "locked_price_per_kwh": valuation.locked_price,
         "collateral": float(collateral),
         "expected_revenue": float(valuation.fair_value * total_kwh),
