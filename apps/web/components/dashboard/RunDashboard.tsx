@@ -437,7 +437,7 @@ function Metric({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-function ForecastChart({ run, zone }: { run: RunState; zone: ZoneId }) {
+export function ForecastChart({ run, zone }: { run: RunState; zone: ZoneId }) {
   const points = run.decisions.filter((d) => d.zone === zone);
   const max = Math.max(
     70,

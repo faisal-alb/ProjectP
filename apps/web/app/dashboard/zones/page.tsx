@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { RunDashboard } from "@/components/dashboard/RunDashboard";
 import { getRole } from "@/lib/session";
+
+export const metadata: Metadata = { title: "Zones | GridFlex" };
+
 export default async function Page() {
-  const role = await getRole();
-  return <RunDashboard role={role === "operator" ? "operator" : "participant"} view="zones" />;
+  if ((await getRole()) !== "operator") redirect("/dashboard");
+  return <RunDashboard role="operator" view="zones" />;
 }

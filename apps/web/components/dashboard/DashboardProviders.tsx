@@ -1,6 +1,7 @@
 "use client";
 
 import type { ParticipantProfile, Role } from "@/lib/profile";
+import { HomeProvider, homeFrom } from "./HomeContext";
 import { RunProvider } from "./RunProvider";
 import { NotificationsProvider } from "./Notifications";
 import { OperatorWalletProvider } from "./OperatorWallet";
@@ -10,6 +11,7 @@ import { VoiceAssistantProvider } from "../voice/VoiceAssistantProvider";
 
 export function DashboardProviders({
   role,
+  household,
   children,
 }: {
   role: Role;
@@ -23,7 +25,13 @@ export function DashboardProviders({
           <SimulatorProvider>
             <OperatorWalletProvider>
               <VoiceAssistantProvider role={role}>
-                {children}
+                {role === "participant" && household ? (
+                  <HomeProvider home={homeFrom(household.zone, household.feeder, household.profile.resources)}>
+                    {children}
+                  </HomeProvider>
+                ) : (
+                  children
+                )}
                 <SimulatorPanel />
               </VoiceAssistantProvider>
             </OperatorWalletProvider>
