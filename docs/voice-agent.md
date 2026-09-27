@@ -17,7 +17,23 @@ Next route (signed URL)        VoiceTools → dashboard snapshot (read-only)
    `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`.
 2. Create an agent in ElevenLabs, set **authentication on** (so it needs a signed URL), then add the
    **client tools** below (Tools → Add tool → Client, "wait for response" on).
-3. Paste the system prompt below.
+3. Turn on the **End conversation** system tool (Tools → System tools → `end_call`), so the agent
+   can hang up when the household is done.
+4. Paste the system prompt below.
+5. Optional: under Advanced → Client events, turn on `vad_score` and `tentative_user_transcript`.
+   The idle timer (below) already watches the mic locally; these just make it surer you're mid-sentence.
+
+## Ending a conversation
+
+A session ends in one of three ways:
+
+- **The agent hangs up.** When the household says they're done, the agent says a short goodbye and
+  calls the built-in `end_call` system tool. The SDK disconnects and the button returns to "Ask GridFlex".
+- **It goes quiet.** `VoiceAssistantProvider` ends the session 10 s after GridFlex finishes speaking
+  if nothing happens. It counts as activity if the mic rises above the room's noise floor, if the server
+  sends a transcript or VAD score, or if the agent is replying or calling a tool. The floating button
+  says "Ending soon" for the last 3 s.
+- **The household taps the floating button.**
 
 ## Client tools
 
@@ -47,6 +63,9 @@ All return small JSON and change nothing. Names must match `apps/web/components/
 > ranking is already decided by GridFlex's optimizer: explain it in the order given and use its reasons,
 > never re-rank or invent actions, and never suggest sending generator power to the grid. If the plan
 > has a caveat, mention it. Call `highlight_element` with "plan" while you talk. If asked, say so and point to the control on screen.
+>
+> After answering, don't ask open-ended follow-ups like "anything else?" every time. When the household
+> says they're done ("thanks", "that's all", "bye"), say a short goodbye and call `end_call`.
 
 ## Not built yet
 
