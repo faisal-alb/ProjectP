@@ -6,7 +6,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
     <div className="flex flex-1 flex-col">
       <header className="relative z-10">
         <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between px-5 sm:px-8">
-          <Link href="/onboarding" aria-label="GridFlex, back to the start">
+          <Link href="/" aria-label="GridFlex, back to the homepage">
             <Wordmark />
           </Link>
         </div>
