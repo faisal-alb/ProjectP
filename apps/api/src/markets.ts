@@ -1,7 +1,8 @@
 // Market lifecycle orchestration: the off-chain half of each step (matching,
 // meter simulation) plus the on-chain calls, with state kept per market.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { writeFileAtomic } from "./files";
 import type { Address, Signature } from "@solana/kit";
 import {
   clearMarket,
@@ -115,8 +116,7 @@ const markets = new Map<string, MarketRecord>(
 );
 
 function persist() {
-  mkdirSync(config.dataDir, { recursive: true });
-  writeFileSync(
+  writeFileAtomic(
     file,
     JSON.stringify([...markets.values()], (_, v) => (typeof v === "bigint" ? v.toString() : v), 2),
   );
@@ -143,6 +143,7 @@ export function allMarkets(): MarketRecord[] {
 // --- lifecycle --------------------------------------------------------------
 
 const busy = new Set<string>();
+let nextMarketId = [...markets.values()].reduce((max, m) => m.marketId > max ? m.marketId : max, 0n);
 
 /** One lifecycle step at a time per market; double clicks get a 409. */
 async function step<T>(
@@ -160,7 +161,7 @@ async function step<T>(
   try {
     return await run(market);
   } catch (error) {
-    publish({ type: "market.failed", marketId: id, data: { message: (error as Error).message } });
+    publish({ type: "market.failed", marketId: id, data: { message: "Market update failed; retry the operation." } });
     throw error instanceof HttpError ? error : new HttpError(502, (error as Error).message);
   } finally {
     busy.delete(id);
@@ -176,7 +177,9 @@ export async function openMarket(authority: Address, maxPricePerKwh: number) {
   const requiredWh = kwToWh(downtown.requiredFlexKw);
   const maxPrice = priceToBasePerKwh(maxPricePerKwh);
   const escrowBase = minEscrowBase(requiredWh, maxPrice);
-  const marketId = BigInt(Date.now());
+  const timestampId = BigInt(Date.now());
+  nextMarketId = timestampId > nextMarketId ? timestampId : nextMarketId + 1n;
+  const marketId = nextMarketId;
   const now = BigInt(Math.floor(Date.now() / 1000));
 
   const built = await buildCreateMarketTransaction(client, {

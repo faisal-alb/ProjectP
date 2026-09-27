@@ -1,5 +1,7 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import {
@@ -27,16 +29,24 @@ import {
   verifyMarket,
   type MarketRecord,
 } from "./markets";
+import { rateLimit } from "./rate-limit";
 import { managedWallet } from "./wallets";
 
 const app = new Hono();
 app.use("*", cors({ origin: config.webOrigin }));
+app.use("*", bodyLimit({ maxSize: 64 * 1024 }));
 
 app.onError((error, c) => {
-  const status = error instanceof HttpError ? error.status : 500;
+  const status = error instanceof HttpError || error instanceof HTTPException ? error.status : 500;
   if (status >= 500) console.error(error);
-  return c.json({ error: error.message }, status);
+  return c.json({ error: status >= 500 ? "The service could not complete the request. Please retry." : error.message }, status);
 });
+
+// Bound public demo operations and service-wallet spending; see rate-limit.ts.
+const HOUR = 60 * 60 * 1000;
+const faucetLimit = rateLimit({ name: "faucet", limit: 3, globalLimit: 30, windowMs: HOUR });
+const openLimit = rateLimit({ name: "new market", limit: 10, globalLimit: 60, windowMs: HOUR });
+const stepLimit = rateLimit({ name: "market update", limit: 60, globalLimit: 300, windowMs: HOUR });
 
 const money = (base: bigint | undefined) =>
   base === undefined ? undefined : { base: base.toString(), formatted: formatUsdc(base) };
@@ -100,7 +110,9 @@ app.get("/health", async (c) =>
   c.json({
     ok: true,
     cluster,
-    rpcUrl,
+    // Paid RPC providers put their API key in the URL, so it's only shared on
+    // localnet, where the web app needs it for explorer links.
+    rpcUrl: cluster === "localnet" ? rpcUrl : undefined,
     programId: GRIDFLEX_PROGRAM_ADDRESS,
     usdcMint: client.usdcMint,
     verifier: keys.verifier.address,
@@ -119,7 +131,7 @@ app.get("/markets/current", (c) => {
 app.get("/markets/:id", (c) => c.json({ market: serializeMarket(getMarket(c.req.param("id"))) }));
 
 /** Returns an unsigned create_market transaction for the operator's wallet. */
-app.post("/markets", async (c) => {
+app.post("/markets", openLimit, async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const authority = parseAddress(body.operatorWallet, "operatorWallet");
   const { market, transaction } = await openMarket(authority, Number(body.maxPricePerKwh));
@@ -131,25 +143,25 @@ app.post("/markets", async (c) => {
  * the signed bytes (we broadcast them to our RPC, which works on any cluster)
  * or the signature of a transaction the wallet already sent.
  */
-app.post("/markets/:id/confirm", async (c) => {
+app.post("/markets/:id/confirm", stepLimit, async (c) => {
   const body = await c.req.json().catch(() => ({}));
   let signature = typeof body.signature === "string" ? (body.signature as Signature) : undefined;
   if (typeof body.signedTransaction === "string") {
     signature = await client.rpc
       .sendTransaction(body.signedTransaction as Base64EncodedWireTransaction, { encoding: "base64" })
       .send()
-      .catch((error: Error) => {
-        throw new HttpError(400, `The network rejected the signed transaction: ${error.message}`);
+      .catch(() => {
+        throw new HttpError(400, "The network rejected the signed transaction");
       });
   }
   return c.json({ market: serializeMarket(await confirmMarket(c.req.param("id"), signature)) });
 });
 
-app.post("/markets/:id/verify", async (c) =>
+app.post("/markets/:id/verify", stepLimit, async (c) =>
   c.json({ market: serializeMarket(await verifyMarket(c.req.param("id"))) }),
 );
 
-app.post("/markets/:id/settle", async (c) =>
+app.post("/markets/:id/settle", stepLimit, async (c) =>
   c.json({ market: serializeMarket(await settleMarket(c.req.param("id"))) }),
 );
 
@@ -187,7 +199,7 @@ app.get("/households/:resourceId", async (c) => {
 });
 
 /** Mock USDC + fee SOL for an operator wallet. Never on mainnet. */
-app.post("/faucet", async (c) => {
+app.post("/faucet", faucetLimit, async (c) => {
   if (cluster === "mainnet-beta") throw new HttpError(400, "No faucet on mainnet");
   const body = await c.req.json().catch(() => ({}));
   const owner = parseAddress(body.wallet, "wallet");
@@ -228,5 +240,5 @@ app.get("/stream", (c) =>
 await managedWallet(DEMO_HOUSEHOLD_RESOURCE_ID);
 
 serve({ fetch: app.fetch, port: config.port }, (info) => {
-  console.log(`GridFlex API on http://localhost:${info.port} · ${cluster} · ${rpcUrl}`);
+  console.log(`GridFlex API on http://localhost:${info.port} · ${cluster}`);
 });

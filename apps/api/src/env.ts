@@ -7,6 +7,11 @@ import { loadSolanaEnv } from "@gridflex/solana/node";
 export const root = path.resolve(import.meta.dirname, "../../..");
 const env = loadSolanaEnv(root);
 export const { cluster, rpcUrl } = env;
+if (!["localnet", "devnet", "mainnet-beta"].includes(cluster)) throw new Error("Invalid SOLANA_CLUSTER");
+// The demo exposes simulated verification and unauthenticated market actions.
+if (process.env.NODE_ENV === "production" && cluster === "mainnet-beta") {
+  throw new Error("This demo deployment does not support mainnet");
+}
 
 if (!process.env.USDC_MINT) {
   throw new Error(
@@ -17,7 +22,7 @@ if (!process.env.USDC_MINT) {
 // Managed household wallets are encrypted with this key. Generated once per
 // cluster for local development; set it explicitly anywhere real.
 if (!process.env.WALLET_ENCRYPTION_KEY) {
-  if (cluster === "mainnet-beta") throw new Error("WALLET_ENCRYPTION_KEY must be set on mainnet.");
+  if (cluster === "mainnet-beta" || process.env.NODE_ENV === "production") throw new Error("WALLET_ENCRYPTION_KEY must be set in production.");
   env.setEnvValue(env.clusterEnvFile, "WALLET_ENCRYPTION_KEY", randomBytes(32).toString("base64"));
   console.log(`Generated WALLET_ENCRYPTION_KEY → ${env.clusterEnvFile}`);
 }
@@ -30,6 +35,8 @@ export const config = {
   /** The model service (services/intelligence). Optional: the API falls back to demo values. */
   intelligenceUrl: (process.env.INTELLIGENCE_URL || "http://127.0.0.1:8000").replace(/\/$/, ""),
 };
+
+if (config.encryptionKey.length !== 32) throw new Error("WALLET_ENCRYPTION_KEY must decode to 32 bytes");
 
 export const keys = await env.loadKeys();
 export const client = createGridflexClient({ rpcUrl, cluster, usdcMint: address(process.env.USDC_MINT) });

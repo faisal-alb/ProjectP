@@ -1,0 +1,10 @@
+# Opt-in loopback ports for local validation; do not add this file in Dokploy.
+services:
+  web:
+    ports:
+      - "127.0.0.1:3000:3000"
+  api:
+    environment:
+      TRUST_PROXY: "0"
+    ports:
+      - "127.0.0.1:8787:8787"
