@@ -112,8 +112,8 @@ function LoadChart() {
     <svg viewBox={`0 0 ${CW} ${CH}`} className="h-auto w-full" aria-hidden="true">
       <defs>
         <linearGradient id="hc-area" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#f0823c" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#f0823c" stopOpacity="0" />
+          <stop offset="0%" stopColor="#7fb4cc" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#7fb4cc" stopOpacity="0" />
         </linearGradient>
         <clipPath id="hc-over">
           <rect x="0" y="0" width={CW} height={capY} />
@@ -160,12 +160,12 @@ function LoadChart() {
 
       {/* Series */}
       <path d={measuredPath} fill="none" stroke="#a0a1a8" strokeWidth="1.6" />
-      <path d={forecastPath} fill="none" stroke="#f0823c" strokeWidth="1.6" strokeDasharray="4 3" />
-      <path d={flexPath} fill="none" stroke="#ffd2ad" strokeWidth="1.8" />
+      <path d={forecastPath} fill="none" stroke="#7fb4cc" strokeWidth="1.6" strokeDasharray="4 3" />
+      <path d={flexPath} fill="none" stroke="#eaf5fa" strokeWidth="1.8" />
 
       {/* Peak marker */}
-      <circle cx={x(peak.minutes)} cy={y(peak.mw)} r="7" fill="#f0823c" opacity="0.2" />
-      <circle cx={x(peak.minutes)} cy={y(peak.mw)} r="3" fill="#ffb07a" stroke="#0c0c0e" strokeWidth="1.5" />
+      <circle cx={x(peak.minutes)} cy={y(peak.mw)} r="7" fill="#7fb4cc" opacity="0.2" />
+      <circle cx={x(peak.minutes)} cy={y(peak.mw)} r="3" fill="#cfe6f0" stroke="#0c0c0e" strokeWidth="1.5" />
 
       {/* Axis */}
       {hourTicks.map((t) => (
@@ -190,21 +190,21 @@ export function HeroConsole() {
       {/* Lit top edge of the frame */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-24 left-1/2 h-48 w-[70%] -translate-x-1/2 rounded-[100%] bg-[radial-gradient(closest-side,rgba(240,130,60,0.35),transparent)] blur-2xl"
+        className="pointer-events-none absolute -top-24 left-1/2 h-48 w-[70%] -translate-x-1/2 rounded-[100%] bg-[radial-gradient(closest-side,rgba(127,180,204,0.26),transparent)] blur-2xl"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-px left-[12%] right-[12%] z-10 h-px bg-gradient-to-r from-transparent via-[#ffb07a] to-transparent"
+        className="pointer-events-none absolute -top-px left-[12%] right-[12%] z-10 h-px bg-gradient-to-r from-transparent via-[#cfe6f0] to-transparent"
       />
 
       <div
         role="img"
         aria-label={`Preview of the GridFlex operator console: ${downtown.zone} is forecast to reach ${downtown.forecastLoadMw} MW against ${downtown.capacityMw} MW capacity at ${downtown.peakTime}, and ${committed} kW of local flexibility is committed to keep it under the limit.`}
-        className="relative overflow-hidden rounded-[20px] border border-white/[0.09] bg-[#0c0c0e] p-3 shadow-[0_40px_120px_-40px_rgba(240,130,60,0.25)] sm:p-4"
+        className="relative overflow-hidden rounded-[20px] border border-white/[0.09] bg-[#0c0c0e] p-3 shadow-[0_40px_120px_-40px_rgba(127,180,204,0.25)] sm:p-4"
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(60%_100%_at_50%_0%,rgba(240,130,60,0.12),transparent)]"
+          className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(60%_100%_at_50%_0%,rgba(127,180,204,0.12),transparent)]"
         />
 
         <div aria-hidden="true" className="relative grid gap-3 lg:grid-cols-[180px_1fr]">
@@ -265,7 +265,7 @@ export function HeroConsole() {
                 <Bell className="h-3.5 w-3.5" />
               </span>
               <div className="flex items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] py-1 pl-1 pr-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-b from-[#f59a58] to-[#c4541c] text-[10px] font-semibold text-[#1a0c04]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-b from-[#a9cfe0] to-[#3f6f84] text-[10px] font-semibold text-[#0a1a22]">
                   CU
                 </span>
                 <span className="text-[11px] leading-tight">
@@ -314,7 +314,7 @@ export function HeroConsole() {
                   </div>
                   <div>
                     <p className="text-[10.5px] text-muted-2">With GridFlex</p>
-                    <p className="font-mono text-xl font-semibold tabular text-ember-bright">
+                    <p className="font-mono text-xl font-semibold tabular text-volt-bright">
                       {FLEX_CEILING.toFixed(2)}
                       <span className="ml-1 text-xs text-muted">MW</span>
                     </p>
@@ -339,10 +339,10 @@ export function HeroConsole() {
                     <span className="h-px w-3 bg-muted" /> Measured
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="h-px w-3 border-t border-dashed border-ember" /> Forecast
+                    <span className="h-px w-3 border-t border-dashed border-volt" /> Forecast
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="h-0.5 w-3 bg-[#ffd2ad]" /> With committed flexibility
+                    <span className="h-0.5 w-3 bg-[#eaf5fa]" /> With committed flexibility
                   </span>
                 </div>
               </Card>
@@ -374,7 +374,7 @@ export function HeroConsole() {
                         className="h-full"
                         style={{
                           width: `${(r.kw / marketTotals.requestedKw) * 100}%`,
-                          background: `color-mix(in srgb, #f0823c ${100 - i * 16}%, #3a2418)`,
+                          background: `color-mix(in srgb, #7fb4cc ${100 - i * 16}%, #1c2b33)`,
                         }}
                       />
                     ))}
@@ -386,7 +386,7 @@ export function HeroConsole() {
                         <span className="flex min-w-0 items-center gap-2 text-muted">
                           <span
                             className="h-1.5 w-1.5 shrink-0 rounded-sm"
-                            style={{ background: `color-mix(in srgb, #f0823c ${100 - i * 16}%, #3a2418)` }}
+                            style={{ background: `color-mix(in srgb, #7fb4cc ${100 - i * 16}%, #1c2b33)` }}
                           />
                           <span className="truncate">{r.label}</span>
                         </span>

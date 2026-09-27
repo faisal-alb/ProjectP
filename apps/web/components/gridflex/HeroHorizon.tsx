@@ -1,7 +1,8 @@
 /**
- * The homepage's light source: the edge of a night-side planet, its rim lit by the
- * evening peak, with a faint lat/long grid and lit nodes across its face. Purely
- * decorative, so it's hidden from assistive tech.
+ * The homepage's light source: the edge of a night-side planet, its rim lit steel
+ * blue like a live conductor with a pulse of current running along it, and a faint
+ * lat/long grid with sparking nodes across its face. Purely decorative, so it's
+ * hidden from assistive tech.
  */
 
 const W = 1440;
@@ -10,6 +11,7 @@ const CX = W / 2;
 const CY = -560;
 const R = 820;
 const RIM_Y = CY + R; // 260
+const RIM_LENGTH = 2 * Math.PI * R;
 
 // Deterministic PRNG so server and client render the same field.
 function mulberry32(seed: number) {
@@ -76,29 +78,40 @@ export function HeroHorizon({ className = "" }: { className?: string }) {
     >
       <defs>
         <radialGradient id="hz-face" cx="0.5" cy="1" r="0.42">
-          <stop offset="0%" stopColor="#3a1709" />
-          <stop offset="35%" stopColor="#170a05" />
+          <stop offset="0%" stopColor="#10222b" />
+          <stop offset="35%" stopColor="#0a1419" />
           <stop offset="100%" stopColor="#060607" />
         </radialGradient>
         <linearGradient id="hz-rim" x1="80" x2={W - 80} y1="0" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#f0823c" stopOpacity="0" />
-          <stop offset="22%" stopColor="#e2672a" stopOpacity="0.55" />
-          <stop offset="42%" stopColor="#ff9d5c" />
-          <stop offset="50%" stopColor="#ffe2c9" />
-          <stop offset="58%" stopColor="#ff9d5c" />
-          <stop offset="78%" stopColor="#e2672a" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#f0823c" stopOpacity="0" />
+          <stop offset="0%" stopColor="#7fb4cc" stopOpacity="0" />
+          <stop offset="22%" stopColor="#5d91a8" stopOpacity="0.55" />
+          <stop offset="42%" stopColor="#a8d2e3" />
+          <stop offset="50%" stopColor="#f2f9fc" />
+          <stop offset="58%" stopColor="#a8d2e3" />
+          <stop offset="78%" stopColor="#5d91a8" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#7fb4cc" stopOpacity="0" />
         </linearGradient>
         <radialGradient id="hz-bloom" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#f0823c" stopOpacity="0.42" />
-          <stop offset="45%" stopColor="#c4541c" stopOpacity="0.14" />
-          <stop offset="100%" stopColor="#c4541c" stopOpacity="0" />
+          <stop offset="0%" stopColor="#7fb4cc" stopOpacity="0.28" />
+          <stop offset="45%" stopColor="#3f6f84" stopOpacity="0.09" />
+          <stop offset="100%" stopColor="#3f6f84" stopOpacity="0" />
         </radialGradient>
         <linearGradient id="hz-fade-g" x1="0" x2="0" y1="0" y2={RIM_Y} gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#fff" stopOpacity="0" />
           <stop offset="55%" stopColor="#fff" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#fff" stopOpacity="1" />
         </linearGradient>
+        <linearGradient id="hz-rim-fade-g" x1="80" x2={W - 80} y1="0" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#fff" stopOpacity="0" />
+          <stop offset="25%" stopColor="#fff" stopOpacity="0.35" />
+          <stop offset="42%" stopColor="#fff" stopOpacity="1" />
+          <stop offset="58%" stopColor="#fff" stopOpacity="1" />
+          <stop offset="75%" stopColor="#fff" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+        <mask id="hz-rim-fade" maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>
+          <rect width={W} height={H} fill="url(#hz-rim-fade-g)" />
+        </mask>
         <mask id="hz-fade" maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>
           <rect width={W} height={H} fill="url(#hz-fade-g)" />
         </mask>
@@ -114,7 +127,7 @@ export function HeroHorizon({ className = "" }: { className?: string }) {
       </defs>
 
       {/* Dust in the dark around the planet */}
-      <g fill="#ffd9bd">
+      <g fill="#d6e8f0">
         {stars.map((s, i) => (
           <circle key={i} cx={s.x} cy={s.y} r={s.r} opacity={s.o} />
         ))}
@@ -126,7 +139,7 @@ export function HeroHorizon({ className = "" }: { className?: string }) {
       {/* Planet face and the grid on it */}
       <circle cx={CX} cy={CY} r={R} fill="url(#hz-face)" />
       <g clipPath="url(#hz-planet)">
-        <g fill="none" stroke="#ff9d5c" mask="url(#hz-fade)">
+        <g fill="none" stroke="#a8d2e3" mask="url(#hz-fade)">
           {rings.map((ring) => (
             <circle key={ring.r} cx={CX} cy={CY} r={ring.r} strokeWidth="0.8" opacity={ring.o} />
           ))}
@@ -140,7 +153,7 @@ export function HeroHorizon({ className = "" }: { className?: string }) {
             cx={n.x}
             cy={n.y}
             r={n.live ? 1.8 : 1.1}
-            fill={n.live ? "#ffd2ad" : "#f59a58"}
+            fill={n.live ? "#eaf5fa" : "#a9cfe0"}
             opacity={n.live ? undefined : n.o}
             className={n.live ? "grid-node-live" : undefined}
             style={n.live ? ({ "--d": `${n.delay}s` } as React.CSSProperties) : undefined}
@@ -150,10 +163,18 @@ export function HeroHorizon({ className = "" }: { className?: string }) {
 
       {/* The lit rim: a wide halo, a soft glow and a hairline core */}
       <g className="horizon-glow" fill="none">
-        <circle cx={CX} cy={CY} r={R} stroke="url(#hz-rim)" strokeWidth="26" filter="url(#hz-blur-lg)" opacity="0.8" />
-        <circle cx={CX} cy={CY} r={R} stroke="url(#hz-rim)" strokeWidth="5" filter="url(#hz-blur-sm)" />
+        <circle cx={CX} cy={CY} r={R} stroke="url(#hz-rim)" strokeWidth="24" filter="url(#hz-blur-lg)" opacity="0.6" />
+        <circle cx={CX} cy={CY} r={R} stroke="url(#hz-rim)" strokeWidth="4" filter="url(#hz-blur-sm)" />
       </g>
-      <circle cx={CX} cy={CY} r={R} fill="none" stroke="url(#hz-rim)" strokeWidth="1.4" />
+      <circle cx={CX} cy={CY} r={R} fill="none" stroke="url(#hz-rim)" strokeWidth="1.2" />
+
+      {/* A pulse of current running along the rim (see rim-current in globals.css) */}
+      <g mask="url(#hz-rim-fade)">
+        <g className="rim-current" fill="none" stroke="#f2f9fc" strokeDasharray={`140 ${RIM_LENGTH}`} strokeLinecap="round">
+          <circle cx={CX} cy={CY} r={R} strokeWidth="6" filter="url(#hz-blur-sm)" opacity="0.7" />
+          <circle cx={CX} cy={CY} r={R} strokeWidth="1.6" />
+        </g>
+      </g>
     </svg>
   );
 }

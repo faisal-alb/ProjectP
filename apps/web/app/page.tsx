@@ -124,7 +124,7 @@ export default function Home() {
             <h1 className="rise text-[2.25rem] leading-[1.08] font-semibold tracking-[-0.03em] text-balance text-foreground sm:text-5xl lg:text-[3.5rem]">
               Prevent grid congestion{" "}
               <br className="hidden sm:block" />
-              <span className="text-ember-gradient">before</span> it becomes an
+              <span className="text-volt-gradient">before</span> it becomes an
               outage.
             </h1>
 
@@ -144,7 +144,7 @@ export default function Home() {
             >
               <Link
                 href="/dashboard"
-                className="btn-ember inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold sm:w-auto"
+                className="btn-volt inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold sm:w-auto"
               >
                 Get Started
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
