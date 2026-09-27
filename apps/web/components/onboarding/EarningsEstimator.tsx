@@ -2,9 +2,40 @@
 
 import { useEffect, useRef, useState } from "react";
 import { estimateFlex, type ResourceKey } from "@gridflex/shared";
-import { SettingRow, SliderRow, Switch } from "./controls";
+import { BatteryCharging, PlugZap } from "lucide-react";
+import { SliderRow, Switch } from "./controls";
 
 const money = (n: number) => `$${n.toFixed(2)}`;
+
+/** A device row whose icon takes the app's "active" green while the device is switched on. */
+function DeviceRow({
+  icon: Icon,
+  label,
+  hint,
+  on,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean | "true" }>;
+  label: string;
+  hint: string;
+  on: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3 py-3">
+      <Icon
+        className={`h-5 w-5 shrink-0 transition-colors duration-200 ${on ? "text-normal" : "text-muted-2"}`}
+        strokeWidth={1.5}
+        aria-hidden="true"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="mt-0.5 text-xs text-muted">{hint}</p>
+      </div>
+      <div className="shrink-0">{children}</div>
+    </div>
+  );
+}
 
 /** Eases a number toward its target. Restarts from the value on screen, so it can be interrupted mid-flight. */
 function useTween(target: number, ms = 380) {
@@ -50,15 +81,18 @@ export function EarningsEstimator() {
       <p className="tracked-caps text-[11px] font-medium text-muted">Estimate one event</p>
 
       <div className="mt-2 divide-y divide-border">
-        <SettingRow label="Home battery" hint="Shares energy above your reserve">
+        <DeviceRow icon={BatteryCharging} label="Home battery" hint="Shares energy above your reserve" on={battery}>
           <Switch checked={battery} onChange={setBattery} label="Home battery" />
-        </SettingRow>
-        <SettingRow label="EV charging" hint="Shifts a charge to later">
+        </DeviceRow>
+        <DeviceRow icon={PlugZap} label="EV charging" hint="Shifts a charge to later" on={ev}>
           <Switch checked={ev} onChange={setEv} label="EV charging" />
-        </SettingRow>
+        </DeviceRow>
       </div>
 
-      <div className="mt-2 grid gap-x-8 gap-y-2 border-t border-border pt-3 sm:grid-cols-2">
+      <div
+        className="mt-2 grid gap-x-8 gap-y-2 border-t border-border pt-3 sm:grid-cols-2"
+        style={{ "--range-fill": "var(--accent)" } as React.CSSProperties}
+      >
         <SliderRow
           label="Keep in reserve"
           value={reserve}
@@ -81,7 +115,10 @@ export function EarningsEstimator() {
 
       <div className="mt-4 flex items-baseline justify-between gap-4 rounded-md border border-border bg-background-raised px-4 py-3">
         <span className="text-sm text-muted">Could earn per event</span>
-        <span className="font-mono text-xl font-semibold tabular text-accent" aria-hidden="true">
+        <span
+          className={`font-mono text-xl font-semibold tabular transition-colors duration-200 ${resources.length === 0 ? "text-muted-2" : "text-accent"}`}
+          aria-hidden="true"
+        >
           {resources.length === 0 ? "$0.00" : `${money(low)}–${money(high)}`}
         </span>
         <span className="sr-only" role="status">

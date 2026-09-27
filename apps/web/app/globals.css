@@ -127,7 +127,7 @@ input[type="range"]::-webkit-slider-runnable-track {
   border-radius: 2px;
   background: linear-gradient(
     to right,
-    var(--foreground) var(--range-pct),
+    var(--range-fill, var(--foreground)) var(--range-pct),
     var(--range-track) var(--range-pct)
   );
 }
@@ -150,7 +150,7 @@ input[type="range"]::-moz-range-track {
 input[type="range"]::-moz-range-progress {
   height: 4px;
   border-radius: 2px;
-  background: var(--foreground);
+  background: var(--range-fill, var(--foreground));
 }
 input[type="range"]::-moz-range-thumb {
   width: 10px;
