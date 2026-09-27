@@ -6,7 +6,7 @@ The baseline model estimates what a home *would* have drawn absent an event --
 the counterfactual that settlement is measured against. Training it on the
 project's own simulator would mean learning the simulator's load formula, so
 this pulls real, physics-calibrated profiles instead. See
-``docs/09_HOME_MODELS_PLAN.md`` §2.2.
+``docs/home-models-plan.md`` §2.2.
 
 Source: NREL End-Use Load Profiles, public on the OEDI data lake (no
 credentials). Travis County, TX -- the same geography as the ``LZ_AEN`` prices

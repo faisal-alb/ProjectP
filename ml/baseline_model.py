@@ -10,7 +10,7 @@ treats them as separate models:
 * **p10** -> ``committed_kwh``, the conservative sizing estimate
 
 Deriving both from one published number means a generous sizing forecast cannot
-be paired with a stingy settlement baseline. See ``docs/09_HOME_MODELS_PLAN.md``.
+be paired with a stingy settlement baseline. See ``docs/home-models-plan.md``.
 
 Target is **net grid draw** (``total + pv``; ResStock signs PV negative), so
 solar export shows up as negative draw exactly as the meter would record it.
@@ -199,7 +199,7 @@ class BaselineQuantileModel:
         ``pickle.load`` executes arbitrary code -- poor properties for a file a
         third party is invited to re-run. The native format is stable text that
         hashes cleanly, which is what the on-chain commitment needs
-        (``docs/09_HOME_MODELS_PLAN.md`` §4.3).
+        (``docs/home-models-plan.md`` §4.3).
         """
         out_dir = Path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)

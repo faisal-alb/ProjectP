@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """Fair-value pricing for flexibility contracts.
 
-Implements §3.3 of ``docs/08_MODEL_ORCHESTRATION.md``:
+Implements §3.3 of ``docs/model-orchestration.md``:
 
     fair_value   = P(spike) x E[price|spike] + (1 - P(spike)) x E[price|no spike]
     risk_buffer  = buffer_k x (price_p50 - price_p10)

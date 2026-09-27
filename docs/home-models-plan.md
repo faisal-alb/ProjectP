@@ -1,6 +1,6 @@
 # Home Models Plan: Baseline and Fair Value
 
-Status: planning. Supersedes parts of `08_MODEL_ORCHESTRATION.md` §3.2 where noted.
+Status: planning. Supersedes parts of `model-orchestration.md` §3.2 where noted.
 
 This covers the two remaining modelling pieces — the per-home baseline and the
 fair-value price — after the spike classifier landed in `ml/`. It records what
@@ -10,7 +10,7 @@ the spike work measured, because several of those numbers decide things here.
 
 ## 1. The consolidation
 
-`08_MODEL_ORCHESTRATION.md` §3.2 specifies four models. Three of them collapse:
+`model-orchestration.md` §3.2 specifies four models. Three of them collapse:
 
 | Spec model | Becomes | Why |
 |---|---|---|
@@ -59,7 +59,7 @@ LightGBM quantile objective, one booster per quantile.
 
 ### 2.2 The data problem — resolve this first
 
-`06_AI_AND_SIMULATOR.md:209` defines `actual_kw = simulated actual usage`.
+`forecasting-and-simulation.md:116` defines `actual_kw = simulated actual usage`.
 Homes are simulated, so a baseline model trained on simulator output **learns
 the simulator's load formula**. Its held-out MAE will look excellent and measure
 nothing.
