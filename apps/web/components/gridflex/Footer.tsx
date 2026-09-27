@@ -5,7 +5,7 @@ const links = [
   { label: "Product", href: "#how-it-works" },
   { label: "Technology", href: "#technology" },
   { label: "About", href: "#about" },
-  { label: "GitHub", href: "https://github.com" },
+  { label: "GitHub", href: "https://github.com/faisal-alb/ProjectP" },
   { label: "Dashboard", href: "/dashboard" },
 ];
 

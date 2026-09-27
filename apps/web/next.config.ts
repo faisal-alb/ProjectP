@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
   // other than the dev server's own `.next` folder.
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   transpilePackages: ["@gridflex/shared"],
+  // Keeps the dev-mode badge off screen during live presentations.
+  devIndicators: false,
 };
 
 export default nextConfig;
