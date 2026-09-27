@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Clock } from "lucide-react";
 import { flexResources, marketTotals } from "@/lib/demo-data";
+import { InfoTip } from "@/components/ui/Tooltip";
 
 type RowStatus = "pending" | "accepted";
 
@@ -64,7 +65,14 @@ export function MarketTable() {
             <tr className="text-left text-xs text-muted">
               <th className="pb-2 font-medium">Resource</th>
               <th className="pb-2 font-medium">Type</th>
-              <th className="pb-2 font-medium">Flex</th>
+              <th className="pb-2 font-medium">
+                <span className="inline-flex items-center gap-1.5">
+                  Flex
+                  <InfoTip label="flex" side="bottom">
+                    How much flexibility this resource is offering for the event: power it can add to the grid or take off it.
+                  </InfoTip>
+                </span>
+              </th>
               <th className="pb-2 font-medium">Price</th>
               <th className="pb-2 font-medium">Status</th>
             </tr>

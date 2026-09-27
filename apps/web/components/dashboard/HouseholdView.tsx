@@ -8,6 +8,7 @@ import { useHouseholdState } from "./HouseholdState";
 import { HouseholdEvent } from "./HouseholdEvent";
 import { PageHeader } from "./PageHeader";
 import { PowerPlan } from "./PowerPlan";
+import { InfoTip } from "@/components/ui/Tooltip";
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
@@ -48,7 +49,12 @@ export function HouseholdView() {
 
       {/* At a glance */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Tile label="Your available flex" href="/dashboard/devices" linkLabel="Devices">
+        <Tile
+          label="Your available flex"
+          info="Energy above your reserve that GridFlex could use in tonight's event, plus any EV charging that can shift to later."
+          href="/dashboard/devices"
+          linkLabel="Devices"
+        >
           <p className="font-mono text-3xl font-semibold tabular text-foreground">{s.availableKwh.toFixed(1)} kWh</p>
           <p className="mt-1 text-xs text-muted">
             {s.evIn ? `+ ${EV_SHIFTABLE_KW} kW EV charging can shift` : s.batteryIn ? "From your battery, above your reserve" : "Nothing opted in"}
@@ -60,7 +66,10 @@ export function HouseholdView() {
             Today {money(s.today)} · Lifetime {money(s.lifetime)}
           </p>
         </Tile>
-        <Tile label={`Grid status · ${zone} ${feeder}`}>
+        <Tile
+          label={`Grid status · ${zone} ${feeder}`}
+          info="How close your zone's load gets to what it can safely carry. When it's high, GridFlex asks nearby devices, like yours, to help."
+        >
           <p className={`text-3xl font-semibold tracking-tight ${GRID_STYLE[gridStatus]}`}>{gridStatus}</p>
           <p className="mt-1 text-xs text-muted">
             {gridStatus === "NORMAL"
@@ -114,11 +123,13 @@ export function HouseholdView() {
 
 function Tile({
   label,
+  info,
   href,
   linkLabel,
   children,
 }: {
   label: string;
+  info?: string;
   href?: string;
   linkLabel?: string;
   children: React.ReactNode;
@@ -126,7 +137,10 @@ function Tile({
   return (
     <div className="panel rounded-lg p-5">
       <div className="flex items-start justify-between gap-3">
-        <p className="tracked-caps text-xs font-medium text-muted">{label}</p>
+        <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
+          <span className="tracked-caps">{label}</span>
+          {info && <InfoTip label={label}>{info}</InfoTip>}
+        </p>
         {href && (
           <Link
             href={href}

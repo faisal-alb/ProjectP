@@ -16,6 +16,7 @@ import { ResourcePicker, RoleLegend } from "@/components/resources/ResourcePicke
 import { completeOnboarding } from "@/app/actions";
 import { api, clusterLabel, shortAddress, useApiHealth, type HouseholdDto } from "@/lib/api";
 import { defaultParticipantProfile, type Emergency, type ParticipantProfile } from "@/lib/profile";
+import { InfoTip } from "@/components/ui/Tooltip";
 import {
   ChoiceTile,
   Segmented,
@@ -211,7 +212,12 @@ function LocationStep({ profile, patch, heading, location }: StepProps & { locat
           <div className="rounded-md border border-border bg-background-raised p-4">
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <div>
-                <dt className="text-xs text-muted">GridFlex zone</dt>
+                <dt className="flex items-center gap-1.5 text-xs text-muted">
+                  GridFlex zone
+                  <InfoTip label="GridFlex zone">
+                    The local part of the grid your home sits in. Flexibility is matched within a zone, so this decides which events you can join.
+                  </InfoTip>
+                </dt>
                 <dd className="mt-0.5 font-medium text-foreground">
                   {location.zone} <span className="font-mono text-muted tabular">/ {location.feeder}</span>
                 </dd>

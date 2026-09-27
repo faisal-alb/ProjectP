@@ -9,6 +9,7 @@ import { api, base64ToBytes, bytesToBase64, chainFor, clusterLabel, type MarketD
 import { useOperatorWallet, WalletOptions } from "./OperatorWallet";
 import { useSolana } from "./SolanaProvider";
 import { TxLink } from "./TxLink";
+import { InfoTip } from "@/components/ui/Tooltip";
 
 const primaryButton =
   "inline-flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-[color,background-color,transform] hover:bg-white active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-50";
@@ -67,7 +68,12 @@ export function EscrowCard({
   return (
     <div className="w-full shrink-0 rounded-md border border-border-strong bg-background-raised p-4 lg:w-80">
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-xs font-medium text-muted">USDC escrow</p>
+        <p className="inline-flex items-center gap-1.5 text-xs font-medium text-muted">
+          USDC escrow
+          <InfoTip label="USDC escrow" side="bottom">
+            Money you lock up before the event. It&rsquo;s paid to participants only once their delivery is verified, and returned to you if it isn&rsquo;t.
+          </InfoTip>
+        </p>
         <span className="flex items-center gap-1.5 text-xs text-muted-2">
           <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-normal" : "bg-muted-2"}`} aria-hidden="true" />
           {live ? `Solana ${clusterLabel(health.cluster)}` : "Offline"}
@@ -135,7 +141,12 @@ export function EscrowCard({
 
       <div className="mt-4 border-t border-border pt-3">
         <div className="flex items-baseline justify-between text-xs">
-          <span className="text-muted">Flexibility committed</span>
+          <span className="inline-flex items-center gap-1.5 text-muted">
+            Flexibility committed
+            <InfoTip label="flexibility committed">
+              Power that participants have promised to deliver, out of what this event needs.
+            </InfoTip>
+          </span>
           <span className="font-mono tabular text-foreground">
             {committedKw} / {requiredKw} kW
           </span>

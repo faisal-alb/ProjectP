@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { Segmented, SliderRow, Switch } from "@/components/onboarding/controls";
 import { useHouseholdState } from "./HouseholdState";
 import { PageHeader } from "./PageHeader";
+import { InfoTip } from "@/components/ui/Tooltip";
 
 const price = (n: number) => `$${n.toFixed(2)}/kWh`;
 
@@ -18,9 +19,14 @@ export function HouseholdSettings() {
       <section id="voice-autoflex" aria-labelledby="autoflex-heading" className="panel mt-6 max-w-2xl rounded-lg p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 id="autoflex-heading" className="tracked-caps text-xs font-medium text-muted">
-              AutoFlex
-            </h2>
+            <div className="flex items-center gap-1.5">
+              <h2 id="autoflex-heading" className="tracked-caps text-xs font-medium text-muted">
+                AutoFlex
+              </h2>
+              <InfoTip label="AutoFlex" side="bottom">
+                Lets GridFlex join grid events for you, only inside the limits below. You never place bids.
+              </InfoTip>
+            </div>
             <p className="mt-2 flex items-center gap-1.5 text-lg font-semibold text-foreground">
               {rules.autoFlex ? (
                 <>
