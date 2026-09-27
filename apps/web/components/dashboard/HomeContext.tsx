@@ -11,9 +11,11 @@ export interface Home {
   feeder: string;
   kinds: DeviceKind[];
   resources: Partial<Record<DeviceKind, ResourceKey>>;
+  /** Everything they've added, including devices the run can't dispatch yet. */
+  picked: ResourceKey[];
 }
 
-const KIND_OF: Partial<Record<ResourceKey, DeviceKind>> = {
+export const KIND_OF: Partial<Record<ResourceKey, DeviceKind>> = {
   battery: "battery",
   solarBattery: "battery",
   ev: "ev",
@@ -40,6 +42,7 @@ export function homeFrom(zone: string, feeder: string, picked: ResourceKey[]): H
     feeder,
     kinds: Object.keys(resources) as DeviceKind[],
     resources,
+    picked,
   };
 }
 

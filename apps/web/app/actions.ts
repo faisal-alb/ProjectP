@@ -52,6 +52,19 @@ export async function saveParticipantLimits(input: unknown) {
   return { ok: true as const };
 }
 
+/**
+ * Save the household's devices from the Devices page. Setting the cookie re-renders the
+ * dashboard layout, so the household's slice of the run picks up the change straight away.
+ */
+export async function saveParticipantResources(resources: unknown) {
+  if ((await getRole()) !== "participant") return { ok: false as const };
+  const current = await getParticipantProfile();
+  const next = parseParticipantProfile({ ...current, resources });
+  if (next.resources.length > 0) next.notSure = false;
+  (await cookies()).set(PROFILE_COOKIE, JSON.stringify(next), cookieOptions);
+  return { ok: true as const };
+}
+
 export async function signOut() {
   await authReady;
   await auth.api.signOut({ headers: await headers() });

@@ -1,19 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useOptimistic, useState, useTransition } from "react";
 import { ChevronRight } from "lucide-react";
 import {
   resourceType,
   virtualAt,
   type DeviceKind,
   type DeviceState,
+  type ResourceKey,
   type RunEvent,
   type RunState,
 } from "@gridflex/shared";
 import { AskGridFlexButton } from "@/components/voice/AskButton";
-import { RESOURCE_ICON, RoleTags } from "@/components/resources/ResourcePicker";
+import { saveParticipantResources } from "@/app/actions";
+import { RESOURCE_ICON, ResourcePicker, RoleLegend, RoleTags } from "@/components/resources/ResourcePicker";
 import { InfoTip } from "@/components/ui/Tooltip";
-import { useHome } from "./HomeContext";
+import { KIND_OF, useHome } from "./HomeContext";
 import { HouseholdEvent, type EventState, type EventView } from "./HouseholdEvent";
 import { PageHeader } from "./PageHeader";
 import { ForecastChart } from "./RunDashboard";
@@ -307,22 +310,29 @@ function deviceLines(d: DeviceState, run: RunState): [string, string] {
 
 export function HomeDevices() {
   const s = useHomeRun();
-  if (!s.run) return <Waiting title="My devices" connected={s.connected} />;
+  if (!s.run)
+    return (
+      <>
+        <Waiting title="My devices" connected={s.connected} />
+        <AddDevices />
+      </>
+    );
   const { run, devices, events, home } = s;
   const earnedBy = (id: string) =>
     events.flatMap((e) => e.commitments).filter((c) => c.resourceId === id).reduce((t, c) => t + Number(c.paidBase ?? 0), 0) / 1e6;
   const eventsBy = (id: string) => events.filter((e) => e.commitments.some((c) => c.resourceId === id)).length;
+  const notInRun = home.picked.filter((k) => !KIND_OF[k]);
 
   return (
     <div>
-      <PageHeader title="My devices" subtitle="What GridFlex can use when your neighborhood needs help." />
+      <PageHeader title="My devices" subtitle="What GridFlex can use when your neighborhood needs help, or add more." />
       <section aria-labelledby="connected-heading" className="mt-6">
         <h2 id="connected-heading" className="tracked-caps text-xs font-medium text-muted">
           Connected · {devices.length}
         </h2>
         {devices.length === 0 ? (
           <p className="panel mt-3 rounded-lg p-5 text-sm text-muted">
-            None of the devices you picked during setup take part in today&rsquo;s run. Home batteries, EVs, AC, solar and generators can.
+            None of your devices take part in today&rsquo;s run yet. Add a home battery, EV, AC, solar panels or a generator below to start earning.
           </p>
         ) : (
           <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -356,11 +366,58 @@ export function HomeDevices() {
             })}
           </div>
         )}
+        {notInRun.length > 0 && (
+          <p className="mt-3 text-xs text-muted">
+            Also saved: {notInRun.map((k) => resourceType(k).name).join(", ")}. GridFlex can&rsquo;t call on{" "}
+            {notInRun.length === 1 ? "it" : "these"} in today&rsquo;s run yet.
+          </p>
+        )}
       </section>
+      <AddDevices />
       <div className="mt-8">
         <DemoNote run={run} />
       </div>
     </div>
+  );
+}
+
+const toggled = (keys: ResourceKey[], key: ResourceKey) => (keys.includes(key) ? keys.filter((k) => k !== key) : [...keys, key]);
+
+/** The same picker as onboarding. Each change is saved to the profile, and the run picks it up right away. */
+function AddDevices() {
+  const { picked } = useHome();
+  const [selected, toggleSelected] = useOptimistic(picked, toggled);
+  const [, startTransition] = useTransition();
+  const [failed, setFailed] = useState(false);
+
+  const onToggle = (key: ResourceKey) => {
+    const next = toggled(selected, key);
+    setFailed(false);
+    startTransition(async () => {
+      toggleSelected(key);
+      const r = await saveParticipantResources(next).catch(() => ({ ok: false as const }));
+      if (!r.ok) setFailed(true);
+    });
+  };
+
+  return (
+    <section aria-labelledby="add-heading" className="panel mt-8 rounded-lg p-5 sm:p-6">
+      <h2 id="add-heading" className="text-lg font-semibold text-foreground">
+        Add devices
+      </h2>
+      <p className="mt-1 text-sm text-muted">Each one uses, makes or stores power, and some do more than one.</p>
+      {failed && (
+        <p role="alert" className="mt-3 text-sm text-watch">
+          Couldn&rsquo;t save that change. Try again.
+        </p>
+      )}
+      <div className="mt-4">
+        <RoleLegend />
+      </div>
+      <div className="mt-6">
+        <ResourcePicker selected={selected} onToggle={onToggle} headingLevel="h3" />
+      </div>
+    </section>
   );
 }
 
