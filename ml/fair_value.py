@@ -50,7 +50,9 @@ SEASONS = {
 BLOCK_EDGES = [-1, 6, 15, 20, 23]
 BLOCK_LABELS = ["night", "midday", "peak", "evening"]
 
-MIN_STRATUM_OBS = 30
+# Counts events once weight_by="event", not intervals, so it is lower than an
+# interval-based threshold would be.
+MIN_STRATUM_OBS = 8
 
 # Accepted risk, not a defect. The baseline model's p10 coverage runs 8.3-19.3%
 # across walk-forward folds against a 10% target, because a single calendar year
@@ -110,11 +112,24 @@ class PriceStatistics:
     estimator: str = "trimmed_mean"
     trim: float = 0.1
     min_obs: int = MIN_STRATUM_OBS
+    # Spike intervals cluster into episodes: summer|peak has 646 intervals but
+    # only 74 distinct events, and the longest episodes are also the most
+    # severe (one 19-interval event averaged $4,276/MWh). Interval-weighting
+    # therefore lets a handful of catastrophes dominate.
+    #
+    # The orchestrator commits once per episode -- §4.1 allows one active event
+    # with a cooldown -- so each episode is one draw, not seven. Weighting by
+    # event matches how the price is actually realised, and collapses the gap
+    # between estimators: summer|peak per-event reads 950 / 965 / 962 for
+    # mean / median / trimmed, against 1302 / 822 / 1023 per-interval.
+    weight_by: str = "event"
+    event_gap_hours: int = 1
     table: dict = field(default_factory=dict)
     global_stats: dict = field(default_factory=dict)
     fitted_window: list[str] | None = None
 
-    def _central(self, values: np.ndarray) -> float:
+    def _central(self, values) -> float:
+        values = np.asarray(values, dtype=float)
         if len(values) == 0:
             return float("nan")
         if self.estimator == "median":
@@ -127,8 +142,23 @@ class PriceStatistics:
             return float(np.mean(kept)) if len(kept) else float(np.mean(values))
         raise ValueError(f"Unknown estimator: {self.estimator!r}")
 
+    def _spike_values(self, group: pd.DataFrame) -> np.ndarray:
+        """Spike observations, one per event when event-weighted."""
+        spikes = group.loc[group["spike_1h"] == 1].sort_values("ts")
+        if self.weight_by == "interval" or spikes.empty:
+            return spikes["realised"].to_numpy()
+        gap = spikes["ts"].diff() > pd.Timedelta(hours=self.event_gap_hours)
+        episode = gap.cumsum()
+        # Collapse each episode with a plain mean: the representative price for
+        # an event is what you would realise across its delivery windows. The
+        # chosen estimator is applied once, across episodes -- applying it here
+        # too would trim the severe events twice and understate them.
+        return spikes.groupby(episode)["realised"].mean().to_numpy()
+
     def _summarise(self, group: pd.DataFrame) -> dict:
-        spike = group.loc[group["spike_1h"] == 1, "realised"].to_numpy()
+        spike = self._spike_values(group)
+        # The calm term is not clustered the same way and its distribution is
+        # tight, so it stays interval-weighted.
         calm = group.loc[group["spike_1h"] == 0, "realised"].to_numpy()
         return {
             "e_spike": self._central(spike),
@@ -137,6 +167,7 @@ class PriceStatistics:
             "p50": float(np.quantile(spike, 0.50)) if len(spike) else float("nan"),
             "p90": float(np.quantile(spike, 0.90)) if len(spike) else float("nan"),
             "n_spike": int(len(spike)),
+            "n_spike_intervals": int((group["spike_1h"] == 1).sum()),
             "n_total": int(len(group)),
         }
 
@@ -174,6 +205,7 @@ class PriceStatistics:
             "estimator": self.estimator,
             "trim": self.trim,
             "min_obs": self.min_obs,
+            "weight_by": self.weight_by,
             "fitted_window": self.fitted_window,
             "global": self.global_stats,
             "table": self.table,
@@ -186,7 +218,10 @@ class PriceStatistics:
     def load(cls, path: Path | str) -> "PriceStatistics":
         payload = json.loads(Path(path).read_text())
         obj = cls(
-            estimator=payload["estimator"], trim=payload["trim"], min_obs=payload["min_obs"]
+            estimator=payload["estimator"],
+            trim=payload["trim"],
+            min_obs=payload["min_obs"],
+            weight_by=payload.get("weight_by", "event"),
         )
         obj.table = payload["table"]
         obj.global_stats = payload["global"]
@@ -327,6 +362,7 @@ def main() -> None:
     parser.add_argument(
         "--estimator", choices=("trimmed_mean", "mean", "median"), default="trimmed_mean"
     )
+    parser.add_argument("--weight-by", choices=("event", "interval"), default="event")
     parser.add_argument("--keep-uri", action="store_true")
     parser.add_argument("--save", action="store_true")
     args = parser.parse_args()
@@ -338,7 +374,7 @@ def main() -> None:
     if not args.keep_uri:
         df = drop_excluded_regimes(df)
 
-    stats = PriceStatistics(estimator=args.estimator).fit(df)
+    stats = PriceStatistics(estimator=args.estimator, weight_by=args.weight_by).fit(df)
     g = stats.global_stats
     print(f"\nfitted {stats.fitted_window[0]} -> {stats.fitted_window[1]}  "
           f"({g['n_total']:,} intervals, {g['n_spike']:,} spike)")
