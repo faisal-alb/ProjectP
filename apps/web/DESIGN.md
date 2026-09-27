@@ -96,7 +96,7 @@ GridFlex reads as a utility operator's console, not a sustainability brochure an
 
 The same system runs across both surfaces: the marketing page (`app/page.tsx`) and the dashboard (`app/dashboard/page.tsx`). The dashboard drops the hero for a denser control-room grid built from the same components.
 
-**The homepage is the one deliberate exception.** It runs under a `.home` scope (`globals.css`) that re-points the tokens: a near-black canvas (`#0a0a0c`), an **ember** accent (`#f0823c`, bright `#ffb07a`, deep `#c4541c`) in place of steel blue, 16px panels with a faint lit top edge, and pill buttons (`.btn-ember` primary, `.btn-ghost-pill` secondary). It has exactly one light source, the **evening peak**: `HeroHorizon` (the rim of a night-side planet glowing ember, with a faint lat/long grid and lit nodes on its face), echoed by the lit top edge of the `HeroConsole` preview and the final `CTASection`. Glows stay tied to that one light; don't add new ones elsewhere on the page. The dashboard and onboarding keep the graphite, steel-blue system below.
+**The homepage is the one deliberate exception.** It runs under a `.home` scope (`globals.css`) that re-points the tokens: a near-black canvas (`#0a0a0c`), 16px panels with a faint lit top edge, and pill buttons (`.btn-volt` primary, `.btn-ghost-pill` secondary). Its color stays the app's steel-blue accent, the same blue as the Ask GridFlex voice button, extended into a **volt** family for light (`--volt` `#7fb4cc`, bright `#cfe6f0`, deep `#3f6f84`, arc core `#f2f9fc`). It stays desaturated so it reads as electricity, not neon, and not as a status color. It has exactly one light source, **the grid's current**: `HeroHorizon` (the rim of a night-side planet lit like a live conductor, with a lat/long grid and sparking nodes on its face), echoed by the lit top edge of the `HeroConsole` preview and the final `CTASection`. Glows stay tied to that one light; don't add new ones elsewhere on the page. The dashboard and onboarding keep the graphite, steel-blue system below.
 
 **Key Characteristics:**
 - Neutral graphite canvas (`#17181b`) with flat `.panel` surfaces (`#212226` + hairline border). No translucency, no blur.
@@ -126,7 +126,7 @@ The same system runs across both surfaces: the marketing page (`app/page.tsx`) a
 - **Border** (`rgba(255,255,255,0.08)`) / **Strong Border** (`0.16`).
 
 ### Named Rules
-**The No-Glow Rule.** No colored box-shadows, text-shadows, drop-shadow filters, blur halos, radial gradient washes, or backdrop blur. If something needs emphasis, use a stronger border, a surface step, or the accent as text color. (Homepage exception: the evening-peak light described in the Overview.)
+**The No-Glow Rule.** No colored box-shadows, text-shadows, drop-shadow filters, blur halos, radial gradient washes, or backdrop blur. If something needs emphasis, use a stronger border, a surface step, or the accent as text color. (Homepage exception: the grid-current light described in the Overview.)
 **The Data-Only Color Rule.** Accent and status colors mark data, not decoration. Headers, icons, chips, and containers stay neutral.
 **The Status-Color Consistency Rule.** Risk/watch/normal always map to the same three hexes across every surface.
 
@@ -152,7 +152,7 @@ The same system runs across both surfaces: the marketing page (`app/page.tsx`) a
 
 ## Layout
 
-Content is capped at `max-w-[1240px]` with `px-5`/`sm:px-8` gutters on the marketing page; sections run `py-20`/`sm:py-28`, separated in places by full-bleed hairline-bordered bands (`border-y border-border`). The hero is centered: `HeroHorizon` across the top, a two-line H1 (`3.5rem` at desktop) with "before" in the ember gradient, the subtitle, two pill CTAs, then `HeroConsole`, a static operator-console preview built from `lib/demo-data` that dissolves into the page (`.fade-bottom`) above an "illustrative demo data" caption. The workflow rail and flex categories collapse to one column on mobile.
+Content is capped at `max-w-[1240px]` with `px-5`/`sm:px-8` gutters on the marketing page; sections run `py-20`/`sm:py-28`, separated in places by full-bleed hairline-bordered bands (`border-y border-border`). The hero is centered: `HeroHorizon` across the top, a two-line H1 (`3.5rem` at desktop) with "before" in the volt gradient, the subtitle, two pill CTAs, then `HeroConsole`, a static operator-console preview built from `lib/demo-data` that dissolves into the page (`.fade-bottom`) above an "illustrative demo data" caption. The workflow rail and flex categories collapse to one column on mobile.
 
 The dashboard (`/dashboard`) shows one view per account. The account type is chosen once at onboarding and stored in a cookie with a validated profile (`lib/profile.ts`); there is no in-app toggle, and changing account type means **Switch account** from the account menu. Both views are capped at `max-w-[1240px]` and share a header: wordmark, account label (the organization name for operators, "My energy" for participants), Solana network status, a wallet control, and the account menu.
 
@@ -191,13 +191,13 @@ Tight, consistent radii: `rounded-lg` (8px) for panels, `rounded-md` (6px) for b
 - `GridStatusBadge`: a 6px status dot plus label in the status color, no background pill. Dot pulses only for `high`. A `compact` variant renders the bare dot with an `sr-only` label.
 
 ### Navigation
-- Homepage: sticky, translucent blurred header with a hairline bottom border; wordmark left, a centered segmented pill nav (current item raised), and an ember "Get Started" pill right. The pill nav hides below `md`.
+- Homepage: sticky, translucent blurred header with a hairline bottom border; wordmark left, a centered segmented pill nav (current item raised), and a steel-blue "Get Started" pill right. The pill nav hides below `md`.
 
 ### Load Forecast Chart (dashboard)
 `components/dashboard/LoadForecastChart.tsx`: measured load (muted), forecast without flexibility (`--chart-forecast` #b86f9c, dashed) and forecast with committed flexibility (`--chart-flex` #4f92c3, solid) against a 1.5px risk-colored capacity line, with the overload area at 14% risk and the flex window as a faint band. Legend with line keys, crosshair tooltip, arrow-key stepping, and a "Show data as a table" disclosure. The two series colors were validated for the dark surface (CVD ΔE 7.2, so the dashed/solid distinction is required, not decorative).
 
-### Evening-Peak Horizon (homepage signature)
-`HeroHorizon.tsx`: an SVG planet edge whose rim is lit ember (hairline core, soft glow, wide halo that breathes slowly), light spilling below it, a lat/long grid on its face fading upward, and a few nodes that flicker. It's deterministic (seeded), so server and client render the same field. `GridMapPreview` is the schematic zone map used further down the page.
+### Grid-Current Horizon (homepage signature)
+`HeroHorizon.tsx`: an SVG planet edge whose rim is lit steel blue (near-white hairline core, soft glow, wide halo that breathes slowly), light spilling below it, a lat/long grid on its face fading upward, and a few nodes that spark with a quick double flash. Every 6.5s a pulse of current runs along the rim, left to right, faded at the ends to match the rim; it's hidden under reduced motion. It's deterministic (seeded), so server and client render the same field. `GridMapPreview` is the schematic zone map used further down the page.
 
 ### Workflow Rail
 `WorkflowStep.tsx`'s `WorkflowRail`: five stations on one rail separated by plain hairline connectors, each with a bordered-square icon, title, description, and mono readout.
