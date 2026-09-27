@@ -34,7 +34,7 @@ export function ZonesMap({ zones }: { zones: Zone[] }) {
       try {
         const [module, response] = await Promise.all([
           import("mapbox-gl"),
-          fetch("/maps/south-florida-zones.geojson", { signal: controller.signal }),
+          fetch("/maps/austin-zones.geojson", { signal: controller.signal }),
         ]);
         if (!response.ok) throw new Error("Zone boundaries unavailable");
         const boundaries = (await response.json()) as FeatureCollection<Geometry, { zone: string }>;
@@ -60,8 +60,8 @@ export function ZonesMap({ zones }: { zones: Zone[] }) {
           container: container.current,
           accessToken: token,
           style: "mapbox://styles/mapbox/dark-v11",
-          center: [-80.2, 25.9],
-          zoom: 9,
+          center: [-97.74, 30.3],
+          zoom: 10,
           scrollZoom: false,
           dragRotate: false,
           pitchWithRotate: false,

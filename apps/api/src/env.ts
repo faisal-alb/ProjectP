@@ -27,6 +27,8 @@ export const config = {
   webOrigin: process.env.WEB_ORIGIN ?? "http://localhost:3000",
   encryptionKey: Buffer.from(process.env.WALLET_ENCRYPTION_KEY!, "base64"),
   dataDir: path.join(root, ".data"),
+  /** The model service (services/intelligence). Optional: the API falls back to demo values. */
+  intelligenceUrl: (process.env.INTELLIGENCE_URL || "http://127.0.0.1:8000").replace(/\/$/, ""),
 };
 
 export const keys = await env.loadKeys();

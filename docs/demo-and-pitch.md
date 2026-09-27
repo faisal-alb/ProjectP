@@ -11,14 +11,16 @@ The figures below are the illustrative demo data described in [Product](product.
 "GridFlex monitors local grid capacity and distributed resources."
 
 ```text
-Downtown Miami
+Downtown Austin
 Current:  10.8 MW
 Capacity: 12.0 MW
 ```
 
 ### 2. Show the forecast
 
-"Our forecasting system predicts Downtown Miami will reach 12.8 MW during the evening peak."
+"Our forecasting system predicts Downtown Austin will reach 12.8 MW during the evening peak."
+
+With the model service running, point at **Price spike outlook**: "This is a real evening, 20 August 2024, replayed. At 5 PM our spike model, which never saw that day, put the chance of an ERCOT price spike before 8 PM at 88%. The 7–8 PM window cleared at $4,857/MWh." Click **Use $0.55/kWh as your price** to set the cap from the model.
 
 ```text
 Predicted:       12.8 MW at 7:20 PM
@@ -43,7 +45,7 @@ GridFlex accepts the cheapest offers that cover the need, up to the operator's p
 EV Fleet #4                     180 kW   $0.08
 Tower HVAC                      170 kW   $0.09
 Solar Group #9                  100 kW   $0.11
-Downtown Miami home batteries   100 kW   $0.14
+Downtown Austin home batteries   100 kW   $0.14
 Battery #17                     250 kW   $0.16
                                --------
 Total                           800 kW
@@ -73,13 +75,13 @@ Then click **Settle payments**:
 
 ```text
 Escrowed: $160.00
-Paid:      $93.60  to 24 participants
+Paid:      $93.60  to 18 participants (24 without the model service)
 Refunded:  $66.40  to the operator
 ```
 
 ### 7. Show a participant
 
-Sign out from the account menu, then choose **Provide flexibility** on the onboarding page and finish setup. Show the household's payout ($0.70 for 5 kWh at $0.14) in the header wallet. To also show the "You got paid" notification, open the household dashboard in a second window before settling; notifications arrive live and aren't replayed.
+Sign out from the account menu, then choose **Provide flexibility** on the onboarding page and finish setup. Show the household's payout in the header wallet: $0.84 (6.0 kWh at $0.14) when the baseline model sized the homes, $0.70 (5 kWh) without it. To also show the "You got paid" notification, open the household dashboard in a second window before settling; notifications arrive live and aren't replayed.
 
 ## Pitch structure
 

@@ -14,7 +14,7 @@ export function OperatorDashboard({ initialCap }: { initialCap: number }) {
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Miami grid</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Austin grid</h1>
           <p className="mt-1 text-sm text-muted">Tonight&rsquo;s outlook · Forecast updated {forecastUpdatedAt}</p>
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">

@@ -13,6 +13,9 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "dev:web": "npm run dev --workspace=web",
+    "dev:intelligence": "node services/intelligence/dev.mjs",
+    "intelligence:setup": "node services/intelligence/setup.mjs",
+    "ml:train": ".venv/bin/python -m ml.build_artifacts",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "solana:setup": "tsx scripts/solana/setup.ts",

@@ -10,12 +10,12 @@ Keep it simple: one web app, one API, one Solana program. Anything that can be a
 │ dashboards, onboarding│                 │ market lifecycle │            │ (Anchor)       │
 └───────┬───────────────┘                 └────────┬─────────┘            └────────────────┘
         │                                          │
-        │ signed URL                               │ in-memory state,
-        ▼                                          ▼ mirrored to .data/*.json
-┌───────────────────────┐                 ┌──────────────────┐
-│ ElevenLabs voice agent│                 │ packages/shared  │  demo data, unit maths,
-└───────────────────────┘                 │ packages/solana  │  Power Plan, Solana client
-                                          └──────────────────┘
+        │ signed URL                               │ HTTP (internal)     in-memory state,
+        ▼                                          ▼                     mirrored to .data/*.json
+┌───────────────────────┐                 ┌──────────────────────┐
+│ ElevenLabs voice agent│                 │ Intelligence (Python)│  spike, fair value, home
+└───────────────────────┘                 │ services/intelligence│  baselines from ml/
+                                          └──────────────────────┘
 ```
 
 | Component | Where | Does |
@@ -24,7 +24,7 @@ Keep it simple: one web app, one API, one Solana program. Anything that can be a
 | API | `apps/api` | Creates markets, records commitments, verifies delivery, settles, and streams events |
 | Solana program | `programs/gridflex` | Holds the USDC escrow and enforces commitments, verification and payouts |
 | Shared packages | `packages/shared`, `packages/solana` | Code used by more than one app (below) |
-| Spike model | `ml/` | Offline price-spike model; not connected to the app yet |
+| Intelligence service | `services/intelligence`, models in `ml/` | Price-spike forecast, fair value and per-home baselines for the API. Optional: the API falls back to demo values without it. See [Intelligence service](intelligence.md) |
 
 ## Web app
 
@@ -58,11 +58,15 @@ The API streams server-sent events at `GET /stream`. The dashboard refetches the
 
 Keep fast-moving data off-chain (telemetry, forecasts, weather, private participant data). Keep the trust-critical data on-chain (escrow, commitments, verified deliveries, payouts). Don't blur that line for convenience.
 
+## Intelligence service
+
+A small internal Python service that serves the trained models (spike, fair value, home baseline) on a replayed real evening in Austin. The API calls it when the dashboard loads a forecast, when a market opens and when commitments are sized, never during settlement. Models predict; the API decides what to commit. Details in [Intelligence service](intelligence.md).
+
 ## Planned
 
 These are designed but not built. The dashboards use static demo data in their place.
 
-- **Intelligence service.** A Python service that turns zone state into a demand forecast, congestion risk and required flexibility. The forecast itself comes from a model, never from an LLM. Design in [Forecasting and simulation](forecasting-and-simulation.md); the spike-model work that exists is in `ml/`.
+- **Zone load forecast.** The intelligence service forecasts prices and household baselines; zone load, congestion risk and required flexibility are still demo data. Design in [Forecasting and simulation](forecasting-and-simulation.md). The forecast itself comes from a model, never from an LLM.
 - **Grid simulator.** Zone load that responds to weather, time and dispatched flexibility.
 - **Orchestrator.** A simulated 15-minute clock that builds features, evaluates models, locks event terms and dispatches resources before handing the event to the chain worker. Design in [Model orchestration](model-orchestration.md).
 - **Database.** PostgreSQL to replace in-memory state and cookies. The tables are sketched in [API and data](api-and-data.md#planned-data-model).

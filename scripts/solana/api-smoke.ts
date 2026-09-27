@@ -53,11 +53,20 @@ console.log(`settle: ${settled.market.phase}, paid ${settled.market.paid.formatt
 
 await assert.rejects(call("POST", `/markets/${id}/settle`), /409/, "settling twice is rejected");
 
+// Households are sized by the baseline model when the model service is up, and
+// at their battery's 5 kW otherwise ($0.70), so check against what was recorded.
+const plan = settled.market.plan;
+console.log(`sizing: ${plan.source}${plan.baselineHash ? `, baseline ${plan.baselineHash.slice(0, 12)}…` : ""}`);
+const demo = settled.market.commitments.find((cm: any) => cm.resourceId === DEMO_HOUSEHOLD_RESOURCE_ID);
+if (plan.source === "demo") assert.equal(demo.payout.base, "700000", "demo household paid $0.70");
+else assert.ok(demo.meter && demo.baselineKw !== undefined, "model-sized household has a meter reading");
+
 const household = await call("GET", `/households/${DEMO_HOUSEHOLD_RESOURCE_ID}`);
 const gained = BigInt(household.balance.base) - BigInt(householdBefore.balance.base);
-assert.equal(gained, 700_000n, "demo household paid $0.70");
+assert.equal(gained, BigInt(demo.payout.base), `demo household paid ${demo.payout.formatted}`);
 assert.equal(household.tonight.phase, "settled");
+// The split between homes changes; the total paid for the cleared offers doesn't.
 const operatorAfter = await call("GET", `/wallets/${operator.address}/usdc`);
 assert.equal(operatorAfter.balance.formatted, "$406.40");
-console.log(`household ${household.wallet}: ${household.balance.formatted} (+$0.70), payment ${household.tonight.url}`);
+console.log(`household ${household.wallet}: ${household.balance.formatted} (+${demo.payout.formatted}), payment ${household.tonight.url}`);
 console.log("✔ API flow OK");
