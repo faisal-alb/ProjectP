@@ -1,16 +1,20 @@
 // Account profiles captured at onboarding. Stored in a cookie for the demo;
 // real auth and a database replace this later. Parsers clamp every value, so a
 // tampered or stale cookie can never put the dashboards in a broken state.
-import { defaultZip, localUtility, type ResourceKey } from "@gridflex/shared";
+import { RESOURCE_KEYS, defaultZip, localUtility, type ResourceKey } from "@gridflex/shared";
 
 export type Role = "participant" | "operator";
 
 export const ROLE_COOKIE = "gridflex_role";
 export const PROFILE_COOKIE = "gridflex_profile";
 
-export const RESOURCE_KEYS: ResourceKey[] = ["battery", "ev", "solar", "hvac", "generator", "building"];
-
 export type Emergency = "ask" | "allow" | "never";
+
+/** When an EV needs to be ready by, as offered in onboarding and Settings. */
+export const READY_BY = ["05:00", "06:00", "06:30", "07:00", "07:30", "08:00", "09:00"].map((v) => {
+  const [h, m] = v.split(":").map(Number);
+  return { value: v, label: `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}` };
+});
 
 export interface ParticipantProfile {
   resources: ResourceKey[];

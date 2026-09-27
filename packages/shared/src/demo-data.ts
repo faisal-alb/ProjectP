@@ -1,4 +1,4 @@
-// Illustrative demo data only — not real grid, customer, or market data.
+// Illustrative demo data only. Not real grid, customer, or market data.
 
 export type ZoneStatus = "normal" | "watch" | "high";
 

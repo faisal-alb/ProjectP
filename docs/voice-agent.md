@@ -1,4 +1,4 @@
-# Voice agent (website)
+# Voice agent
 
 Two voice surfaces, one voice service. This covers the **website** surface: a conversational
 ElevenLabs agent on the household dashboard. Nest announcements (TTS → MP3 → Cast) come later.
@@ -8,7 +8,7 @@ Browser ── @elevenlabs/react ── ElevenLabs agent
    │                                  │
    │  GET /api/voice/session          │ calls client tools (browser-side)
    ▼                                  ▼
-Next route (signed URL)        GridAssistant → dashboard snapshot (read-only)
+Next route (signed URL)        VoiceTools → dashboard snapshot (read-only)
 ```
 
 ## Setup
@@ -17,11 +17,27 @@ Next route (signed URL)        GridAssistant → dashboard snapshot (read-only)
    `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`.
 2. Create an agent in ElevenLabs, set **authentication on** (so it needs a signed URL), then add the
    **client tools** below (Tools → Add tool → Client, "wait for response" on).
-3. Paste the system prompt below.
+3. Turn on the **End conversation** system tool (Tools → System tools → `end_call`), so the agent
+   can hang up when the household is done.
+4. Paste the system prompt below.
+5. Optional: under Advanced → Client events, turn on `vad_score` and `tentative_user_transcript`.
+   The idle timer (below) already watches the mic locally; these just make it surer you're mid-sentence.
+
+## Ending a conversation
+
+A session ends in one of three ways:
+
+- **The agent hangs up.** When the household says they're done, the agent says a short goodbye and
+  calls the built-in `end_call` system tool. The SDK disconnects and the button returns to "Ask GridFlex".
+- **It goes quiet.** `VoiceAssistantProvider` ends the session 10 s after GridFlex finishes speaking
+  if nothing happens. It counts as activity if the mic rises above the room's noise floor, if the server
+  sends a transcript or VAD score, or if the agent is replying or calling a tool. The floating button
+  says "Ending soon" for the last 3 s.
+- **The household taps the floating button.**
 
 ## Client tools
 
-All return small JSON and change nothing. Names must match `components/voice/GridAssistant.tsx`.
+All return small JSON and change nothing. Names must match `apps/web/components/voice/VoiceTools.tsx`.
 
 | Tool | Parameters | Returns |
 | --- | --- | --- |
@@ -32,7 +48,8 @@ All return small JSON and change nothing. Names must match `components/voice/Gri
 | `get_upcoming_events` | none | same as `get_active_event` (one event in the demo) |
 | `get_earnings` | none | month total, event count |
 | `get_autoflex_settings` | none | AutoFlex on/off, reserve, min price, max kWh |
-| `highlight_element` | `element`: `tonight` \| `earnings` \| `autoflex` (enum) | scrolls to and rings that section |
+| `get_power_plan` | none | Tonight's ranked Power Plan: each action's rank, kWh, earnings, reasons, caveat, plus a one-line "why" |
+| `highlight_element` | `element`: `tonight` \| `earnings` \| `autoflex` \| `plan` (enum) | opens that section's dashboard page if needed, then scrolls to and rings it |
 
 ## System prompt (starting point)
 
@@ -40,7 +57,15 @@ All return small JSON and change nothing. Names must match `components/voice/Gri
 > tonight's grid event. Be brief and speak numbers naturally ("five kilowatt-hours", "one dollar
 > fifty-five"). Always use the tools for facts; never guess amounts. When you explain a payment or
 > event, call `highlight_element` for the relevant section while you talk. You cannot change any
-> settings or join events yet. If asked, say so and point to the control on screen.
+> settings or join events yet.
+>
+> For "what should I do tonight" questions, call `get_power_plan` and explain the plan it returns. The
+> ranking is already decided by GridFlex's optimizer: explain it in the order given and use its reasons,
+> never re-rank or invent actions, and never suggest sending generator power to the grid. If the plan
+> has a caveat, mention it. Call `highlight_element` with "plan" while you talk. If asked, say so and point to the control on screen.
+>
+> After answering, don't ask open-ended follow-ups like "anything else?" every time. When the household
+> says they're done ("thanks", "that's all", "bye"), say a short goodbye and call `end_call`.
 
 ## Not built yet
 
@@ -49,3 +74,13 @@ All return small JSON and change nothing. Names must match `components/voice/Gri
   energy preferences.
 - Server/webhook tools once data lives in `apps/api`; today the demo household state is client-side.
 - `/voice/tts`, MP3 caching, Google Cast → Nest.
+
+## Power Plan (Energy Copilot)
+
+`packages/shared/src/power-plan.ts` ranks what a household can do about a grid stress event:
+store excess solar, discharge the battery, shift household load, run a generator, or do nothing.
+It's a pure function (tested in `power-plan.test.ts`): the optimizer decides, the card shows it,
+and the voice agent only explains it. Each action is scored on financial value, grid relief,
+reliability and emissions, weighted by the household's goal ("What matters most tonight?": balanced, earn the most, keep backup power, cleanest energy, or help the grid most); a storm multiplies
+the reliability weight and raises the protected reserve to 80%. Solar surplus, generator fuel cost
+and shiftable load are demo constants for now.

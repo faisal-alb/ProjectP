@@ -22,8 +22,14 @@
     "solana:api-smoke": "tsx scripts/solana/api-smoke.ts"
   },
   "devDependencies": {
-    "tsx": "^4",
+    "@gridflex/shared": "*",
     "@gridflex/solana": "*",
-    "@gridflex/shared": "*"
+    "tsx": "^4"
+  },
+  "dependencies": {
+    "approve": "^0.0.12"
+  },
+  "allowScripts": {
+    "unrs-resolver": true
   }
 }

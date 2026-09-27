@@ -6,23 +6,20 @@ import dynamic from "next/dynamic";
 import {
   ArrowLeft,
   ArrowRight,
-  Battery,
-  Building2,
-  Car,
   Check,
   CircleHelp,
   Loader2,
-  Snowflake,
-  Sun,
   Wallet,
-  Zap,
 } from "lucide-react";
-import { DEMO_HOUSEHOLD_RESOURCE_ID, demoDevices, estimateFlex, resolveZip, type ResourceKey } from "@gridflex/shared";
+import { DEMO_HOUSEHOLD_RESOURCE_ID, estimateFlex, resolveZip, resourceCatalog, type ResourceKey } from "@gridflex/shared";
+import { ResourcePicker, RoleLegend } from "@/components/resources/ResourcePicker";
 import { completeOnboarding } from "@/app/actions";
 import { api, clusterLabel, shortAddress, useApiHealth, type HouseholdDto } from "@/lib/api";
-import { defaultParticipantProfile, type Emergency, type ParticipantProfile } from "@/lib/profile";
+import { READY_BY, defaultParticipantProfile, type Emergency, type ParticipantProfile } from "@/lib/profile";
+import { InfoTip } from "@/components/ui/Tooltip";
 import {
   ChoiceTile,
+  CollapsibleSection,
   Segmented,
   SelectField,
   SettingRow,
@@ -40,21 +37,9 @@ const ZoneMap = dynamic(() => import("./ZoneMap"), {
 
 const STEPS = ["Resources", "Location", "Limits", "Payout"] as const;
 
-const RESOURCE_TILES: { key: ResourceKey; icon: typeof Battery; title: string; description: string }[] = [
-  { key: "battery", icon: Battery, title: "Home battery", description: "Powerwall, Enphase, or similar" },
-  { key: "ev", icon: Car, title: "EV / EV charger", description: "Charging that can wait" },
-  { key: "solar", icon: Sun, title: "Solar", description: "Rooftop or ground-mounted" },
-  { key: "hvac", icon: Snowflake, title: "HVAC / thermostat", description: "Cooling that can ease off" },
-  { key: "generator", icon: Zap, title: "Generator", description: "Backup power" },
-  { key: "building", icon: Building2, title: "Flexible building load", description: "Pumps, lighting, equipment" },
-];
-
-const READY_BY = ["05:00", "06:00", "06:30", "07:00", "07:30", "08:00", "09:00"].map((v) => {
-  const [h, m] = v.split(":").map(Number);
-  return { value: v, label: `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}` };
-});
-
 const money = (n: number) => `$${n.toFixed(2)}`;
+
+const EMERGENCY_LABEL: Record<Emergency, string> = { ask: "ask me", allow: "allow", never: "never" };
 
 export function ParticipantFlow() {
   const [profile, setProfile] = useState<ParticipantProfile>(defaultParticipantProfile);
@@ -171,28 +156,27 @@ function ResourcesStep({ profile, patch, heading }: StepProps) {
       <h1 id="resources-heading" ref={heading} tabIndex={-1} className="text-2xl font-semibold tracking-tight text-foreground outline-none">
         What energy resources do you have?
       </h1>
-      <p className="mt-2 text-sm text-muted">Pick everything that could help the grid. You can change this later.</p>
+      <p className="mt-2 text-sm text-muted">
+        Pick everything that could help the grid. Each one uses, makes or stores power, and some do more than one.
+        You can change this later.
+      </p>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2" role="group" aria-label="Energy resources">
-        {RESOURCE_TILES.map(({ key, icon, title, description }) => (
-          <ChoiceTile
-            key={key}
-            icon={icon}
-            title={title}
-            description={description}
-            selected={profile.resources.includes(key)}
-            onClick={() => toggle(key)}
-          />
-        ))}
-        <div className="sm:col-span-2">
-          <ChoiceTile
-            icon={CircleHelp}
-            title="Not sure yet"
-            description="We'll connect your address now and help you add devices later."
-            selected={profile.notSure}
-            onClick={() => patch({ notSure: !profile.notSure, resources: [] })}
-          />
-        </div>
+      <div className="mt-6">
+        <RoleLegend />
+      </div>
+
+      <div className="mt-8">
+        <ResourcePicker selected={profile.resources} onToggle={toggle} />
+      </div>
+
+      <div className="mt-8 border-t border-border pt-6">
+        <ChoiceTile
+          icon={CircleHelp}
+          title="Not sure yet"
+          description="We'll connect your address now and help you add devices later."
+          selected={profile.notSure}
+          onClick={() => patch({ notSure: !profile.notSure, resources: [] })}
+        />
       </div>
     </section>
   );
@@ -226,7 +210,12 @@ function LocationStep({ profile, patch, heading, location }: StepProps & { locat
           <div className="rounded-md border border-border bg-background-raised p-4">
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <div>
-                <dt className="text-xs text-muted">GridFlex zone</dt>
+                <dt className="flex items-center gap-1.5 text-xs text-muted">
+                  GridFlex zone
+                  <InfoTip label="GridFlex zone">
+                    The local part of the grid your home sits in. Flexibility is matched within a zone, so this decides which events you can join.
+                  </InfoTip>
+                </dt>
                 <dd className="mt-0.5 font-medium text-foreground">
                   {location.zone} <span className="font-mono text-muted tabular">/ {location.feeder}</span>
                 </dd>
@@ -280,8 +269,8 @@ function LimitsStep({ profile, patch, heading }: StepProps) {
             {profile.resources.map((key) => (
               <li key={key} className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 rounded-md border border-border px-3 py-2 text-sm">
                 <Check className="h-4 w-4 shrink-0 text-normal" aria-hidden="true" />
-                <span className="font-medium text-foreground">{demoDevices[key].device}</span>
-                <span className="text-xs text-muted">{demoDevices[key].spec}</span>
+                <span className="font-medium text-foreground">{resourceCatalog[key].device}</span>
+                <span className="text-xs text-muted">{resourceCatalog[key].spec}</span>
               </li>
             ))}
           </ul>
@@ -292,90 +281,103 @@ function LimitsStep({ profile, patch, heading }: StepProps) {
             </SettingRow>
           </div>
 
-          {battery && (
-            <fieldset className="mt-8 space-y-6">
-              <legend className="text-base font-semibold text-foreground">Battery</legend>
-              <SliderRow
-                label="Always keep at least"
-                value={profile.reservePercent}
-                display={`${profile.reservePercent}%`}
-                min={20}
-                max={80}
-                step={5}
-                onChange={(v) => patch({ reservePercent: v })}
-                hint="Charge kept for your home, for example during an outage."
-              />
-              <SliderRow
-                label="Share at most"
-                value={profile.maxKwhPerEvent}
-                display={`${profile.maxKwhPerEvent.toFixed(1)} kWh`}
-                min={1}
-                max={6}
-                step={0.5}
-                onChange={(v) => patch({ maxKwhPerEvent: v })}
-                hint="Per event."
-              />
-            </fieldset>
-          )}
+          <p className="mt-6 text-sm text-muted">
+            These starting limits are a good fit for most homes. Open a section to adjust it. You can change any of
+            them later in <strong className="font-medium text-foreground">Settings</strong>.
+          </p>
 
-          {has("ev") && (
-            <fieldset className="mt-8 space-y-6">
-              <legend className="text-base font-semibold text-foreground">Electric vehicle</legend>
-              <SelectField
-                label="Vehicle ready by"
-                value={profile.ev.readyBy}
-                options={READY_BY}
-                onChange={(v) => patch({ ev: { ...profile.ev, readyBy: v } })}
-              />
-              <SliderRow
-                label="Always have at least"
-                value={profile.ev.minCharge}
-                display={`${profile.ev.minCharge}%`}
-                min={20}
-                max={90}
-                step={5}
-                onChange={(v) => patch({ ev: { ...profile.ev, minCharge: v } })}
-              />
-              <SliderRow
-                label="Delay charging by up to"
-                value={profile.ev.delayMinutes}
-                display={`${profile.ev.delayMinutes} min`}
-                min={30}
-                max={180}
-                step={15}
-                onChange={(v) => patch({ ev: { ...profile.ev, delayMinutes: v } })}
-                hint="Delayed charging counts as flexibility."
-              />
-            </fieldset>
-          )}
+          <div className="mt-4 divide-y divide-border border-y border-border">
+            {battery && (
+              <CollapsibleSection
+                title="Battery"
+                summary={`Keep at least ${profile.reservePercent}% · share up to ${profile.maxKwhPerEvent.toFixed(1)} kWh`}
+              >
+                <SliderRow
+                  label="Always keep at least"
+                  value={profile.reservePercent}
+                  display={`${profile.reservePercent}%`}
+                  min={20}
+                  max={80}
+                  step={5}
+                  onChange={(v) => patch({ reservePercent: v })}
+                  hint="Charge kept for your home, for example during an outage."
+                />
+                <SliderRow
+                  label="Share at most"
+                  value={profile.maxKwhPerEvent}
+                  display={`${profile.maxKwhPerEvent.toFixed(1)} kWh`}
+                  min={1}
+                  max={6}
+                  step={0.5}
+                  onChange={(v) => patch({ maxKwhPerEvent: v })}
+                  hint="Per event."
+                />
+              </CollapsibleSection>
+            )}
 
-          {has("hvac") && (
-            <fieldset className="mt-8 space-y-6">
-              <legend className="text-base font-semibold text-foreground">HVAC</legend>
-              <SliderRow
-                label="Maximum adjustment"
-                value={profile.hvac.maxAdjustF}
-                display={`${profile.hvac.maxAdjustF}°F`}
-                min={1}
-                max={4}
-                step={1}
-                onChange={(v) => patch({ hvac: { ...profile.hvac, maxAdjustF: v } })}
-              />
-              <SliderRow
-                label="Maximum event duration"
-                value={profile.hvac.maxMinutes}
-                display={`${profile.hvac.maxMinutes} min`}
-                min={30}
-                max={120}
-                step={15}
-                onChange={(v) => patch({ hvac: { ...profile.hvac, maxMinutes: v } })}
-              />
-            </fieldset>
-          )}
+            {has("ev") && (
+              <CollapsibleSection
+                title="Electric vehicle"
+                summary={`Ready by ${READY_BY.find((o) => o.value === profile.ev.readyBy)?.label ?? profile.ev.readyBy} · keep ${profile.ev.minCharge}% · delay up to ${profile.ev.delayMinutes} min`}
+              >
+                <SelectField
+                  label="Vehicle ready by"
+                  value={profile.ev.readyBy}
+                  options={READY_BY}
+                  onChange={(v) => patch({ ev: { ...profile.ev, readyBy: v } })}
+                />
+                <SliderRow
+                  label="Always have at least"
+                  value={profile.ev.minCharge}
+                  display={`${profile.ev.minCharge}%`}
+                  min={20}
+                  max={90}
+                  step={5}
+                  onChange={(v) => patch({ ev: { ...profile.ev, minCharge: v } })}
+                />
+                <SliderRow
+                  label="Delay charging by up to"
+                  value={profile.ev.delayMinutes}
+                  display={`${profile.ev.delayMinutes} min`}
+                  min={30}
+                  max={180}
+                  step={15}
+                  onChange={(v) => patch({ ev: { ...profile.ev, delayMinutes: v } })}
+                  hint="Delayed charging counts as flexibility."
+                />
+              </CollapsibleSection>
+            )}
 
-          <fieldset className="mt-8">
-            <legend className="text-base font-semibold text-foreground">Every event</legend>
-            <div className="mt-4 space-y-6">
+            {has("hvac") && (
+              <CollapsibleSection
+                title="HVAC"
+                summary={`Adjust up to ${profile.hvac.maxAdjustF}°F · for up to ${profile.hvac.maxMinutes} min`}
+              >
+                <SliderRow
+                  label="Maximum adjustment"
+                  value={profile.hvac.maxAdjustF}
+                  display={`${profile.hvac.maxAdjustF}°F`}
+                  min={1}
+                  max={4}
+                  step={1}
+                  onChange={(v) => patch({ hvac: { ...profile.hvac, maxAdjustF: v } })}
+                />
+                <SliderRow
+                  label="Maximum event duration"
+                  value={profile.hvac.maxMinutes}
+                  display={`${profile.hvac.maxMinutes} min`}
+                  min={30}
+                  max={120}
+                  step={15}
+                  onChange={(v) => patch({ hvac: { ...profile.hvac, maxMinutes: v } })}
+                />
+              </CollapsibleSection>
+            )}
+
+            <CollapsibleSection
+              title="Every event"
+              summary={`At least ${money(profile.minRate)}/kWh · ${profile.maxEventsPerDay} a day at most · emergencies: ${EMERGENCY_LABEL[profile.emergency]}`}
+            >
               <SliderRow
                 label="Only join when paid at least"
                 value={profile.minRate}
@@ -385,30 +387,30 @@ function LimitsStep({ profile, patch, heading }: StepProps) {
                 step={0.01}
                 onChange={(v) => patch({ minRate: Math.round(v * 100) / 100 })}
               />
-            </div>
-            <div className="mt-2 divide-y divide-border">
-              <SettingRow label="Most events per day">
-                <Segmented
-                  label="Most events per day"
-                  value={profile.maxEventsPerDay}
-                  options={[1, 2, 3].map((n) => ({ value: n, label: String(n) }))}
-                  onChange={(v) => patch({ maxEventsPerDay: v })}
-                />
-              </SettingRow>
-              <SettingRow label="Emergency events" hint="When the grid is at risk of an outage">
-                <Segmented<Emergency>
-                  label="Emergency events"
-                  value={profile.emergency}
-                  options={[
-                    { value: "ask", label: "Ask me" },
-                    { value: "allow", label: "Allow" },
-                    { value: "never", label: "Never" },
-                  ]}
-                  onChange={(v) => patch({ emergency: v })}
-                />
-              </SettingRow>
-            </div>
-          </fieldset>
+              <div className="divide-y divide-border">
+                <SettingRow label="Most events per day">
+                  <Segmented
+                    label="Most events per day"
+                    value={profile.maxEventsPerDay}
+                    options={[1, 2, 3].map((n) => ({ value: n, label: String(n) }))}
+                    onChange={(v) => patch({ maxEventsPerDay: v })}
+                  />
+                </SettingRow>
+                <SettingRow label="Emergency events" hint="When the grid is at risk of an outage">
+                  <Segmented<Emergency>
+                    label="Emergency events"
+                    value={profile.emergency}
+                    options={[
+                      { value: "ask", label: "Ask me" },
+                      { value: "allow", label: "Allow" },
+                      { value: "never", label: "Never" },
+                    ]}
+                    onChange={(v) => patch({ emergency: v })}
+                  />
+                </SettingRow>
+              </div>
+            </CollapsibleSection>
+          </div>
 
           <p className="mt-8 rounded-md border border-border bg-background-raised px-4 py-3 text-sm text-foreground" aria-live="polite">
             {estimate.batteryKwh > 0 || has("ev") ? (

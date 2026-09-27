@@ -8,11 +8,13 @@ export function Dropdown({
   label,
   children,
   align = "right",
+  width = "w-72",
 }: {
   trigger: React.ReactNode;
   label: string;
   children: (close: () => void) => React.ReactNode;
   align?: "left" | "right";
+  width?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -40,15 +42,15 @@ export function Dropdown({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-border-strong aria-expanded:border-border-strong"
+        className="inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97] aria-expanded:border-border-strong"
       >
         {trigger}
       </button>
       {open && (
         <div
           id={panelId}
-          className={`absolute top-full z-50 mt-2 w-72 rounded-md border border-border-strong bg-background-raised p-4 ${
-            align === "right" ? "right-0" : "left-0"
+          className={`pop-in absolute top-full z-50 mt-2 ${width} max-w-[calc(100vw-2.5rem)] glass rounded-xl p-4 ${
+            align === "right" ? "right-0 origin-top-right" : "left-0 origin-top-left"
           }`}
         >
           {children(() => setOpen(false))}

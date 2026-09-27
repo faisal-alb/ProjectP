@@ -206,7 +206,7 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
                       acceptedKw ? "font-semibold text-foreground" : "text-muted-2"
                     }`}
                   >
-                    {acceptedKw ? `${acceptedKw} kW` : "—"}
+                    {acceptedKw ? `${acceptedKw} kW` : "0 kW"}
                   </td>
                   <td className="py-2.5 pl-3">
                     <OutcomeLabel outcome={outcome} />
@@ -255,7 +255,7 @@ function paidFor(market: MarketDto, label: string, type: string) {
   const rows = market.commitments.filter((c) =>
     type === "Home batteries" ? c.type === "Home batteries" : c.label === label,
   );
-  if (!rows.length) return "—";
+  if (!rows.length) return "$0.00";
   const base = rows.reduce((s, c) => s + BigInt(c.payout?.base ?? "0"), 0n);
   return `$${(Number(base) / 1e6).toFixed(2)}`;
 }

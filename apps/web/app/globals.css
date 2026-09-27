@@ -26,11 +26,16 @@
   --solana-soft: rgba(163, 139, 224, 0.1);
 
   /* Chart series (validated for dark surface, CVD-safe with line-style + labels) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
   --chart-forecast: #b86f9c;
   --chart-flex: #4f92c3;
 }
 
 @theme inline {
+  /* Every Tailwind transition uses the app's ease-out instead of ease-in-out. */
+  --default-transition-timing-function: var(--ease-out);
+
   --color-background: var(--background);
   --color-background-raised: var(--background-raised);
   --color-foreground: var(--foreground);
@@ -122,7 +127,7 @@ input[type="range"]::-webkit-slider-runnable-track {
   border-radius: 2px;
   background: linear-gradient(
     to right,
-    var(--foreground) var(--range-pct),
+    var(--range-fill, var(--foreground)) var(--range-pct),
     var(--range-track) var(--range-pct)
   );
 }
@@ -145,7 +150,7 @@ input[type="range"]::-moz-range-track {
 input[type="range"]::-moz-range-progress {
   height: 4px;
   border-radius: 2px;
-  background: var(--foreground);
+  background: var(--range-fill, var(--foreground));
 }
 input[type="range"]::-moz-range-thumb {
   width: 10px;
@@ -189,9 +194,9 @@ input[type="range"]:disabled {
     transform: translateY(14px);
     filter: blur(4px);
     transition:
-      opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-      transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-      filter 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .fade-up.is-visible {
     opacity: 1;
@@ -212,6 +217,38 @@ input[type="range"]:disabled {
   .tracked-caps {
     text-transform: uppercase;
     letter-spacing: 0.14em;
+  }
+}
+
+@layer utilities {
+  /* Menus grow from their trigger corner (set transform-origin on the element) */
+  .pop-in {
+    animation: pop-in 150ms var(--ease-out) both;
+  }
+
+  /* Staggered entrance for hero content */
+  .rise {
+    opacity: 0;
+    animation: rise-in 0.6s var(--ease-out) forwards;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -252,4 +289,264 @@ input[type="range"]:disabled {
 .voice-highlight {
   outline: 2px solid var(--color-foreground);
   outline-offset: 4px;
+}
+
+/* Voice assistant meter. Bar heights while listening or speaking are driven per frame
+   from the audio levels (see VoiceMeter); CSS only handles colour and the connecting wave. */
+.voice-meter {
+  display: inline-flex;
+  align-items: center;
+}
+.voice-bar {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: background-color 200ms var(--ease-out);
+}
+/* Resting bars, set per bar from --rest. They ease here from wherever the live meter left
+   them, and lift to full height on hover, left to right, as a hint that this listens. */
+.voice-meter[data-state="idle"] .voice-bar {
+  transform: scaleY(calc(var(--rest) * 0.6));
+  transition:
+    background-color 200ms var(--ease-out),
+    transform 360ms var(--ease-out);
+  transition-delay: calc(var(--i) * 28ms);
+}
+@media (hover: hover) {
+  .voice-button:hover .voice-meter[data-state="idle"] .voice-bar {
+    transform: scaleY(var(--rest));
+  }
+}
+.voice-meter[data-state="connecting"] .voice-bar {
+  background: var(--accent);
+  animation: voice-wave 900ms ease-in-out infinite;
+}
+.voice-meter[data-state="listening"] .voice-bar {
+  background: var(--foreground);
+}
+.voice-meter[data-state="speaking"] .voice-bar {
+  background: var(--accent);
+}
+@keyframes voice-wave {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(0.7);
+  }
+}
+
+/* Ask GridFlex buttons. Colour is by whose voice it is: accent is GridFlex (idle, connecting,
+   speaking), foreground is you (listening). Set --voice-base for an opaque surface to tint over;
+   VoiceMeter drives --voice-level (0-1) for the glow. */
+@layer components {
+  .voice-button {
+    --voice-tint: 8%;
+    --voice-edge: 28%;
+    --voice-ink: var(--accent);
+    position: relative;
+    border-color: color-mix(in srgb, var(--voice-ink) var(--voice-edge), transparent);
+    background-color: color-mix(in srgb, var(--accent) var(--voice-tint), var(--voice-base, transparent));
+    transition:
+      border-color 200ms var(--ease-out),
+      background-color 200ms var(--ease-out),
+      scale 220ms var(--ease-out);
+  }
+  /* Feedback on press, not release, and quicker in than out. */
+  .voice-button:active:not(:disabled) {
+    scale: 0.97;
+    transition:
+      border-color 200ms var(--ease-out),
+      background-color 200ms var(--ease-out),
+      scale 90ms var(--ease-out);
+  }
+  @media (hover: hover) {
+    .voice-button[data-state="idle"]:hover {
+      --voice-tint: 13%;
+      --voice-edge: 55%;
+    }
+  }
+  .voice-button[data-state="connecting"] {
+    --voice-edge: 40%;
+  }
+  .voice-button[data-state="listening"] {
+    --voice-tint: 0%;
+    --voice-edge: 30%;
+    --voice-ink: var(--foreground);
+  }
+  .voice-button[data-state="speaking"] {
+    --voice-tint: 12%;
+    --voice-edge: 60%;
+  }
+
+  /* A halo that follows the live level: set per frame, so no transition while talking,
+     only a fade when the session ends. */
+  .voice-button::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--voice-ink) 55%, transparent),
+      0 0 18px -2px color-mix(in srgb, var(--voice-ink) 60%, transparent);
+    opacity: min(1, calc(var(--voice-level, 0) * 1.4));
+  }
+  .voice-button[data-state="idle"]::after,
+  .voice-button[data-state="connecting"]::after {
+    transition: opacity 320ms var(--ease-out);
+  }
+
+  /* Each state label settles in, rather than swapping in place. */
+  .voice-label {
+    display: inline-block;
+    animation: voice-label-in 260ms var(--ease-out) backwards;
+  }
+}
+@keyframes voice-label-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+    filter: blur(2px);
+  }
+}
+
+/* The floating button is chrome over content, so it's a light glass rather than a solid chip. */
+.voice-fab {
+  --voice-base: color-mix(in srgb, var(--surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
+  animation: voice-fab-in 220ms var(--ease-out) both;
+}
+@keyframes voice-fab-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .voice-fab {
+    animation-name: voice-fab-fade;
+  }
+  @keyframes voice-fab-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  .voice-meter[data-state="connecting"] .voice-bar {
+    animation: voice-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes voice-pulse {
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+/* ── Dashboard ──────────────────────────────────────────────────────────────
+   Mostly natural: content sits on solid cards with soft depth. Glass is kept for
+   chrome that floats over content (the header, menus, the Ask button), where the
+   blur says "this is a layer above, and the page carries on underneath". */
+
+/* Header material. The blur lives on ::before, not the header, so menus inside the
+   header can still blur the page beneath them (a backdrop-filter element would
+   otherwise become their backdrop root). */
+.dash-chrome {
+  border-bottom: 1px solid var(--border);
+  transition: box-shadow 240ms var(--ease-out);
+}
+.dash-chrome::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--background) 82%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+}
+/* A scroll edge, not a heavier divider: only once content is passing underneath. */
+.dash-chrome[data-scrolled="true"] {
+  box-shadow: 0 12px 28px -20px rgba(0, 0, 0, 0.9);
+}
+
+/* The current-tab indicator: a 1px bar placed and sized with transforms from JS. */
+.nav-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 2px;
+  background: var(--foreground);
+  transform-origin: left;
+  pointer-events: none;
+}
+.nav-indicator[data-ready] {
+  transition:
+    transform 420ms var(--ease-out),
+    opacity 200ms var(--ease-out);
+}
+
+@layer utilities {
+  /* Cards: solid, softer corners, a faint lit top edge and a shadow that grounds them. */
+  .dash .panel {
+    border-radius: 14px;
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.035),
+      0 1px 2px rgba(0, 0, 0, 0.22),
+      0 10px 28px -16px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Floating menus: a heavier glass than the header, since they sit over busy content. */
+  .glass {
+    background: color-mix(in srgb, var(--background-raised) 80%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(170%);
+    backdrop-filter: blur(24px) saturate(170%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 16px 40px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Each dashboard page settles in on navigation instead of swapping in place. */
+  .page-settle {
+    animation: page-settle 360ms var(--ease-out) backwards;
+  }
+}
+@keyframes page-settle {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dash-chrome::before,
+  .glass {
+    background: var(--background-raised);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .voice-fab {
+    --voice-base: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .dash-chrome::before,
+  .glass {
+    background: var(--background-raised);
+  }
+  .dash-chrome,
+  .glass,
+  .dash .panel {
+    border-color: rgba(255, 255, 255, 0.28);
+  }
 }

@@ -50,9 +50,12 @@ export default function ZoneMap({ zip }: { zip: string }) {
           dragRotate: false,
           pitchWithRotate: false,
           touchPitch: false,
+          attributionControl: false,
         });
         map.touchZoomRotate.disableRotation();
         map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+        // Required by Mapbox's terms; compact collapses the credits into an (i) button.
+        map.addControl(new mapboxgl.AttributionControl({ compact: true }));
         map.getCanvas().setAttribute("aria-label", `${selected.zone} zone map, ZIP ${zip}`);
         map.on("error", () => {
           if (!disposed) setStatus("error");
@@ -106,7 +109,7 @@ export default function ZoneMap({ zip }: { zip: string }) {
               : status === "error" ? "The map couldn't load. Your zone details are shown above."
               : "Loading your grid zone…"}</p>
             {token && status === "error" && (
-              <button type="button" className="rounded-md border border-border px-4 py-2 text-foreground transition-colors hover:border-border-strong"
+              <button type="button" className="rounded-md border border-border px-4 py-2 text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97]"
                 onClick={() => { setStatus("loading"); setAttempt((value) => value + 1); }}>
                 Retry map
               </button>

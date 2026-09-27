@@ -35,8 +35,9 @@ Flexibility resources fall into four categories the product treats as interchang
 
 - Core loop operates per local zone/feeder, not grid-wide — this locality is fundamental to the product's value claim and should not be abstracted away in future work.
 - Off-chain: telemetry ingestion and forecasting. On-chain (Solana): settlement of verified commitments and payments. This split is a stated architectural constraint.
-- No `/dashboard` implementation exists yet — the landing page (`apps/web/app/page.tsx`) links to it, but it is unbuilt. Building it is a likely near-term surface.
-- Monorepo has empty scaffolding for `apps/api`, `packages/db`, `packages/shared`, `packages/solana`, `packages/ui` — no backend, database, or on-chain integration code exists yet. `apps/web` currently ships as a static/demo marketing site only.
+- Built: the landing page, onboarding for both roles, and household and operator dashboards (`apps/web/app/dashboard`), backed by `apps/api` (Hono; market lifecycle and SSE events), the Anchor program in `programs/gridflex`, and `packages/shared` and `packages/solana`. See `docs/README.md` for the full status.
+- Not built: a database (state is in memory and cookies), the forecasting/intelligence service, and the grid simulator. Zone loads, forecasts and resource offers are illustrative demo data.
+- In the app, participants see resources as **Uses power**, **Makes power** and **Stores power**. The four categories above are the grid-facing vocabulary; see `docs/product.md#resource-categories`.
 - Stack (pre-existing, not a greenfield decision): Next.js 16, React 19, Tailwind CSS 4, TypeScript, lucide-react icons.
 
 ## Brand Commitments

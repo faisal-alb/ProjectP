@@ -31,7 +31,7 @@ export function Navbar() {
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-white"
+            className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background transition-[color,background-color,transform] hover:bg-white active:scale-[0.97]"
           >
             Get Started
           </Link>

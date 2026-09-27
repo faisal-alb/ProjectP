@@ -1,7 +1,7 @@
 import { ParticipantFlow } from "@/components/onboarding/ParticipantFlow";
 
 export const metadata = {
-  title: "Set up your energy — GridFlex",
+  title: "Set up your energy | GridFlex",
 };
 
 // No signed-in redirect here: saving sets the account cookie, and the page

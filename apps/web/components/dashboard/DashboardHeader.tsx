@@ -1,20 +1,47 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { ChevronDown, UserRound } from "lucide-react";
 import { signOut } from "@/app/actions";
 import type { Role } from "@/lib/profile";
 import { Logo, Wordmark } from "@/components/gridflex/Logo";
+import { DashboardNav } from "./DashboardNav";
 import { Dropdown } from "./Dropdown";
+import { NotificationBell } from "./Notifications";
 import { HouseholdWalletButton } from "./HouseholdWallet";
 import { OperatorWalletButton } from "./OperatorWallet";
+import { useSecretTap } from "./Simulator";
 import { useSolana } from "./SolanaProvider";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 const ROLE_DESCRIPTION: Record<Role, string> = { participant: "Flexibility provider", operator: "Grid operator" };
 
+/**
+ * Marks the header once the page scrolls, so its edge shadow only shows when content is actually
+ * passing underneath. Written to the DOM directly: this changes on scroll, not on render.
+ */
+function useScrollEdge() {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const scrolled = window.scrollY > 2 ? "true" : "false";
+      if (el.dataset.scrolled !== scrolled) el.dataset.scrolled = scrolled;
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+  return ref;
+}
+
 export function DashboardHeader({ role, label }: { role: Role; label: string }) {
+  const onLabelTap = useSecretTap();
+  const headerRef = useScrollEdge();
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background">
+    <header ref={headerRef} className="dash-chrome sticky top-0 z-40">
       <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between gap-3 px-5 sm:px-8">
         <div className="flex min-w-0 items-center gap-4">
           <Link href="/" className="shrink-0" aria-label="GridFlex home">
@@ -24,14 +51,20 @@ export function DashboardHeader({ role, label }: { role: Role; label: string }) 
             <Logo className="h-6 w-6 text-foreground sm:hidden" />
           </Link>
           <span className="hidden h-4 w-px bg-border sm:block" aria-hidden="true" />
-          <span className="truncate text-sm text-muted">{label}</span>
+          <span className="select-none truncate text-sm text-muted" onClick={onLabelTap}>
+            {label}
+          </span>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
           <NetworkStatus />
           {role === "participant" ? <HouseholdWalletButton /> : <OperatorWalletButton />}
+          <NotificationBell />
           <AccountMenu role={role} label={label} />
         </div>
+      </div>
+      <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
+        <DashboardNav role={role} />
       </div>
     </header>
   );
@@ -41,12 +74,16 @@ function NetworkStatus() {
   const { apiStatus, health } = useSolana();
   const online = apiStatus === "online" && health;
   return (
-    <span
-      className="hidden items-center gap-1.5 text-xs text-muted md:inline-flex"
-      title={online ? `Settling in USDC on Solana ${health.cluster}` : "Live settlement is unavailable"}
-    >
-      <span className={`h-1.5 w-1.5 rounded-full ${online ? "bg-normal" : "bg-muted-2"}`} aria-hidden="true" />
-      {online ? "Solana" : apiStatus === "loading" ? "Connecting…" : "Solana offline"}
+    <span className="hidden md:inline-flex">
+      <Tooltip
+        side="bottom"
+        content={online ? `Payments settle in USDC on Solana ${health.cluster}.` : "Live settlement is unavailable right now."}
+      >
+        <span tabIndex={0} className="inline-flex items-center gap-1.5 rounded-sm text-xs text-muted">
+          <span className={`h-1.5 w-1.5 rounded-full ${online ? "bg-normal" : "bg-muted-2"}`} aria-hidden="true" />
+          {online ? "Solana" : apiStatus === "loading" ? "Connecting…" : "Solana offline"}
+        </span>
+      </Tooltip>
     </span>
   );
 }
@@ -72,7 +109,7 @@ function AccountMenu({ role, label }: { role: Role; label: string }) {
             <form action={signOut}>
               <button
                 type="submit"
-                className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:border-border-strong"
+                className="w-full rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97]"
               >
                 Sign out
               </button>

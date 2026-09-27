@@ -1,12 +1,12 @@
 "use client";
 
-import { useId } from "react";
-import { Check } from "lucide-react";
+import { useId, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
 
 export const primaryButton =
-  "inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-[color,background-color,transform] hover:bg-white active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-50";
 export const secondaryButton =
-  "inline-flex items-center justify-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-[color,border-color,transform] hover:border-border-strong active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Inline style that fills a range input's track up to its current value. */
 export function rangeFill(value: number, min: number, max: number): React.CSSProperties {
@@ -123,14 +123,23 @@ export function Segmented<T extends string | number>({
   value,
   options,
   onChange,
+  gridOnMobile = false,
 }: {
   label: string;
   value: T;
   options: { value: T; label: string; disabled?: boolean }[];
   onChange: (v: T) => void;
+  /** Two columns on phones, one row from `sm` up. For longer labels that won't fit in one row. */
+  gridOnMobile?: boolean;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-md border border-border bg-background-raised p-0.5">
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className={`max-w-full rounded-md border border-border bg-background-raised p-0.5 ${
+        gridOnMobile ? "grid w-full grid-cols-2 gap-0.5 sm:inline-flex sm:w-auto" : "inline-flex overflow-x-auto"
+      }`}
+    >
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -245,6 +254,7 @@ export function ChoiceTile({
   icon: Icon,
   title,
   description,
+  meta,
   radio = false,
   disabled = false,
 }: {
@@ -253,6 +263,8 @@ export function ChoiceTile({
   icon?: React.ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean | "true" }>;
   title: string;
   description?: string;
+  /** Extra line under the description, e.g. tags. */
+  meta?: React.ReactNode;
   radio?: boolean;
   disabled?: boolean;
 }) {
@@ -274,6 +286,7 @@ export function ChoiceTile({
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-foreground">{title}</span>
         {description && <span className="mt-0.5 block text-xs leading-relaxed text-muted">{description}</span>}
+        {meta && <span className="mt-2 block">{meta}</span>}
       </span>
       <span
         className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
@@ -284,5 +297,56 @@ export function ChoiceTile({
         {selected && <Check className="h-3 w-3" strokeWidth={3} />}
       </span>
     </button>
+  );
+}
+
+/**
+ * A titled group of controls that opens and closes. The summary line keeps the current values
+ * visible while it's closed. Content stays mounted (so values persist) but is inert when closed.
+ */
+export function CollapsibleSection({
+  title,
+  summary,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  summary: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const id = useId();
+  return (
+    <div>
+      <h2>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={`${id}-panel`}
+          onClick={() => setOpen((o) => !o)}
+          className="flex w-full items-center justify-between gap-4 py-3.5 text-left"
+        >
+          <span className="min-w-0">
+            <span className="block text-base font-semibold text-foreground">{title}</span>
+            <span className="mt-0.5 block text-xs text-muted">{summary}</span>
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            strokeWidth={1.5}
+            aria-hidden="true"
+          />
+        </button>
+      </h2>
+      <div
+        id={`${id}-panel`}
+        className={`grid transition-[grid-template-rows] duration-200 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+        inert={!open}
+      >
+        <div className="-mx-1 overflow-hidden px-1">
+          <div className="space-y-6 pt-1 pb-5">{children}</div>
+        </div>
+      </div>
+    </div>
   );
 }

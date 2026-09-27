@@ -1,4 +1,4 @@
-// The known-good flow (docs/05): one Downtown flexibility event from escrow to
+// The known-good flow (docs/solana.md): one Downtown flexibility event from escrow to
 // refund, without the UI. Prints every signature and checks the balances.
 //   npm run solana:demo            (SOLANA_CLUSTER=devnet to run on devnet)
 import assert from "node:assert/strict";
