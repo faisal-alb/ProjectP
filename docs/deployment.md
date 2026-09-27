@@ -137,10 +137,19 @@ docker compose --env-file .env.deploy -f docker-compose.yml -f docker-compose.lo
 
 ## Validation status (2026-09-27)
 
-API typecheck, web lint, the web production build, Compose configuration validation,
-and three deployment regression tests passed locally. Container builds exposed and
-fixed missing native SQLite build dependencies. The subsequent build was blocked
-when the host ran out of disk space and Docker's BuildKit storage became read-only.
-The complete Compose startup, runtime health/auth checks and restart persistence
-checks remain unverified. Free several GB, restart Docker, and run the local steps
-above before deploying. No live blockchain transaction was executed in this check.
+Validated locally on Linux ARM64 containers through Docker Desktop:
+
+- All three images build and all three Compose services become healthy.
+- API health redacts the RPC URL; the intelligence forecast returns explicit
+  placeholders when no trained models are mounted.
+- The web page and anonymous sign-in work; unauthenticated voice requests fail.
+- Faucet limits return 429 with Retry-After; oversized requests return 413.
+- The managed-wallet snapshot and authenticated session survive container restart.
+- API typecheck, web lint, web production build, Compose configuration validation
+  and the three deployment regression tests pass.
+
+The builds caught missing SQLite compilation tools and missing cross-platform
+native dependencies in the npm lockfile; both are fixed. Existing locked package
+versions are preserved. The smoke test used isolated, unfunded keys and placeholder
+models. Live devnet settlement, trained model artifacts, ElevenLabs and public
+Dokploy HTTPS routing still require the deployment-specific checks above.
