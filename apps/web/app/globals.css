@@ -220,114 +220,17 @@ input[type="range"]:disabled {
   }
 }
 
-/* Onboarding energy: gradients built from the app's own accent, purple and green. */
 @layer utilities {
-  .gradient-text {
-    background: linear-gradient(100deg, #8cc4dc 0%, #6fb5c4 50%, #6fc9a8 100%);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: gradient-shift 2.4s var(--ease-out) 0.4s forwards;
-  }
-
-  .gradient-button {
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(100deg, #8cc4dc 0%, #6fb5c4 55%, #6fc9a8 100%);
-    background-size: 160% 100%;
-    color: #0f1013;
-    box-shadow: 0 8px 28px -10px rgba(127, 180, 204, 0.45);
-    transition:
-      background-position 0.5s var(--ease-out),
-      box-shadow 0.3s var(--ease-out),
-      transform 0.16s var(--ease-out);
-  }
-  .gradient-button:hover {
-    background-position: 100% 0;
-    box-shadow: 0 10px 34px -8px rgba(111, 201, 168, 0.4);
-  }
-  .gradient-button:active {
-    transform: scale(0.97);
-  }
-
-
-  /* Drifting aurora behind the hero */
-  .aurora {
-    position: absolute;
-    inset: -4rem 0 0 0; /* reaches up behind the header */
-    overflow: hidden;
-    pointer-events: none;
-    -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent);
-    mask-image: linear-gradient(to bottom, #000 30%, transparent);
-  }
-  .aurora > span {
-    position: absolute;
-    border-radius: 9999px;
-    filter: blur(70px);
-    opacity: 0.28;
-    will-change: transform;
-    animation: aurora-drift 18s ease-in-out infinite alternate;
-  }
-  .aurora > span:nth-child(1) {
-    top: -12%;
-    left: 8%;
-    width: 30rem;
-    height: 22rem;
-    background: var(--accent);
-  }
-  .aurora > span:nth-child(2) {
-    top: 2%;
-    right: 4%;
-    width: 26rem;
-    height: 22rem;
-    background: #4f92c3;
-    animation-duration: 22s;
-    animation-delay: -6s;
-  }
-  .aurora > span:nth-child(3) {
-    top: 26%;
-    left: 38%;
-    width: 22rem;
-    height: 16rem;
-    background: #6fc9a8;
-    opacity: 0.16;
-    animation-duration: 26s;
-    animation-delay: -12s;
-  }
-
   /* Menus grow from their trigger corner (set transform-origin on the element) */
   .pop-in {
     animation: pop-in 150ms var(--ease-out) both;
   }
 
-  /* Translucent surface; solid when the user asks for reduced transparency */
-  .glass {
-    background: color-mix(in srgb, var(--background-raised) 70%, transparent);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-  }
-
   /* Staggered entrance for hero content */
   .rise {
     opacity: 0;
-    animation: rise-in 0.8s var(--ease-out) forwards;
+    animation: rise-in 0.6s var(--ease-out) forwards;
     animation-delay: var(--rise-delay, 0ms);
-  }
-}
-
-@keyframes gradient-shift {
-  to {
-    background-position: 100% 0;
-  }
-}
-
-@keyframes aurora-drift {
-  from {
-    transform: translate3d(-4%, -3%, 0) scale(1);
-  }
-  to {
-    transform: translate3d(6%, 8%, 0) scale(1.15);
   }
 }
 
@@ -341,7 +244,7 @@ input[type="range"]:disabled {
 @keyframes rise-in {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -365,14 +268,6 @@ input[type="range"]:disabled {
   }
   50% {
     opacity: 0.3;
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .glass {
-    background: var(--background-raised);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
   }
 }
 
