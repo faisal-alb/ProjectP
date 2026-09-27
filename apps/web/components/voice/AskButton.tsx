@@ -1,15 +1,16 @@
 "use client";
 
-import { secondaryButton } from "@/components/onboarding/controls";
 import { STATE_LABEL, useVoiceAssistant, type VoiceState } from "./context";
 import { VoiceMeter } from "./VoiceMeter";
 
-const FLOATING_BORDER: Record<VoiceState, string> = {
-  idle: "border-border-strong hover:border-foreground/40",
-  connecting: "border-border-strong",
-  listening: "border-foreground/30",
-  speaking: "border-accent/60",
-};
+/** The state label, keyed so each change settles in rather than swapping in place. */
+function StateText({ state, text }: { state: VoiceState; text: string }) {
+  return (
+    <span key={state} className="voice-label">
+      {text}
+    </span>
+  );
+}
 
 /** Bottom-right, always on screen. Shows what the assistant is doing, and ends the session on tap. */
 export function FloatingAskButton() {
@@ -26,12 +27,13 @@ export function FloatingAskButton() {
         type="button"
         onClick={() => toggle()}
         aria-label={active ? "End voice assistant" : "Ask GridFlex with your voice"}
-        className={`voice-fab flex h-12 min-w-44 items-center gap-3 rounded-lg border bg-surface px-4 text-left shadow-lg shadow-black/30 transition-[border-color,transform] duration-150 ease-[var(--ease-out)] active:scale-[0.97] ${FLOATING_BORDER[state]}`}
+        data-state={state}
+        className="voice-button voice-fab flex h-12 min-w-44 items-center gap-3 rounded-lg border px-4 text-left shadow-lg shadow-black/30 [--voice-base:var(--surface)]"
       >
         <VoiceMeter state={state} />
         <span className="flex flex-col leading-tight">
           <span className="text-sm font-medium text-foreground" aria-live="polite">
-            {STATE_LABEL[state]}
+            <StateText state={state} text={STATE_LABEL[state]} />
           </span>
           {active && <span className="text-[11px] text-muted-2">Tap to end</span>}
         </span>
@@ -60,11 +62,12 @@ export function AskGridFlexButton({
       type="button"
       onClick={() => toggle(prompt)}
       aria-label={active ? "End voice assistant" : `${label} with your voice`}
-      className={`${secondaryButton} !gap-2.5 !py-2 active:scale-[0.97] ${active ? "!border-border-strong" : ""} ${state === "speaking" ? "!border-accent/60" : ""} ${className}`}
+      data-state={state}
+      className={`voice-button inline-flex items-center justify-center gap-2.5 rounded-md border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       <VoiceMeter state={state} size="sm" />
       <span className="min-w-[4.75rem] text-left" aria-live="polite">
-        {active ? STATE_LABEL[state] : label}
+        <StateText state={state} text={active ? STATE_LABEL[state] : label} />
       </span>
     </button>
   );

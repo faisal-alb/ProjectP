@@ -301,11 +301,25 @@ input[type="range"]:disabled {
   width: 3px;
   height: 100%;
   border-radius: 2px;
-  background: var(--muted-2);
+  background: var(--accent);
   transition: background-color 200ms var(--ease-out);
 }
+/* Resting bars, set per bar from --rest. They ease here from wherever the live meter left
+   them, and lift to full height on hover, left to right, as a hint that this listens. */
+.voice-meter[data-state="idle"] .voice-bar {
+  transform: scaleY(calc(var(--rest) * 0.6));
+  transition:
+    background-color 200ms var(--ease-out),
+    transform 360ms var(--ease-out);
+  transition-delay: calc(var(--i) * 28ms);
+}
+@media (hover: hover) {
+  .voice-button:hover .voice-meter[data-state="idle"] .voice-bar {
+    transform: scaleY(var(--rest));
+  }
+}
 .voice-meter[data-state="connecting"] .voice-bar {
-  background: var(--muted);
+  background: var(--accent);
   animation: voice-wave 900ms ease-in-out infinite;
 }
 .voice-meter[data-state="listening"] .voice-bar {
@@ -323,6 +337,82 @@ input[type="range"]:disabled {
     transform: scaleY(0.7);
   }
 }
+
+/* Ask GridFlex buttons. Colour is by whose voice it is: accent is GridFlex (idle, connecting,
+   speaking), foreground is you (listening). Set --voice-base for an opaque surface to tint over;
+   VoiceMeter drives --voice-level (0-1) for the glow. */
+@layer components {
+  .voice-button {
+    --voice-tint: 8%;
+    --voice-edge: 28%;
+    --voice-ink: var(--accent);
+    position: relative;
+    border-color: color-mix(in srgb, var(--voice-ink) var(--voice-edge), transparent);
+    background-color: color-mix(in srgb, var(--accent) var(--voice-tint), var(--voice-base, transparent));
+    transition:
+      border-color 200ms var(--ease-out),
+      background-color 200ms var(--ease-out),
+      scale 220ms var(--ease-out);
+  }
+  /* Feedback on press, not release, and quicker in than out. */
+  .voice-button:active:not(:disabled) {
+    scale: 0.97;
+    transition:
+      border-color 200ms var(--ease-out),
+      background-color 200ms var(--ease-out),
+      scale 90ms var(--ease-out);
+  }
+  @media (hover: hover) {
+    .voice-button[data-state="idle"]:hover {
+      --voice-tint: 13%;
+      --voice-edge: 55%;
+    }
+  }
+  .voice-button[data-state="connecting"] {
+    --voice-edge: 40%;
+  }
+  .voice-button[data-state="listening"] {
+    --voice-tint: 0%;
+    --voice-edge: 30%;
+    --voice-ink: var(--foreground);
+  }
+  .voice-button[data-state="speaking"] {
+    --voice-tint: 12%;
+    --voice-edge: 60%;
+  }
+
+  /* A halo that follows the live level: set per frame, so no transition while talking,
+     only a fade when the session ends. */
+  .voice-button::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--voice-ink) 55%, transparent),
+      0 0 18px -2px color-mix(in srgb, var(--voice-ink) 60%, transparent);
+    opacity: min(1, calc(var(--voice-level, 0) * 1.4));
+  }
+  .voice-button[data-state="idle"]::after,
+  .voice-button[data-state="connecting"]::after {
+    transition: opacity 320ms var(--ease-out);
+  }
+
+  /* Each state label settles in, rather than swapping in place. */
+  .voice-label {
+    display: inline-block;
+    animation: voice-label-in 260ms var(--ease-out) backwards;
+  }
+}
+@keyframes voice-label-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+    filter: blur(2px);
+  }
+}
+
 .voice-fab {
   animation: voice-fab-in 220ms var(--ease-out) both;
 }
