@@ -42,9 +42,11 @@ export function Navbar() {
   const [active, setActive] = useState(0);
   const navRef = useRef<HTMLElement>(null);
   const pillRef = useRef<HTMLSpanElement>(null);
-  // While a click-initiated scroll is running, the pill stays on the clicked item
-  // instead of stepping through every section on the way.
-  const followingClick = useRef(false);
+  // A click pins the pill to the clicked item. The scroll that follows can take any
+  // time (and Safari has no scrollend), so only the reader scrolling for themselves
+  // hands the pill back to the scroll position.
+  const pinned = useRef(false);
+  const spyFrame = useRef(0);
 
   // One pill for the whole nav, placed with a transform so it slides to the current item.
   useLayoutEffect(() => {
@@ -67,35 +69,46 @@ export function Navbar() {
     };
   }, [active]);
 
-  // Follow the reader's scroll position.
+  // Follow the reader's scroll position, unless a click has pinned the pill.
   useEffect(() => {
-    let frame = 0;
     const onScroll = () => {
-      if (followingClick.current) return;
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => setActive(currentIndex()));
+      if (pinned.current) return;
+      cancelAnimationFrame(spyFrame.current);
+      spyFrame.current = requestAnimationFrame(() => {
+        if (!pinned.current) setActive(currentIndex());
+      });
     };
+    // Signs the reader is scrolling themselves: wheel or trackpad, touch, scroll keys,
+    // or grabbing the scrollbar. Clicks in the nav pin again straight after.
+    const release = () => {
+      pinned.current = false;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) release();
+    };
+    const listeners: [string, EventListener][] = [
+      ["wheel", release],
+      ["touchmove", release],
+      ["pointerdown", release],
+      ["keydown", onKey as EventListener],
+    ];
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
+    listeners.forEach(([type, fn]) => window.addEventListener(type, fn, { passive: true }));
     return () => {
-      cancelAnimationFrame(frame);
+      cancelAnimationFrame(spyFrame.current);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
+      listeners.forEach(([type, fn]) => window.removeEventListener(type, fn));
     };
   }, []);
 
   const select = (i: number) => {
+    // Drop a position update queued from just before the click, so the pill can't snap back.
+    cancelAnimationFrame(spyFrame.current);
+    pinned.current = true;
     setActive(i);
-    followingClick.current = true;
-    const release = () => {
-      followingClick.current = false;
-      window.removeEventListener("scrollend", release);
-      clearTimeout(fallback);
-    };
-    window.addEventListener("scrollend", release);
-    // scrollend doesn't fire if nothing scrolls, and older Safari lacks it.
-    const fallback = setTimeout(release, 1200);
   };
 
   return (
