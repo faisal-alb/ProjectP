@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { ChevronRight } from "lucide-react";
 import {
+  deviceCondition,
   resourceType,
   virtualAt,
   type DeviceKind,
@@ -284,12 +285,13 @@ function DemoNote({ run }: { run: RunState }) {
 
 /* ---------- Devices ---------- */
 
-type DeviceStatus = "READY" | "HELPING NOW" | "UNAVAILABLE" | "OPTED OUT";
+type DeviceStatus = "READY" | "HELPING NOW" | "UNAVAILABLE" | "OPTED OUT" | "AWAY";
 const DEVICE_STYLE: Record<DeviceStatus, string> = {
   READY: "text-normal",
   "HELPING NOW": "text-accent",
   UNAVAILABLE: "text-muted",
   "OPTED OUT": "text-muted-2",
+  AWAY: "text-muted",
 };
 
 function deviceLines(d: DeviceState, run: RunState): [string, string] {
@@ -298,6 +300,7 @@ function deviceLines(d: DeviceState, run: RunState): [string, string] {
     case "battery":
       return [`${pct}% charged`, `${one(Math.max(0, d.energyKwh - d.reserve * d.capacityKwh))} kWh above your ${Math.round(d.reserve * 100)}% reserve`];
     case "ev":
+      if (d.away) return [`${pct}% charged`, `Back on the charger around ${clock(run, 1080)}`];
       return [`${pct}% charged`, `Needs ${one(d.targetKwh)} kWh by ${clock(run, d.departureMinute)} · charging can wait`];
     case "hvac":
       return [`${Math.round(d.temperatureF)}°F inside`, `Never lets it go above ${Math.round(d.comfortMaxF)}°F`];
@@ -340,8 +343,17 @@ export function HomeDevices() {
               const key = home.resources[d.kind] ?? d.kind;
               const type = resourceType(key);
               const Icon = RESOURCE_ICON[key];
-              const status: DeviceStatus = d.optedOut ? "OPTED OUT" : !d.available || d.status === "Unavailable" ? "UNAVAILABLE" : d.status === "Delivering" ? "HELPING NOW" : "READY";
+              const status: DeviceStatus = d.optedOut
+                ? "OPTED OUT"
+                : !d.available || d.status === "Unavailable" || (d.kind === "generator" && d.fuelKwh <= 0)
+                  ? "UNAVAILABLE"
+                  : d.status === "Delivering"
+                    ? "HELPING NOW"
+                    : d.kind === "ev" && d.away
+                      ? "AWAY"
+                      : "READY";
               const [line1, line2] = deviceLines(d, run);
+              const condition = deviceCondition(run, d);
               const earned = earnedBy(d.id);
               return (
                 <div key={d.id} className="panel flex flex-col rounded-lg p-4">
@@ -356,7 +368,10 @@ export function HomeDevices() {
                     <RoleTags roles={type.roles} />
                   </div>
                   <p className="mt-3 font-mono text-2xl font-semibold tabular text-foreground">{line1}</p>
-                  <p className="mt-1 flex-1 text-xs text-muted">{line2}</p>
+                  <p className="mt-1 text-xs text-muted">{line2}</p>
+                  <p className="mt-2 flex-1 text-xs text-watch" aria-live="polite">
+                    {condition}
+                  </p>
                   <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3 text-xs text-muted">
                     <span>Helped in {eventsBy(d.id)} {eventsBy(d.id) === 1 ? "event" : "events"} today</span>
                     <span className="font-mono tabular text-normal">+{money(earned)}</span>

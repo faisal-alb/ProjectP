@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createDevices, evolveDevice, virtualAt } from "./run";
+import { applyScenario, createDevices, deviceCondition, evolveDevice, releaseScenario, virtualAt } from "./run";
 
 test("battery conserves energy including losses and cannot cross reserve", () => {
   const d = createDevices()[0];
@@ -29,4 +29,25 @@ test("virtual clock crosses midnight without changing the real clock", () => {
     virtualAt({ start: "2024-08-20T05:00:00Z", minute: 1440 }),
     "2024-08-21T05:00:00.000Z",
   );
+});
+test("scenarios change device settings while active and restore them after", () => {
+  const run = { devices: createDevices(), minute: 390, faults: [] as { id: string; until: number }[], events: [] };
+  const battery = run.devices.find((d) => d.kind === "battery")!;
+  const ev = run.devices.find((d) => d.kind === "ev")!;
+  run.faults.push({ id: "storm", until: 420 }, { id: "reserve", until: 440 });
+  applyScenario(run, "storm");
+  applyScenario(run, "reserve");
+  applyScenario(run, "ev-departure");
+  assert.equal(battery.reserve, 0.8);
+  assert.equal(deviceCondition(run, battery), "Holding 80% in reserve for the storm");
+  assert.equal(ev.departureMinute, 390);
+  assert.equal(evolveDevice(ev, 7, 391, 90, 0, []).reliefKw, 0);
+  assert.equal(deviceCondition(run, ev), "Unplugged and away from home");
+  run.minute = 420;
+  assert.equal(releaseScenario(run, "storm"), false, "reserve scenario still holds it");
+  assert.equal(battery.reserve, 0.8);
+  run.minute = 440;
+  assert.equal(releaseScenario(run, "reserve"), true);
+  assert.equal(battery.reserve, 0.2);
+  assert.equal(battery.held?.reserve, undefined);
 });

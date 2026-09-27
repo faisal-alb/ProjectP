@@ -54,6 +54,8 @@ export interface DeviceState {
   powerKw: number;
   deliveredWh: number;
   status: string;
+  /** Settings a scenario overrode, restored when the scenario ends. */
+  held?: Partial<Pick<DeviceState, "reserve" | "available" | "fuelKwh">>;
 }
 export interface ZoneState {
   id: ZoneId;
@@ -281,6 +283,92 @@ export function createDevices(seed = 7): DeviceState[] {
   );
 }
 
+type Held = keyof NonNullable<DeviceState["held"]>;
+
+/** Scenarios that change a device's own settings for as long as they last. */
+const HOLDS: Record<string, { kind: DeviceKind; field: Held; value: (d: DeviceState) => number | boolean }> = {
+  storm: { kind: "battery", field: "reserve", value: (d) => Math.max(d.reserve, 0.8) },
+  reserve: { kind: "battery", field: "reserve", value: (d) => Math.max(d.reserve, 0.8) },
+  "device-offline": { kind: "battery", field: "available", value: () => false },
+  "generator-limit": { kind: "generator", field: "fuelKwh", value: () => 0 },
+};
+
+/**
+ * Put a scenario into the devices themselves, so dashboards, the optimizer and the
+ * physics all see the same thing: a storm raises battery reserves, an early departure
+ * unplugs the EVs. Returns whether any device changed.
+ */
+export function applyScenario(run: Pick<RunState, "devices" | "minute">, id: string) {
+  const hold = HOLDS[id];
+  let changed = false;
+  for (const d of run.devices) {
+    if (hold && d.kind === hold.kind) {
+      const held = (d.held ??= {});
+      if (held[hold.field] === undefined) Object.assign(held, { [hold.field]: d[hold.field] });
+      Object.assign(d, { [hold.field]: hold.value(d) });
+      changed = true;
+    }
+    if (id === "ev-departure" && d.kind === "ev" && run.minute < 1080 && run.minute < d.departureMinute) {
+      d.departureMinute = run.minute;
+      changed = true;
+    }
+    if (id === "hvac-limit" && d.kind === "hvac" && d.temperatureF < d.comfortMaxF) {
+      d.temperatureF = d.comfortMaxF;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+/** Undo a scenario's settings once no other active scenario still needs them. */
+export function releaseScenario(run: Pick<RunState, "devices" | "faults" | "minute">, id: string) {
+  const hold = HOLDS[id];
+  if (!hold) return false;
+  const stillHeld = run.faults.some(
+    (f) => f.until > run.minute && HOLDS[f.id]?.kind === hold.kind && HOLDS[f.id]?.field === hold.field,
+  );
+  if (stillHeld) return false;
+  let changed = false;
+  for (const d of run.devices) {
+    const value = d.held?.[hold.field];
+    if (d.kind !== hold.kind || value === undefined) continue;
+    Object.assign(d, { [hold.field]: value });
+    delete d.held![hold.field];
+    changed = true;
+  }
+  return changed;
+}
+
+/** What's affecting a device right now, in words a household would use. */
+export function deviceCondition(run: Pick<RunState, "faults" | "minute" | "events">, d: DeviceState): string | undefined {
+  const has = (id: string) => activeFault(run, id);
+  const helping = run.events.some(
+    (e) => e.phase === "dispatching" && e.commitments.some((c) => c.resourceId === d.id),
+  );
+  if (d.optedOut) return "Opted out by the household";
+  if (!d.available) return has("device-offline") ? "Offline, so GridFlex is working around it" : "Offline";
+  if (d.kind === "battery" && has("storm")) return `Holding ${Math.round(d.reserve * 100)}% in reserve for the storm`;
+  if (d.kind === "battery" && has("reserve")) return `Protecting a higher ${Math.round(d.reserve * 100)}% reserve`;
+  if (d.kind === "ev" && d.away) return "Unplugged and away from home";
+  if (d.kind === "generator" && has("generator-limit")) return "Out of fuel until it's refilled";
+  if (d.kind === "hvac" && (has("hvac-limit") || d.temperatureF >= d.comfortMaxF)) return "At its comfort limit, so it can't ease off";
+  if (d.kind === "solar" && has("solar-drop")) return "Clouds are cutting its output";
+  if (helping) {
+    if (has("zero-delivery")) return "Not delivering what it committed";
+    if (has("under-delivery")) return "Delivering about half of what it promised";
+    if (has("over-delivery")) return "Delivering more than it promised";
+    if (has("missing-readings")) return "Meter readings aren't arriving";
+    if (has("stale-readings")) return "Meter is resending old readings";
+    if (has("implausible-readings")) return "Meter is reporting impossible numbers";
+    if (has("duplicate-readings")) return "Meter sent some readings twice";
+  }
+  if (has("opt-out")) return "Opted out of new events";
+  if (has("declined")) return "Declined the latest request";
+  if (has("unanswered")) return "Hasn't answered the latest request";
+  if (has("price-ineligible")) return "Asking more than the price cap";
+  return undefined;
+}
+
 /** One-minute physical evolution. Meter outcomes do not depend on predicted baselines. */
 export function evolveDevice(
   d: DeviceState,
@@ -322,9 +410,8 @@ export function evolveDevice(
       consumption += charge;
     }
   } else if (d.kind === "ev") {
-    const connected =
-      minute < (has("ev-departure") ? 390 : d.departureMinute) ||
-      minute >= 1080;
+    // An early departure moves departureMinute itself (see applyScenario).
+    const connected = minute < d.departureMinute || minute >= 1080;
     const desired =
       connected && !offline
         ? Math.min(d.maxKw, (Math.max(0, d.targetKwh - d.energyKwh) * 60) / 0.9)

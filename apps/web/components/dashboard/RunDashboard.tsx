@@ -1,5 +1,5 @@
 "use client";
-import { virtualAt, type RunState, type ZoneId } from "@gridflex/shared";
+import { deviceCondition, virtualAt, type RunState, type ZoneId } from "@gridflex/shared";
 import { useRun, runTime } from "./RunProvider";
 import { useVoiceAssistant } from "../voice/context";
 
@@ -290,6 +290,11 @@ export function RunDashboard({
                     </td>
                     <td className="border-b border-border px-3 py-4">
                       {d.status}
+                      {deviceCondition(run, d) && (
+                        <span className="mt-0.5 block text-xs text-watch">
+                          {deviceCondition(run, d)}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

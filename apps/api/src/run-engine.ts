@@ -1,8 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
   activeFault,
+  applyScenario,
   createDevices,
   evolveDevice,
+  releaseScenario,
   rounded,
   RUN_ZONES,
   SCENARIOS,
@@ -160,6 +162,9 @@ export class RunEngine {
         );
       this.log("device.changed", scenario.label, undefined, id);
     }
+    // Not evidence on its own: coverage still waits for the scenario to affect delivery.
+    if (applyScenario(s, id))
+      this.log("device.changed", `${scenario.label}: device settings updated.`);
     if (id === "cancel-event")
       for (const e of s.events.filter(
         (e) => !["completed", "canceled"].includes(e.phase),
@@ -258,9 +263,13 @@ export class RunEngine {
         )
           throw new Error("Reserve must be between 10 and 100 percent");
         device.reserve = input.reservePercent / 100;
+        // A presenter's own setting outlasts whatever a scenario was holding.
+        delete device.held?.reserve;
       }
-      if (typeof input.available === "boolean")
+      if (typeof input.available === "boolean") {
         device.available = input.available;
+        delete device.held?.available;
+      }
       if (typeof input.optedOut === "boolean") device.optedOut = input.optedOut;
       this.log(
         "resource.updated",
@@ -487,7 +496,14 @@ export class RunEngine {
         for (const f of SCENARIOS.filter((f) => f.minute === s.minute))
           this.inject(f.id);
       }
+      const ended = s.faults.filter((f) => f.until <= s.minute);
       s.faults = s.faults.filter((f) => f.until > s.minute);
+      for (const f of ended)
+        if (releaseScenario(s, f.id))
+          this.log(
+            "device.changed",
+            `${SCENARIOS.find((c) => c.id === f.id)?.label ?? f.id} ended: device settings restored.`,
+          );
       // The simulator keeps raw interval evidence. After a fault clears, a corrected
       // resend is ingested exactly once; unavailable real telemetry must remain pending.
       for (const event of s.events)
