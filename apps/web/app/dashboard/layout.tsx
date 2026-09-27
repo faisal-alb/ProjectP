@@ -20,7 +20,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
 
   return (
     <DashboardProviders role={role} household={household}>
-      <div className="flex flex-1 flex-col">
+      <div className="dash flex flex-1 flex-col">
         <DashboardHeader role={role} label={label} />
         <main className="mx-auto w-full max-w-[1240px] flex-1 px-5 py-8 sm:px-8 sm:py-10">{children}</main>
       </div>

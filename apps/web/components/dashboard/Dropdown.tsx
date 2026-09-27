@@ -49,7 +49,7 @@ export function Dropdown({
       {open && (
         <div
           id={panelId}
-          className={`pop-in absolute top-full z-50 mt-2 ${width} max-w-[calc(100vw-2.5rem)] rounded-md border border-border-strong bg-background-raised p-4 ${
+          className={`pop-in absolute top-full z-50 mt-2 ${width} max-w-[calc(100vw-2.5rem)] glass rounded-xl p-4 ${
             align === "right" ? "right-0 origin-top-right" : "left-0 origin-top-left"
           }`}
         >
