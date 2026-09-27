@@ -76,7 +76,7 @@ export function ParticipantFlow() {
     }
   }
 
-  if (done) return <Ready profile={profile} heading={heading} zone={location?.zone ?? "Downtown Miami"} feeder={location?.feeder ?? "DT-A"} />;
+  if (done) return <Ready profile={profile} heading={heading} zone={location?.zone ?? "Downtown Austin"} feeder={location?.feeder ?? "DT-A"} />;
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-5 py-10 sm:py-14">
@@ -233,7 +233,7 @@ function LocationStep({ profile, patch, heading, location }: StepProps & { locat
         ) : (
           <p className={`text-xs ${zipComplete ? "text-watch" : "text-muted-2"}`}>
             {zipComplete
-              ? "GridFlex isn't available at this ZIP yet. We currently serve the Miami area."
+              ? "GridFlex isn't available at this ZIP yet. We currently serve the Austin area."
               : "Enter a 5-digit ZIP code."}
           </p>
         )}

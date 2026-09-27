@@ -20,7 +20,7 @@ sign create_market  ─────────────►  broadcast ──
 
 The operator signs exactly one transaction (the escrow). Everything after that is signed by the GridFlex verifier key held by the API.
 
-Demo numbers (Downtown Miami, 800 kW for 1 hour, $0.20/kWh cap): **$160.00 escrowed**, **$93.60 paid** to 24 participants (20 of them individual homes), **$66.40 refunded**. The demo household is paid **$0.70** (5 kWh × $0.14).
+Demo numbers (Downtown Austin, 800 kW for 1 hour, $0.20/kWh cap): **$160.00 escrowed**, **$93.60 paid**, **$66.40 refunded**. The 100 kW of home batteries is split across individual homes. When the [intelligence service](intelligence.md) is running, the baseline model sizes each home (14 homes; the demo household commits 6.0 kW and is paid **$0.84**) and the verify proof commits to its baselines. Without it, each home commits its battery's 5 kW (20 homes; **$0.70**).
 
 ## Units
 

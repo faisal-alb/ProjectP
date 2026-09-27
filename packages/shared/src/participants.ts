@@ -15,6 +15,12 @@ export interface ParticipantCommitment {
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+/** Stable id of the i-th (0-based) managed household, e.g. downtown-home-01. */
+export const homeResourceId = (i: number) => `downtown-home-${String(i + 1).padStart(2, "0")}`;
+
+/** Display label of the i-th (0-based) managed household. */
+export const homeLabel = (i: number) => `Home ${i + 1} (Downtown Austin home batteries)`;
+
 /**
  * Turn cleared market rows into one commitment per paid participant. The
  * aggregated "Home batteries" offer becomes individual homes (each sharing up
@@ -40,11 +46,11 @@ export function participantCommitments(
       }
       const homes = Math.max(1, Math.ceil(r.acceptedKw / household.maxDischargeKw));
       return Array.from({ length: homes }, (_, i) => {
-        const resourceId = `downtown-home-${String(i + 1).padStart(2, "0")}`;
+        const resourceId = homeResourceId(i);
         const remaining = r.acceptedKw - i * household.maxDischargeKw;
         return {
           resourceId,
-          label: `Home ${i + 1} (Downtown Miami home batteries)`,
+          label: homeLabel(i),
           type: r.offer.type,
           kw: Math.min(household.maxDischargeKw, remaining),
           pricePerKwh: r.offer.pricePerKwh,

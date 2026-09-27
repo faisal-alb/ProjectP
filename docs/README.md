@@ -15,7 +15,8 @@ Start with [Product](product.md) for what we're building and why, then [Architec
 | [Voice agent](voice-agent.md) | The household voice assistant and the Power Plan | Built |
 | [Location map](location-map.md) | The onboarding zone map and its boundary data | Built |
 | [Forecasting and simulation](forecasting-and-simulation.md) | The grid simulator and forecasting design | Planned (the dashboard uses static demo data) |
-| [Model orchestration](model-orchestration.md) | The Python spike model, valuation, dispatch and event lifecycle | Partly built (`ml/` has the spike model) |
+| [Model orchestration](model-orchestration.md) | The Python spike model, valuation, dispatch and event lifecycle | Partly built (models in `ml/`, served by the intelligence service) |
+| [Intelligence service](intelligence.md) | How the trained models reach the app: the forecast, per-home baselines, the replay clock | Built |
 | [Demo and pitch](demo-and-pitch.md) | The two-minute demo script and answers to judges' questions | Reference |
 | [Archive](archive/) | The original 36-hour build plan | Historical |
 
@@ -27,12 +28,13 @@ The design system lives with the web app: [`apps/web/DESIGN.md`](../apps/web/DES
 - **API** (`apps/api`): the market lifecycle (create, commit, verify, settle) over HTTP, with live events over SSE.
 - **Solana program** (`programs/gridflex`): escrow, commitments, verification and payout in USDC.
 - **Shared code** (`packages/shared`, `packages/solana`): unit maths, the Power Plan optimizer, onboarding data and the Solana client.
-- **Spike model** (`ml/`): ERCOT price-spike features, a LightGBM classifier and walk-forward evaluation.
+- **Models** (`ml/`): an ERCOT price-spike classifier, fair-value price statistics and a per-home baseline, trained on public Austin data.
+- **Intelligence service** (`services/intelligence`): serves those models to the API on a replayed real evening. See [Intelligence service](intelligence.md).
 
 ## What's not built
 
 - A database. State is in memory and mirrored to `.data/` files; sessions use SQLite (better-auth).
-- The intelligence service, the grid simulator and the orchestrator. Zone loads, forecasts and resource lists on the dashboards are illustrative demo data from `packages/shared/src/demo-data.ts`.
+- The grid simulator and the orchestrator. Zone loads, the congestion forecast and resource lists on the dashboards are illustrative demo data from `packages/shared/src/demo-data.ts`; the price spike outlook and household sizing come from the models.
 - Real utility or meter integrations.
 
 Everything shown in the product is illustrative. Don't present it as real pilots, customers or measurements.

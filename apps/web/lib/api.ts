@@ -31,9 +31,20 @@ export interface MarketDto {
     pricePerKwh: number;
     participant: string;
     deliveredKw?: number;
+    /** Model baseline for the window, for model-sized households. */
+    baselineKw?: number;
+    meter?: { baselineKw: number; actualKw: number };
     payout?: Money;
     settleUrl?: string;
   }[];
+  /** How commitments were sized; the hashes commit to the model's baselines. */
+  plan?: {
+    source: "model" | "placeholder" | "demo";
+    window?: { start: string; end: string };
+    baselineHash?: string;
+    modelHash?: string | null;
+    featuresHash?: string | null;
+  };
   settledAt?: string;
 }
 
@@ -42,6 +53,30 @@ export interface HealthDto {
   rpcUrl: string;
   programId: string;
   usdcMint: string;
+  intelligence?: "online" | "offline";
+}
+
+/** The model forecast for a zone (services/intelligence, via the API). */
+export interface ForecastDto {
+  zone: string;
+  zoneName: string;
+  settlementPoint: string;
+  /** Replay time, Austin wall clock without an offset. */
+  at: string;
+  window: { start: string; end: string };
+  source: "model" | "placeholder" | "mixed";
+  spike: { horizonH: number; probability: number | null }[];
+  pSpike: number | null;
+  valuation: {
+    fairValuePerKwh: number | null;
+    riskBufferPerKwh: number | null;
+    aggregatorFeePerKwh: number | null;
+    lockedPricePerKwh: number | null;
+    stratum: string;
+  };
+  recommendation: { openEvent: boolean; threshold: number; reason: string };
+  reasons: string[];
+  signals: Partial<Record<"tempF" | "forecastTempF" | "lastPriceMwh" | "recentMaxPriceMwh", number | null>>;
 }
 
 export interface HouseholdDto {
@@ -142,6 +177,28 @@ export function useApiHealth() {
     };
   }, []);
   return state;
+}
+
+export type ForecastState =
+  | { status: "loading" }
+  | { status: "ready"; forecast: ForecastDto }
+  /** The API or the model service is down; the page stays on demo data. */
+  | { status: "unavailable" };
+
+/** The model forecast for a zone, fetched once when the API is online. */
+export function useForecast(zone: string, enabled: boolean): ForecastState {
+  const [state, setState] = useState<ForecastState>({ status: "loading" });
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    api<{ forecast: ForecastDto | null }>(`/forecast/${zone}`)
+      .then(({ forecast }) => !cancelled && setState(forecast ? { status: "ready", forecast } : { status: "unavailable" }))
+      .catch(() => !cancelled && setState({ status: "unavailable" }));
+    return () => {
+      cancelled = true;
+    };
+  }, [zone, enabled]);
+  return enabled ? state : { status: "unavailable" };
 }
 
 /** The current market from the API, kept fresh from the event stream. */

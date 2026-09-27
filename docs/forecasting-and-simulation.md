@@ -70,7 +70,7 @@ Input:
 
 ```json
 {
-  "zone": "Downtown Miami",
+  "zone": "Downtown Austin",
   "currentLoadKw": 10800,
   "predictedLoadKw": 12800,
   "capacityKw": 12000,
@@ -88,7 +88,7 @@ Output:
 ```json
 {
   "severity": "HIGH",
-  "summary": "Downtown Miami is expected to exceed local capacity during the evening peak.",
+  "summary": "Downtown Austin is expected to exceed local capacity during the evening peak.",
   "drivers": ["High cooling demand", "Large event demand", "Reduced solar generation"],
   "recommendedFlexKw": 800
 }
@@ -103,7 +103,7 @@ Each resource has a zone, type, capacity, available capacity, price and response
 | EV Fleet #4 | 180 | 0.08 |
 | Tower HVAC | 170 | 0.09 |
 | Solar Group #9 | 100 | 0.11 |
-| Downtown Miami home batteries | 100 | 0.14 |
+| Downtown Austin home batteries | 100 | 0.14 |
 | Battery #17 | 250 | 0.16 |
 | Backup Generator #3 | 250 | 0.32 |
 

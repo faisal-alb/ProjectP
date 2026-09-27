@@ -128,7 +128,7 @@ try {
   await expectText(page, "Acme Power’s network is ready");
   await page.getByRole("link", { name: "Open control center" }).click();
   await page.waitForURL(/\/dashboard$/);
-  await expectText(page, "Miami grid");
+  await expectText(page, "Austin grid");
   await page.getByText("Acme Power").first().waitFor();
   if ((await page.getByRole("navigation", { name: "Dashboard view" }).count()) > 0) {
     throw new Error("the participant/operator switch should not be in the header");
@@ -198,7 +198,7 @@ try {
   if (await page.getByRole("button", { name: "Continue" }).isEnabled()) {
     throw new Error("Continue should be disabled for an unsupported ZIP");
   }
-  await page.getByLabel("ZIP code").fill("33132");
+  await page.getByLabel("ZIP code").fill("78701");
   await expectText(page, "Eligible for local GridFlex events");
   await page.getByRole("button", { name: "Continue" }).click();
 

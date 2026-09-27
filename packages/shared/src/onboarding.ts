@@ -99,7 +99,7 @@ export const EV_SHIFTABLE_KW = 7.2;
 /** Mapbox / GeoJSON coordinate order: longitude, latitude. */
 export type MapCoordinate = [number, number];
 
-export const localUtility = "Florida Power & Light";
+export const localUtility = "Austin Energy";
 
 export interface GridZone {
   name: string;
@@ -108,42 +108,43 @@ export interface GridZone {
   feeders: string[];
 }
 
-// GridFlex groupings of real ZIP areas. Feeder assignments and substations
-// are illustrative, not FPL network topology or municipal boundaries.
+// GridFlex groupings of real Travis County ZIP areas, all inside Austin Energy's
+// ERCOT load zone (LZ_AEN), where the forecasting models are trained. Feeder
+// assignments and substations are illustrative, not Austin Energy network
+// topology or municipal boundaries.
 export const gridZones: GridZone[] = [
-  { name: "Downtown Miami", center: [-80.1937, 25.7743], zips: ["33130", "33131", "33132", "33136"], feeders: ["DT-A", "DT-B", "DT-C"] },
-  { name: "Miami Beach", center: [-80.13, 25.815], zips: ["33139", "33140", "33141"], feeders: ["MB-A", "MB-B"] },
-  { name: "Fort Lauderdale", center: [-80.1373, 26.1224], zips: ["33301", "33304", "33305", "33306", "33308", "33309", "33311", "33312", "33313", "33314", "33315", "33316"], feeders: ["FL-A", "FL-B"] },
-  { name: "Coral Gables", center: [-80.2684, 25.7215], zips: ["33133", "33134", "33143", "33146"], feeders: ["CG-A", "CG-B"] },
+  { name: "Downtown Austin", center: [-97.7431, 30.2672], zips: ["78701", "78703", "78705", "78712"], feeders: ["DT-A", "DT-B", "DT-C"] },
+  { name: "South Austin", center: [-97.7727, 30.2127], zips: ["78704", "78741", "78745", "78748"], feeders: ["SA-A", "SA-B"] },
+  { name: "North Austin", center: [-97.7282, 30.3794], zips: ["78727", "78729", "78731", "78751", "78752", "78753", "78756", "78757", "78758", "78759"], feeders: ["NA-A", "NA-B"] },
+  { name: "East Austin", center: [-97.6899, 30.2818], zips: ["78702", "78721", "78722", "78723", "78724"], feeders: ["EA-A", "EA-B"] },
 ];
 
 // Representative points from the 2020 Census ZCTA Gazetteer, not street addresses.
 // https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2020_Gazetteer/2020_Gaz_zcta_national.zip
-// 33302, 33303, 33307 and 33310 have no ZCTA and are intentionally excluded.
 const zipCoordinates: Record<string, MapCoordinate> = {
-  "33130": [-80.203359, 25.768524],
-  "33131": [-80.184275, 25.766561],
-  "33132": [-80.172412, 25.777404],
-  "33133": [-80.240995, 25.728632],
-  "33134": [-80.270379, 25.753332],
-  "33136": [-80.205296, 25.787247],
-  "33139": [-80.151566, 25.779391],
-  "33140": [-80.133711, 25.819714],
-  "33141": [-80.138726, 25.851854],
-  "33143": [-80.297375, 25.703032],
-  "33146": [-80.272571, 25.72085],
-  "33301": [-80.127909, 26.121323],
-  "33304": [-80.121184, 26.140411],
-  "33305": [-80.11944, 26.153361],
-  "33306": [-80.113853, 26.165442],
-  "33308": [-80.104988, 26.18851],
-  "33309": [-80.172721, 26.18599],
-  "33311": [-80.172785, 26.144208],
-  "33312": [-80.181783, 26.08817],
-  "33313": [-80.227397, 26.15152],
-  "33314": [-80.222641, 26.067582],
-  "33315": [-80.152994, 26.087022],
-  "33316": [-80.12184, 26.098696],
+  "78701": [-97.742589, 30.270569],
+  "78702": [-97.714483, 30.263378],
+  "78703": [-97.76605, 30.293268],
+  "78704": [-97.765081, 30.243032],
+  "78705": [-97.738516, 30.294331],
+  "78712": [-97.731003, 30.282173],
+  "78721": [-97.683557, 30.269969],
+  "78722": [-97.7147, 30.289958],
+  "78723": [-97.685713, 30.304269],
+  "78724": [-97.617945, 30.292709],
+  "78727": [-97.717796, 30.429937],
+  "78729": [-97.755344, 30.458396],
+  "78731": [-97.768139, 30.348244],
+  "78741": [-97.714198, 30.230459],
+  "78745": [-97.797381, 30.206851],
+  "78748": [-97.82339, 30.166435],
+  "78751": [-97.722749, 30.310788],
+  "78752": [-97.704283, 30.331815],
+  "78753": [-97.673638, 30.382024],
+  "78756": [-97.740169, 30.322223],
+  "78757": [-97.73257, 30.351537],
+  "78758": [-97.706848, 30.387987],
+  "78759": [-97.761038, 30.402667],
 };
 
 export interface GridLocation {
@@ -162,8 +163,8 @@ export function resolveZip(zip: string): GridLocation | null {
   const coordinates = zipCoordinates[clean];
   if (!zone || !coordinates) return null;
   // Retain DT-A for the default household; assignments are sample topology.
-  const feederIndex = zone.name === "Downtown Miami"
-    ? (["33130", "33132"].includes(clean) ? 0 : 1)
+  const feederIndex = zone.name === "Downtown Austin"
+    ? (["78701", "78703"].includes(clean) ? 0 : 1)
     : zone.zips.indexOf(clean) % zone.feeders.length;
   return {
     zip: clean,
@@ -180,7 +181,7 @@ export const demoNetworkFeeders: Record<string, string[]> = Object.fromEntries(
   gridZones.map((zone) => [zone.name, zone.feeders]),
 );
 
-export const defaultZip = "33132";
+export const defaultZip = "78701";
 
 // Illustrative $/kWh range shown as "potential earnings" until a real event pays.
 const HIGH_RATE = 0.25;

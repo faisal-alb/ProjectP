@@ -365,6 +365,7 @@ def main() -> None:
     parser.add_argument("--weight-by", choices=("event", "interval"), default="event")
     parser.add_argument("--keep-uri", action="store_true")
     parser.add_argument("--save", action="store_true")
+    parser.add_argument("--train-end", help="only use rows before this date")
     args = parser.parse_args()
 
     from ml.features import build_feature_frame
@@ -373,6 +374,8 @@ def main() -> None:
     df = build_feature_frame(build_real_dataset(args.start_year, args.end_year))
     if not args.keep_uri:
         df = drop_excluded_regimes(df)
+    if args.train_end:
+        df = df[df["ts"] < pd.Timestamp(args.train_end)]
 
     stats = PriceStatistics(estimator=args.estimator, weight_by=args.weight_by).fit(df)
     g = stats.global_stats

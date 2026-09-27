@@ -108,7 +108,9 @@ for (const { name, child } of children) {
     if (!service || service.exited) return;
     service.exited = true;
 
-    if (!stopping) {
+    // A clean exit means the service chose not to run (e.g. the model service
+    // without a Python venv); only a failure takes everything else down.
+    if (!stopping && code !== 0) {
       console.error(`[${name}] exited with code ${code ?? "unknown"}`);
       stopAll("SIGTERM", code ?? 1);
     }

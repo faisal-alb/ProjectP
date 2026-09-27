@@ -127,7 +127,7 @@ See [Solana settlement](solana.md) for how it works.
 
 ## Demo scenario
 
-**Downtown Miami, evening peak.** The figures are illustrative.
+**Downtown Austin, evening peak.** The figures are illustrative.
 
 | | |
 |---|---|
@@ -144,7 +144,7 @@ Offers, cheapest first (from `packages/shared/src/demo-data.ts`):
 | EV Fleet #4 | 180 | 0.08 | Accepted |
 | Tower HVAC | 170 | 0.09 | Accepted |
 | Solar Group #9 | 100 | 0.11 | Accepted |
-| Downtown Miami home batteries | 100 | 0.14 | Accepted |
+| Downtown Austin home batteries | 100 | 0.14 | Accepted |
 | Battery #17 | 250 | 0.16 | Accepted |
 | Backup Generator #3 | 250 | 0.32 | Rejected: above the cap |
 

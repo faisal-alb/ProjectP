@@ -14,15 +14,20 @@ import {
   WINDOW_START_MINUTES,
   type OfferOutcome,
 } from "@/lib/demo-data";
-import { useCurrentMarket, type MarketDto } from "@/lib/api";
+import { useCurrentMarket, useForecast, type MarketDto } from "@/lib/api";
 import { rangeFill } from "@/components/onboarding/controls";
 import { EscrowCard } from "./EscrowCard";
 import { LoadForecastChart } from "./LoadForecastChart";
+import { ModelForecast } from "./ModelForecast";
 import { useSolana } from "./SolanaProvider";
 import { TxLink } from "./TxLink";
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 const price = (n: number) => `$${n.toFixed(2)}/kWh`;
+
+const MIN_CAP = 0.05;
+/** High enough for the model's suggested price on a spike evening. */
+const MAX_CAP = 0.6;
 
 /** The lowest cap that covers the whole need, cheapest offers first. */
 const coveringCap = Math.max(
@@ -36,6 +41,7 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
   const capId = useId();
   const { apiStatus } = useSolana();
   const { market: current, setMarket } = useCurrentMarket(apiStatus === "online");
+  const forecast = useForecast("downtown", apiStatus === "online");
   const [dismissedId, setDismissedId] = useState<string | null>(null);
   const live = current && current.id !== dismissedId ? current : null;
   // Once a request is funded its price is fixed on-chain.
@@ -56,7 +62,7 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
               Needs flexibility
             </p>
             <h2 id="downtown-heading" className="mt-2 text-xl font-semibold tracking-tight text-balance text-foreground sm:text-2xl">
-              Downtown Miami is forecast to go over capacity tonight
+              Downtown Austin is forecast to go over capacity tonight
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted sm:text-base">
               Load is expected to peak at{" "}
@@ -104,6 +110,13 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
         </div>
       </section>
 
+      <ModelForecast
+        state={apiStatus === "loading" ? { status: "loading" } : forecast}
+        onUsePrice={setCap}
+        priceLocked={locked}
+        maxCap={MAX_CAP}
+      />
+
       {/* Market */}
       <section aria-labelledby="market-heading" className="panel rounded-lg p-5 sm:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -112,7 +125,7 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
               Flexibility request
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Downtown Miami · {downtown.window} · {downtown.requiredFlexKw} kW needed. Offers are accepted
+              Downtown Austin · {downtown.window} · {downtown.requiredFlexKw} kW needed. Offers are accepted
               cheapest first until the need is covered.
             </p>
           </div>
@@ -127,12 +140,12 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
             <input
               id={capId}
               type="range"
-              min={0.05}
-              max={0.4}
+              min={MIN_CAP}
+              max={MAX_CAP}
               step={0.01}
               value={cap}
               onChange={(e) => setCap(Math.round(Number(e.target.value) * 100) / 100)}
-              style={rangeFill(cap, 0.05, 0.4)}
+              style={rangeFill(cap, MIN_CAP, MAX_CAP)}
               className="mt-1 w-full"
               disabled={locked}
               aria-describedby={`${capId}-hint`}
@@ -142,8 +155,8 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
                 <span>Fixed while this request is funded</span>
               ) : (
                 <>
-                  <span>$0.05</span>
-                  <span>$0.40</span>
+                  <span>{price(MIN_CAP).replace("/kWh", "")}</span>
+                  <span>{price(MAX_CAP).replace("/kWh", "")}</span>
                 </>
               )}
             </div>
@@ -169,7 +182,7 @@ export function DowntownEvent({ initialCap = defaultPriceCap }: { initialCap?: n
               </>
             ) : (
               <>
-                <strong className="font-semibold">{market.shortfallKw} kW short.</strong> Downtown Miami would still go over
+                <strong className="font-semibold">{market.shortfallKw} kW short.</strong> Downtown Austin would still go over
                 capacity. Raise your price to at least {price(coveringCap)} to cover the full {downtown.requiredFlexKw}{" "}
                 kW.
               </>

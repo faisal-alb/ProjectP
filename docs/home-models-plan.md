@@ -238,7 +238,10 @@ It turns "trust us, we didn't change it" into "re-run it yourself".
 
 ### 4.3 Artifact format — not pickle
 
-The spike model currently ships as `spike_model.pkl`. For the verifiable path
+*Done: all three models now save in this format with a hashed manifest, and the
+intelligence service verifies the hashes on load (`docs/intelligence.md`).*
+
+The spike model used to ship as `spike_model.pkl`. For the verifiable path
 that is the wrong format: pickles are Python- and library-version fragile, and
 `pickle.load` executes arbitrary code — a poor property for a file third parties
 are invited to run.

@@ -30,7 +30,7 @@ export default function ZoneMap({ zip }: { zip: string }) {
       try {
         const [module, response] = await Promise.all([
           import("mapbox-gl"),
-          fetch("/maps/south-florida-zones.geojson", { signal: controller.signal }),
+          fetch("/maps/austin-zones.geojson", { signal: controller.signal }),
         ]);
         if (!response.ok) throw new Error("Zone boundaries unavailable");
         const boundaries = await response.json() as FeatureCollection<Geometry, { zone: string }>;
