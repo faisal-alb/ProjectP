@@ -61,7 +61,7 @@ export default async function OnboardingPage() {
                 key={label}
                 className="inline-flex items-center gap-2 rounded-full border border-border bg-background-raised/70 px-3 py-1.5 text-xs text-muted backdrop-blur"
               >
-                <Icon className="h-3.5 w-3.5 text-solana-green" aria-hidden="true" />
+                <Icon className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
                 {label}
               </li>
             ))}
@@ -70,7 +70,7 @@ export default async function OnboardingPage() {
 
         <section
           aria-labelledby="operator-heading"
-          className="rise gradient-border mt-14 rounded-lg p-5 sm:mt-16 sm:p-6"
+          className="rise mt-14 rounded-lg bg-background-raised/60 p-5 backdrop-blur sm:mt-16 sm:p-6"
           style={rise(400)}
         >
           <h2 id="operator-heading" className="text-xl font-semibold tracking-tight text-foreground">

@@ -220,7 +220,7 @@ input[type="range"]:disabled {
 /* Onboarding energy: gradients built from the app's own accent, purple and green. */
 @layer utilities {
   .gradient-text {
-    background: linear-gradient(100deg, var(--accent) 0%, var(--solana-purple) 50%, var(--solana-green) 100%);
+    background: linear-gradient(100deg, #8cc4dc 0%, #6fb5c4 50%, #6fc9a8 100%);
     background-size: 200% 100%;
     -webkit-background-clip: text;
     background-clip: text;
@@ -231,10 +231,10 @@ input[type="range"]:disabled {
   .gradient-button {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(100deg, var(--accent) 0%, var(--solana-purple) 55%, var(--solana-green) 100%);
+    background: linear-gradient(100deg, #8cc4dc 0%, #6fb5c4 55%, #6fc9a8 100%);
     background-size: 160% 100%;
     color: #0f1013;
-    box-shadow: 0 8px 28px -8px rgba(163, 139, 224, 0.55);
+    box-shadow: 0 8px 28px -10px rgba(127, 180, 204, 0.45);
     transition:
       background-position 0.5s var(--ease-out),
       box-shadow 0.3s var(--ease-out),
@@ -242,34 +242,27 @@ input[type="range"]:disabled {
   }
   .gradient-button:hover {
     background-position: 100% 0;
-    box-shadow: 0 10px 36px -6px rgba(111, 207, 159, 0.5);
+    box-shadow: 0 10px 34px -8px rgba(111, 201, 168, 0.4);
   }
   .gradient-button:active {
     transform: scale(0.97);
   }
 
-  /* Card with a gradient hairline border over a raised surface */
-  .gradient-border {
-    border: 1px solid transparent;
-    background:
-      linear-gradient(var(--background-raised), var(--background-raised)) padding-box,
-      linear-gradient(135deg, rgba(127, 180, 204, 0.55), rgba(163, 139, 224, 0.25) 50%, rgba(111, 207, 159, 0.55)) border-box;
-  }
 
   /* Drifting aurora behind the hero */
   .aurora {
     position: absolute;
-    inset: 0;
+    inset: -4rem 0 0 0; /* reaches up behind the header */
     overflow: hidden;
     pointer-events: none;
-    -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent);
-    mask-image: linear-gradient(to bottom, #000 40%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent);
+    mask-image: linear-gradient(to bottom, #000 30%, transparent);
   }
   .aurora > span {
     position: absolute;
     border-radius: 9999px;
     filter: blur(80px);
-    opacity: 0.4;
+    opacity: 0.28;
     animation: aurora-drift 18s ease-in-out infinite alternate;
   }
   .aurora > span:nth-child(1) {
@@ -284,7 +277,7 @@ input[type="range"]:disabled {
     right: 4%;
     width: 26rem;
     height: 22rem;
-    background: var(--solana-purple);
+    background: #4f92c3;
     animation-duration: 22s;
     animation-delay: -6s;
   }
@@ -293,8 +286,8 @@ input[type="range"]:disabled {
     left: 38%;
     width: 22rem;
     height: 16rem;
-    background: var(--solana-green);
-    opacity: 0.22;
+    background: #6fc9a8;
+    opacity: 0.16;
     animation-duration: 26s;
     animation-delay: -12s;
   }
