@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { X } from "lucide-react";
+import { FastForward, X } from "lucide-react";
 import { SCENARIOS } from "@gridflex/shared";
 import { presenterRequest, useRun } from "./RunProvider";
 import { OperatorWalletButton } from "./OperatorWallet";
@@ -54,7 +54,7 @@ const button =
   "rounded-md border border-border-strong px-3 py-2 text-sm hover:bg-surface disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-accent";
 export function SimulatorPanel() {
   const { open, close } = useSimulator();
-  const { run, refresh } = useRun();
+  const { run, refresh, connected } = useRun();
   const [unlocked, setUnlocked] = useState(false);
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -80,7 +80,30 @@ export function SimulatorPanel() {
       setBusy(false);
     }
   }
-  if (!open) return null;
+  if (!open) {
+    if (!unlocked || run?.speed !== 0) return null;
+    return (
+      <div className="fixed bottom-24 left-5 z-40 flex max-w-[calc(100vw-2.5rem)] flex-col items-start gap-2 sm:bottom-8 sm:left-8 sm:max-w-80">
+        {error && (
+          <p role="alert" className="rounded-md bg-background-raised px-3 py-2 text-sm text-watch">
+            {error}
+          </p>
+        )}
+        <button
+          type="button"
+          disabled={busy || !connected || run.status === "completed"}
+          aria-busy={busy}
+          onClick={() => void perform("next-event")}
+          className="flex h-12 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-medium text-background shadow-lg disabled:cursor-not-allowed disabled:opacity-50 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+        >
+          <FastForward size={18} aria-hidden="true" />
+          <span aria-live="polite">
+            {busy ? "Advancing…" : run.status === "completed" ? "Day complete" : "Next event"}
+          </span>
+        </button>
+      </div>
+    );
+  }
   return (
     <aside
       aria-label="Simulation controls"
@@ -138,7 +161,7 @@ export function SimulatorPanel() {
           <div className="flex flex-wrap gap-2">
             <button
               className={button}
-              disabled={busy}
+              disabled={busy || run?.speed === 0}
               onClick={() =>
                 void perform(run?.status === "running" ? "pause" : "start")
               }
@@ -159,6 +182,7 @@ export function SimulatorPanel() {
               aria-label="Playback speed"
               className="mt-1 block w-full rounded-md bg-background p-2"
               value={run?.speed ?? 96}
+              disabled={busy}
               onChange={(e) => void perform("speed", Number(e.target.value))}
             >
               {[1, 24, 96].map((n) => (
@@ -171,8 +195,15 @@ export function SimulatorPanel() {
                       : " · one-hour day"}
                 </option>
               ))}
+              <option value={0}>Manual · next event</option>
             </select>
           </label>
+          {run?.speed === 0 && (
+            <p className="text-xs text-muted">
+              Automatic playback is paused. Close this panel and use Next event
+              to advance to the next event update or scenario.
+            </p>
+          )}
           <label className="block text-sm">
             New run
             <select

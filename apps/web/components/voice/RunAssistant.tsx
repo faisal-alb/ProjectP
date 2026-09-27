@@ -1,220 +1,73 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import {
-  ConversationProvider,
-  useConversationClientTool,
-  useConversationControls,
-  useConversationStatus,
-} from "@elevenlabs/react";
-import { activeFault, virtualAt, type ZoneId } from "@gridflex/shared";
+import { X } from "lucide-react";
+import { useVoiceAssistant } from "./context";
 import { useRun } from "../dashboard/RunProvider";
-import { API_URL } from "@/lib/api";
 
-export function RunAssistant({ role, zone }: { role: string; zone: ZoneId }) {
-  const [messages, setMessages] = useState<{ source: string; text: string }[]>(
-    [],
-  );
-  return (
-    <ConversationProvider
-      onMessage={({ source, message }) =>
-        setMessages((m) => [...m.slice(-29), { source, text: message }])
-      }
-    >
-      <AssistantBody role={role} zone={zone} messages={messages} />
-    </ConversationProvider>
-  );
-}
-function AssistantBody({
-  role,
-  zone,
-  messages,
-}: {
-  role: string;
-  zone: ZoneId;
-  messages: { source: string; text: string }[];
-}) {
+/** Optional text conversation beside the persistent voice launcher. */
+export function RunAssistant() {
+  const {
+    textOpen,
+    setTextOpen,
+    askText,
+    messages,
+    state,
+    toggle,
+    error,
+    zone,
+  } = useVoiceAssistant();
   const { run } = useRun();
-  const ref = useRef(run);
-  useEffect(() => {
-    ref.current = run;
-  }, [run]);
-  const { startSession, endSession, sendUserMessage, sendContextualUpdate } =
-    useConversationControls();
-  const { status } = useConversationStatus();
   const [question, setQuestion] = useState("");
-  const [error, setError] = useState("");
-  const [opening, setOpening] = useState(false);
-  const pending = useRef("");
-  const snapshot = () => {
-    const s = ref.current;
-    if (!s) throw new Error("No active energy day.");
-    return {
-      runId: s.id,
-      version: s.version,
-      at: virtualAt(s),
-      role,
-      zone,
-      conditions: s.zones.find((z) => z.id === zone),
-      environment: s.environment,
-      devices: s.devices.filter((d) => d.zone === zone),
-      decisions: s.decisions.filter((d) => d.zone === zone).slice(-4),
-      events: s.events
-        .filter((e) => e.zone === zone)
-        .map((e) =>
-          role === "participant"
-            ? {
-                ...e,
-                commitments: e.commitments.filter(
-                  (c) =>
-                    !c.resourceId.includes("-battery-") ||
-                    c.resourceId.endsWith("-0"),
-                ),
-              }
-            : e,
-        ),
-      sources: s.sources,
-      readOnly: true,
+  const input = useRef<HTMLInputElement>(null);
+  const transcript = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    if (!textOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    input.current?.focus();
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        setTextOpen(false);
+      }
     };
-  };
-  useConversationClientTool("get_grid_status", () =>
-    JSON.stringify(snapshot()),
-  );
-  useConversationClientTool("get_my_resources", () =>
-    JSON.stringify(snapshot().devices),
-  );
-  useConversationClientTool("get_available_flex", () =>
-    JSON.stringify(snapshot().decisions.at(-1)),
-  );
-  useConversationClientTool("get_active_event", () =>
-    JSON.stringify(
-      snapshot().events.filter(
-        (e) => !["completed", "canceled"].includes(e.phase),
-      ),
-    ),
-  );
-  useConversationClientTool("get_upcoming_events", () =>
-    JSON.stringify(
-      snapshot().events.filter((e) =>
-        ["scheduled", "committing"].includes(e.phase),
-      ),
-    ),
-  );
-  useConversationClientTool("get_earnings", () =>
-    JSON.stringify({
-      runId: ref.current?.id,
-      testTokens: true,
-      paidBase: snapshot()
-        .events.flatMap((e) => e.commitments)
-        .reduce((n, c) => n + BigInt(c.paidBase ?? 0), 0n)
-        .toString(),
-    }),
-  );
-  useConversationClientTool("get_autoflex_settings", () =>
-    JSON.stringify(
-      snapshot().devices.map((d) => ({
-        id: d.id,
-        reserve: d.reserve,
-        minPrice: d.minPrice,
-      })),
-    ),
-  );
-  useConversationClientTool("get_power_plan", () =>
-    JSON.stringify(
-      snapshot().decisions.at(-1) ?? { status: "Awaiting forecast" },
-    ),
-  );
-  useConversationClientTool(
-    "analyze_scenario",
-    async (parameters: {
-      reservePercent?: number;
-      priceCapPerKwh?: number;
-      demandChangeKw?: number;
-      offlineResource?: string;
-    }) => {
-      const r = await fetch(`${API_URL}/runs/what-if`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...parameters, zone }),
-      });
-      if (!r.ok) throw new Error("Scenario analysis unavailable.");
-      return JSON.stringify(await r.json());
-    },
-  );
-  useConversationClientTool("highlight_element", () => {
-    document
-      .getElementById("grid-assistant")
-      ?.scrollIntoView({ block: "nearest" });
-    return "The current decision and events are on this page.";
-  });
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("keydown", close);
+      previous?.focus();
+    };
+  }, [textOpen, setTextOpen]);
   useEffect(() => {
-    if (status === "connected" && pending.current) {
-      sendUserMessage(pending.current);
-      pending.current = "";
-    }
-  }, [status, sendUserMessage]);
-  useEffect(() => {
-    if (status === "connected" && run)
-      sendContextualUpdate(
-        JSON.stringify({
-          runId: run.id,
-          version: run.version,
-          at: virtualAt(run),
-          instruction:
-            "State changed. Use tools for current facts. Never claim test tokens are real money or modeled readings are physical telemetry.",
-        }),
-      );
-  }, [run?.id, run?.minute, status, sendContextualUpdate]); // eslint-disable-line react-hooks/exhaustive-deps
-  async function begin(textOnly: boolean, prompt = "") {
-    if (run && activeFault(run, "assistant-offline")) {
-      setError("Assistant unavailable. The decision record remains available.");
-      return;
-    }
-    setError("");
-    setOpening(true);
-    pending.current = prompt;
-    try {
-      const res = await fetch("/api/voice/session");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      await startSession({
-        signedUrl: data.signedUrl,
-        connectionType: "websocket",
-        textOnly,
-        overrides: { conversation: { textOnly } },
-        dynamicVariables: { role, zone },
-      });
-      sendContextualUpdate(
-        "You are a read-only GridFlex assistant. Call tools for all facts and calculations. Explain recorded decisions and constrained what-if results. Never change settings, execute actions, invent amounts, or describe test-token payouts as real money.",
-      );
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setOpening(false);
-    }
-  }
+    if (transcript.current)
+      transcript.current.scrollTop = transcript.current.scrollHeight;
+  }, [messages, textOpen]);
+  if (!textOpen) return null;
   const decision = run?.decisions.filter((d) => d.zone === zone).at(-1);
   return (
-    <section id="grid-assistant" className="border-t border-border pt-6">
-      <div className="flex items-center justify-between gap-4">
+    <section
+      id="grid-assistant"
+      aria-label="Ask GridFlex conversation"
+      className="fixed bottom-20 right-5 z-40 flex max-h-[calc(100dvh-7rem)] w-96 max-w-[calc(100vw-2.5rem)] flex-col rounded-xl border border-border-strong bg-background-raised p-5 sm:bottom-24 sm:right-8"
+    >
+      <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Ask GridFlex</h2>
         <button
-          className="rounded-md border border-border-strong px-3 py-2 text-sm disabled:opacity-50"
-          disabled={opening}
-          onClick={() =>
-            status === "connected" ? void endSession() : void begin(false)
-          }
+          type="button"
+          aria-label="Close conversation panel"
+          onClick={() => setTextOpen(false)}
+          className="-mr-2 flex h-11 w-11 items-center justify-center rounded-md hover:bg-surface"
         >
-          {status === "connected" ? "End conversation" : "Use voice"}
+          <X size={18} />
         </button>
       </div>
-      <p className="mt-2 text-sm text-muted">
-        Understand a decision or explore a what-if. The assistant can read and
-        analyze this system; it cannot change it.
+      <p className="mt-1 text-sm text-muted">
+        Ask about this energy day or explore a what-if.
       </p>
       {messages.length > 0 && (
         <ol
+          ref={transcript}
           aria-live="polite"
-          className="mt-4 max-h-72 space-y-3 overflow-y-auto text-sm"
+          aria-label="Conversation transcript"
+          className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto break-words text-sm"
         >
           {messages.map((m, i) => (
             <li key={i}>
@@ -227,12 +80,11 @@ function AssistantBody({
         </ol>
       )}
       <form
-        className="mt-4 flex gap-2"
+        className="mt-4 flex shrink-0 gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!question.trim()) return;
-          if (status === "connected") sendUserMessage(question);
-          else void begin(true, question);
+          if (!question.trim() || state === "connecting") return;
+          askText(question.trim());
           setQuestion("");
         }}
       >
@@ -241,13 +93,14 @@ function AssistantBody({
         </label>
         <input
           id="assistant-question"
+          ref={input}
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Why did you choose these resources?"
-          className="min-w-0 flex-1 rounded-md border border-border bg-background-raised px-3 py-2 text-base"
+          placeholder="Ask a question…"
+          className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-base"
         />
         <button
-          disabled={opening || !question.trim()}
+          disabled={state === "connecting" || !question.trim()}
           className="rounded-md border border-border-strong px-4 py-2 text-sm disabled:opacity-50"
         >
           Ask
@@ -258,12 +111,23 @@ function AssistantBody({
           {error}
         </p>
       )}
-      <details className="mt-3 text-sm text-muted">
-        <summary className="cursor-pointer">Latest explanation</summary>
-        <p className="mt-2">
+      <details className="mt-4 shrink-0 text-sm text-muted">
+        <summary className="cursor-pointer">
+          Latest decision explanation
+        </summary>
+        <p className="mt-2 max-h-24 overflow-y-auto">
           {decision?.reasons.join(". ") ?? "No decision has been recorded yet."}
         </p>
       </details>
+      {state !== "idle" && (
+        <button
+          type="button"
+          className="mt-4 self-start text-sm text-muted underline underline-offset-4"
+          onClick={() => toggle()}
+        >
+          End conversation
+        </button>
+      )}
     </section>
   );
 }

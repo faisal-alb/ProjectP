@@ -50,20 +50,21 @@ Settlement never calls the model service, so it can't block a payout.
 
 ## When it's missing
 
-- **No service running:** the API's calls time out (2 s for forecasts, 5 s for sizing) and return nothing. The dashboard shows demo figures, markets split homes at 5 kW, and `/health` reports `"intelligence": "offline"`.
-- **Service running without artifacts:** each model falls back to the orchestration spec's day-one placeholder (P(spike) = 0.2, measured average prices, a flat 2 kW baseline) and every response says `"source": "placeholder"`.
+- **No service running:** `/health` reports `"intelligence": "offline"`. The shared run cannot start; if intelligence fails during a run, new commitments are held while existing delivery continues.
+- **Service running without artifacts:** legacy forecast endpoints can report `"source": "placeholder"`; the shared run rejects missing models or an invalid day bundle instead of treating placeholders as trained output.
 
 ## Running it
 
-Needs Python 3.10 or newer.
+Python 3.12 is recommended. Runtime setup supports an existing Python 3.9 environment; optional training requires Python 3.10+ because the legacy gridstatus and AWS download dependencies conflict on 3.9.
 
 ```bash
-npm run intelligence:setup   # .venv at the repo root + serving and training deps
-npm run ml:train             # downloads public data (cached in ml/data_cache/), trains, exports
+npm run intelligence:setup   # .venv + runtime and lightweight bundle preparation
 npm run dev                  # starts the service on :8000 alongside the API and web app
 ```
 
 `npm run dev` skips the service with a note if there's no `.venv`. `npm run dev:intelligence` runs it alone. On macOS, LightGBM needs OpenMP: `brew install libomp`.
+
+Existing artifacts need no retraining. To rebuild them, run `npm run intelligence:setup -- --training` then `npm run ml:train`. To rebuild only `run/` from existing models, use `npm run run:prepare`. Setup checks the actual `.venv` interpreter before installation; setting `PYTHON` only selects an interpreter when creating a new environment. Preserve an older `.venv` under another name before creating a replacement with `PYTHON=/path/to/python3.12 npm run intelligence:setup -- --training`.
 
 Settings, all optional:
 
@@ -83,11 +84,14 @@ spike/            spike_{1..6}h.txt + manifest.json    LightGBM text, hashed
 price_statistics.json
 baseline/         baseline_q10.txt, baseline_q50.txt, baseline_mean.txt + manifest.json
 replay/           grid.parquet, homes.parquet + manifest.json
+run/              bundle.json + manifest.json (complete historical day)
 ```
 
 Every file is checked against its manifest hash on load, and a mismatch falls back to the placeholder. Nothing is pickled, so loading a model never runs code.
 
 ## Deploying
+
+Docker already installs `services/intelligence/requirements.txt` during its image build. You do not run `intelligence:setup` on the server or locally merely to deploy. Train/prepare artifacts once on a build machine when needed, then copy the **contents** of `ml/artifacts/`, including `run/`, into `files/models/`. These files are excluded from Git and the Docker build context. Restart intelligence after updating the files; it caches the bundle in memory. The checked-in Compose file already configures the service and volume below.
 
 Add it to the compose file next to `api`, with no public domain:
 

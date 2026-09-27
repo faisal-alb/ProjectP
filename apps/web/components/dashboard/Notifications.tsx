@@ -29,6 +29,10 @@ const storageKey = (role: Role) => `gridflex:notifications:${role}`;
 const EMPTY = "[]";
 const listeners = new Set<() => void>();
 
+// Use sentence case for log-derived copy, including the status after an area label.
+const notificationText = (text: string) =>
+  text.replace(/(^|:\s+)([a-z])/g, (_, prefix: string, letter: string) => prefix + letter.toUpperCase());
+
 function subscribe(onChange: () => void) {
   listeners.add(onChange);
   window.addEventListener("storage", onChange);
@@ -74,7 +78,7 @@ export function NotificationsProvider({ role, children }: { role: Role; children
     const items = run.log.filter(e => e.type.startsWith("event.") || e.type === "settlement.pending" || e.type === "telemetry.recovered").slice(-50);
     const merged = items.map(e => {
       const id = `${run.id}:${e.seq}`;
-      return { id, title: e.type.replaceAll(".", " "), body: e.message,
+      return { id, title: notificationText(e.type.replaceAll(".", " ")), body: notificationText(e.message),
         tone: (e.type === "event.completed" ? "success" : e.type === "settlement.pending" ? "warning" : "info") as NotificationTone,
         at: prior.find(p => p.id === id)?.at ?? Date.now(), read: prior.find(p => p.id === id)?.read ?? false };
     }).reverse();

@@ -20,11 +20,21 @@ deploy the Solana program, or create a mint. Use a devnet RPC provider suitable
 for the expected traffic. `/health` checks application startup, not RPC funding
 or the program's availability; complete a demo settlement to verify those.
 
-Optionally run `npm run intelligence:setup` and `npm run ml:train` as described in
-[Intelligence service](intelligence.md). Copy the contents of `ml/artifacts/` to
-the deployment's `files/models/`. Without artifacts, the service deliberately
-reports placeholder models. Only load trusted artifacts: model deserialization
-can execute code.
+Docker installs the intelligence runtime during the image build. You do **not**
+need to run `npm run intelligence:setup` locally or on the server just to deploy.
+The deployed shared run does require the generated model artifacts and full-day
+bundle: copy the complete contents of `ml/artifacts/`, including `run/`, into
+`files/models/` (not `files/models/artifacts/`). They are excluded from Git and the
+Docker build context, so pushing code does not transfer them. Restart intelligence
+after replacing artifacts because its model registry and bundle are cached.
+
+If those artifacts already exist, reuse them. Only when generating/rebuilding them,
+use a build machine with Python 3.10+ (3.12 recommended), run
+`npm run intelligence:setup -- --training`, then `npm run ml:train`. The latter
+includes full-day bundle preparation. If only the bundle needs rebuilding, default
+`npm run intelligence:setup` followed by `npm run run:prepare` is sufficient.
+See [Intelligence service](intelligence.md). Missing/invalid artifacts prevent the
+shared run from starting; legacy forecast routes may still report placeholders.
 
 ## Configure Dokploy
 
@@ -103,7 +113,7 @@ Edit `.env.deploy` with `FILES_DIR=./.data/compose`,
 `NEXT_PUBLIC_API_URL=http://localhost:8787`. Generate both secrets, set your devnet
 mint, and set the three keypair JSON variables or copy the three devnet keypairs
 into `.data/compose/keys/`. Copy trained
-artifacts to `.data/compose/models/` if desired. These local files are ignored by
+artifacts, including `run/`, to `.data/compose/models/` for the shared run. These local files are ignored by
 Git and Docker. Do not copy a production database into this test stack.
 
 ```sh
@@ -130,6 +140,35 @@ docker compose --env-file .env.deploy -f docker-compose.yml -f docker-compose.lo
 ```
 
 ## Operations and limits
+
+### Fund the deployed shared run
+
+Local funding uses local managed wallets. Provision the deployed wallets inside
+the API container, using its mounted state and configured keys:
+
+```sh
+docker exec -w /app YOUR_API_CONTAINER /app/node_modules/.bin/tsx scripts/solana/setup-run.ts
+```
+
+This tops the run operator up to the configured run budget in test USDC and tops
+operator/verifier balances up to 1 test SOL each. It preserves existing keys and
+refuses mainnet. If the deployer lacks SOL, the error gives its public address and
+required top-up; fund that address on devnet and rerun. Pause playback while
+provisioning. Use **Check readiness** in the hidden panel afterward.
+
+For an older image without the script, copy it from the server checkout first:
+
+```sh
+API_CONTAINER=YOUR_API_CONTAINER
+CHECKOUT=$(docker inspect "$API_CONTAINER" --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}')
+docker exec "$API_CONTAINER" mkdir -p /app/scripts/solana
+sudo docker cp "$CHECKOUT/scripts/solana/." "$API_CONTAINER:/app/scripts/solana/"
+docker exec -w /app "$API_CONTAINER" /app/node_modules/.bin/tsx scripts/solana/setup-run.ts
+```
+
+The copy is temporary to that container; newer API images include the script.
+
+### Persistence and service limits
 
 - Run one API instance and one web instance. JSON persistence, SQLite sessions,
   per-market locks and rate limits are local to each process. The faucet allows

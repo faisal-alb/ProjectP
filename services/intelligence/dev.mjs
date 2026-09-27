@@ -1,6 +1,5 @@
 // Starts the intelligence service for `npm run dev`. Without a Python venv it
-// explains how to make one and exits cleanly: the API falls back to demo values,
-// so the rest of the app keeps running.
+// explains how to make one and exits cleanly; the shared run awaits intelligence.
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -10,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const python = path.join(root, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
 
 if (!existsSync(python)) {
-  console.log("No .venv at the repo root, so the model service isn't running and the API will use demo values.");
+  console.log("No .venv at the repo root. The shared energy run needs the intelligence service and valid artifacts before it can start.");
   console.log("Set it up with `npm run intelligence:setup` (see docs/intelligence.md).");
   process.exit(0);
 }

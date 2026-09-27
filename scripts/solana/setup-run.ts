@@ -13,6 +13,36 @@ import { managedWallet } from "../../apps/api/src/wallets";
 if (cluster !== "devnet" && cluster !== "localnet")
   throw new Error("Only test networks are supported.");
 const operator = await managedWallet("run-operator");
+const rentBudget = 1_000_000_000n;
+const owners = [...new Set([operator, keys.verifier.address])];
+const balances = await Promise.all(
+  owners.map(async (owner) => ({
+    owner,
+    balance: (
+      await client.rpc.getBalance(owner, { commitment: "confirmed" }).send()
+    ).value,
+  })),
+);
+const deployerBalance = (
+  await client.rpc
+    .getBalance(keys.deployer.address, { commitment: "confirmed" })
+    .send()
+).value;
+const transfers = balances.reduce(
+  (sum, item) =>
+    sum +
+    (item.owner !== keys.deployer.address && item.balance < rentBudget
+      ? rentBudget - item.balance
+      : 0n),
+  0n,
+);
+const retained = owners.includes(keys.deployer.address) ? rentBudget : 0n;
+const needed = transfers + retained + 10_000_000n;
+if (deployerBalance < needed) {
+  throw new Error(
+    `Fund deployer ${keys.deployer.address} with at least ${(Number(needed - deployerBalance) / 1e9).toFixed(3)} additional ${cluster} SOL, then rerun. Existing wallets and keys are preserved.`,
+  );
+}
 const budget = BigInt(process.env.RUN_SPEND_LIMIT_BASE ?? "1000000000");
 const balance = await getUsdcBalance(client, operator);
 if (balance < budget)
@@ -23,10 +53,12 @@ if (balance < budget)
     operator,
     budget - balance,
   );
-for (const owner of [operator, keys.verifier.address]) {
-  const { value } = await client.rpc.getBalance(owner).send();
+for (const owner of owners) {
+  if (owner === keys.deployer.address) continue;
+  const { value } = await client.rpc
+    .getBalance(owner, { commitment: "confirmed" })
+    .send();
   // A full stress day creates many persistent commitment accounts, not just fees.
-  const rentBudget = 1_000_000_000n;
   if (value < rentBudget)
     await sendInstructions(client, keys.deployer, [
       getTransferSolInstruction({

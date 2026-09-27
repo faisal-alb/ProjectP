@@ -72,6 +72,92 @@ const services: RunServices = {
   },
 };
 
+test("manual playback pauses and stops at each event transition without skipping delivery", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gridflex-manual-"));
+  const store = new RunStore(dir);
+  try {
+    const engine = new RunEngine(store, services);
+    await engine.restart("historical");
+    await engine.control("start");
+    await engine.control("speed", 0);
+    assert.equal(engine.state!.status, "paused");
+    await assert.rejects(engine.control("start"), /manual playback/);
+    await engine.control("next-event");
+    assert.equal(engine.state!.minute, 1);
+    assert.ok(engine.state!.events.every((e) => e.phase === "scheduled"));
+    await engine.control("next-event");
+    assert.equal(engine.state!.minute, 1);
+    assert.ok(engine.state!.events.every((e) => e.phase === "dispatching"));
+    await engine.control("next-event");
+    assert.equal(engine.state!.minute, 61);
+    assert.ok(engine.state!.events.every((e) => e.phase === "verifying"));
+    assert.equal(engine.state!.events[0].commitments[0].samples, 60);
+    await engine.control("next-event");
+    assert.ok(engine.state!.events.every((e) => e.phase === "completed"));
+    assert.equal(engine.state!.status, "paused");
+    const restored = new RunEngine(store, services);
+    assert.equal(restored.state!.speed, 0);
+    await engine.control("speed", 24);
+    await assert.rejects(engine.control("next-event"), /manual playback/);
+    await engine.control("start");
+    assert.equal(engine.state!.status, "running");
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("manual playback stops at scenarios and completes a quiet day", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gridflex-manual-quiet-"));
+  const store = new RunStore(dir);
+  try {
+    const engine = new RunEngine(store, {
+      ...services,
+      decide: async (s, zone) => ({ ...(await services.decide(s, zone))!, requiredKw: 0, dispatch: [] }),
+    });
+    await engine.restart("stress");
+    await engine.control("speed", 0);
+    await engine.control("next-event");
+    assert.equal(engine.state!.minute, 121);
+    assert.equal(engine.state!.log.filter((e) => e.type === "scenario.injected").at(-1)?.scenario, "demand-surge");
+    await engine.restart("historical");
+    await engine.control("speed", 0);
+    await engine.control("next-event");
+    assert.equal(engine.state!.minute, 1440);
+    assert.equal(engine.state!.status, "completed");
+    await engine.control("next-event");
+    assert.equal(engine.state!.minute, 1440);
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("manual playback honors readiness and pending transaction barriers", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gridflex-manual-pending-"));
+  const store = new RunStore(dir);
+  let ready = false;
+  try {
+    const engine = new RunEngine(store, {
+      ...services,
+      preflight: async () => ready ? [] : ["RPC unavailable"],
+      settle: async () => {},
+    });
+    await engine.restart("historical");
+    await engine.control("speed", 0);
+    await assert.rejects(engine.control("next-event"), /RPC unavailable/);
+    assert.equal(engine.state!.minute, 0);
+    ready = true;
+    await engine.control("next-event");
+    await assert.rejects(engine.control("next-event"), /Waiting for transaction confirmation/);
+    assert.equal(engine.state!.minute, 1);
+    assert.equal(engine.state!.status, "paused");
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("24-hour run persists, drains, and isolates new-run earnings", async () => {
   const dir = mkdtempSync(path.join(tmpdir(), "gridflex-run-"));
   const store = new RunStore(dir);

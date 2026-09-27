@@ -1,8 +1,7 @@
 "use client";
-import { useState } from "react";
 import { virtualAt, type RunState, type ZoneId } from "@gridflex/shared";
 import { useRun, runTime } from "./RunProvider";
-import { RunAssistant } from "../voice/RunAssistant";
+import { useVoiceAssistant } from "../voice/context";
 
 const number = (n: number) =>
   n.toLocaleString("en-US", { maximumFractionDigits: 1 });
@@ -18,7 +17,7 @@ export function RunDashboard({
   view?: "overview" | "zones" | "devices" | "earnings" | "settings";
 }) {
   const { run, connected } = useRun();
-  const [zone, setZone] = useState<ZoneId>("downtown");
+  const { zone, setZone } = useVoiceAssistant();
   if (!run)
     return (
       <section className="py-12">
@@ -225,7 +224,7 @@ export function RunDashboard({
               </p>
             </section>
           )}
-          <section>
+          <section id="run-decision">
             <h2 className="text-lg font-semibold">Decision record</h2>
             {decision ? (
               <>
@@ -400,7 +399,6 @@ export function RunDashboard({
           )}
         </section>
       )}
-      <RunAssistant role={role} zone={zone} />
       <details className="border-t border-border pt-4 text-sm">
         <summary className="cursor-pointer text-muted">
           Data sources and estimation methods

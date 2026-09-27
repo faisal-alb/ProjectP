@@ -2,6 +2,7 @@
 
 import { STATE_LABEL, useVoiceAssistant, type VoiceState } from "./context";
 import { VoiceMeter } from "./VoiceMeter";
+import { MessageSquare } from "lucide-react";
 
 /** The state label, keyed so each change settles in rather than swapping in place. */
 function StateText({ state, text }: { state: VoiceState; text: string }) {
@@ -14,37 +15,62 @@ function StateText({ state, text }: { state: VoiceState; text: string }) {
 
 /** Bottom-right, always on screen. Shows what the assistant is doing, and ends the session on tap. */
 export function FloatingAskButton() {
-  const { state, error, toggle, endingSoon } = useVoiceAssistant();
+  const { state, error, toggle, endingSoon, textOpen, setTextOpen } =
+    useVoiceAssistant();
   const active = state !== "idle";
   return (
     <div className="fixed right-5 bottom-5 z-40 flex flex-col items-end gap-2 sm:right-8 sm:bottom-8">
-      {error && (
-        <p role="alert" className="panel max-w-64 rounded-md px-3 py-2 text-xs text-muted">
+      {error && !textOpen && (
+        <p
+          role="alert"
+          className="panel max-w-64 rounded-md px-3 py-2 text-xs text-muted"
+        >
           {error}
         </p>
       )}
-      <button
-        type="button"
-        onClick={() => toggle()}
-        aria-label={active ? "End voice assistant" : "Ask GridFlex with your voice"}
-        data-state={state}
-        className="voice-button voice-fab flex h-12 min-w-44 items-center gap-3 rounded-xl border px-4 text-left shadow-lg shadow-black/30"
-      >
-        <VoiceMeter state={state} />
-        <span className="flex flex-col leading-tight">
-          <span className="text-sm font-medium text-foreground" aria-live="polite">
-            <StateText state={state} text={STATE_LABEL[state]} />
-          </span>
-          {active && (
-            <span className="text-[11px] text-muted-2">
-              {/* Keyed so the hint settles in when it changes, like the state label above. */}
-              <span key={endingSoon ? "ending" : "tap"} className="voice-label">
-                {endingSoon ? "Ending soon" : "Tap to end"}
-              </span>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="Type a question"
+          aria-expanded={textOpen}
+          aria-controls="grid-assistant"
+          onClick={() => setTextOpen(!textOpen)}
+          className="voice-button voice-fab flex h-12 w-12 items-center justify-center rounded-xl border text-foreground"
+          data-state="idle"
+        >
+          <MessageSquare size={19} />
+        </button>
+        <button
+          type="button"
+          onClick={() => toggle()}
+          aria-label={
+            active ? "End voice assistant" : "Ask GridFlex with your voice"
+          }
+          data-state={state}
+          className="voice-button voice-fab flex h-12 min-w-44 items-center gap-3 rounded-xl border px-4 text-left shadow-lg shadow-black/30"
+        >
+          <VoiceMeter state={state === "chatting" ? "idle" : state} />
+          <span className="flex flex-col leading-tight">
+            <span
+              className="text-sm font-medium text-foreground"
+              aria-live="polite"
+            >
+              <StateText state={state} text={STATE_LABEL[state]} />
             </span>
-          )}
-        </span>
-      </button>
+            {active && (
+              <span className="text-[11px] text-muted-2">
+                {/* Keyed so the hint settles in when it changes, like the state label above. */}
+                <span
+                  key={endingSoon ? "ending" : "tap"}
+                  className="voice-label"
+                >
+                  {endingSoon ? "Ending soon" : "Tap to end"}
+                </span>
+              </span>
+            )}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

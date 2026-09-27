@@ -1,0 +1,4 @@
+# Runtime plus lightweight preparation of the full-day historical bundle.
+# No gridstatus/S3 ingestion client is needed when trained artifacts already exist.
+-r ../services/intelligence/requirements.txt
+openpyxl>=3.1,<4

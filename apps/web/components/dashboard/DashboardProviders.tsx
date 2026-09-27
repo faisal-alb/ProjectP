@@ -6,6 +6,7 @@ import { NotificationsProvider } from "./Notifications";
 import { OperatorWalletProvider } from "./OperatorWallet";
 import { SimulatorPanel, SimulatorProvider } from "./Simulator";
 import { SolanaProvider } from "./SolanaProvider";
+import { VoiceAssistantProvider } from "../voice/VoiceAssistantProvider";
 
 export function DashboardProviders({
   role,
@@ -21,8 +22,10 @@ export function DashboardProviders({
         <NotificationsProvider role={role}>
           <SimulatorProvider>
             <OperatorWalletProvider>
-              {children}
-              <SimulatorPanel />
+              <VoiceAssistantProvider role={role}>
+                {children}
+                <SimulatorPanel />
+              </VoiceAssistantProvider>
             </OperatorWalletProvider>
           </SimulatorProvider>
         </NotificationsProvider>

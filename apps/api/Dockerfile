@@ -17,6 +17,8 @@ RUN npm ci --no-audit --no-fund
 
 COPY packages packages
 COPY apps/api apps/api
+# Provision the same managed wallets/keys used by the deployed API.
+COPY scripts/solana/package.json scripts/solana/setup-run.ts ./scripts/solana/
 FROM node:24-bookworm-slim
 WORKDIR /app
 COPY --from=build /app ./

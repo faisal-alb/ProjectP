@@ -1,8 +1,10 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { ZoneId } from "@gridflex/shared";
 
-export type VoiceState = "idle" | "connecting" | "listening" | "speaking";
+export type VoiceState =
+  "idle" | "connecting" | "listening" | "speaking" | "chatting";
 
 export interface VoiceAssistant {
   state: VoiceState;
@@ -13,6 +15,12 @@ export interface VoiceAssistant {
   ask: (prompt?: string) => void;
   /** The session has been quiet long enough that it's about to end on its own. */
   endingSoon: boolean;
+  zone: ZoneId;
+  setZone: (zone: ZoneId) => void;
+  textOpen: boolean;
+  setTextOpen: (open: boolean) => void;
+  askText: (prompt: string) => void;
+  messages: { source: string; text: string }[];
 }
 
 export const VoiceContext = createContext<VoiceAssistant | null>(null);
@@ -28,4 +36,5 @@ export const STATE_LABEL: Record<VoiceState, string> = {
   connecting: "Connecting…",
   listening: "Listening",
   speaking: "Speaking",
+  chatting: "Chatting",
 };

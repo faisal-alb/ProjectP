@@ -151,7 +151,8 @@ export interface RunState {
   bundleVersion: string;
   start: string;
   minute: number;
-  speed: 1 | 24 | 96;
+  /** Zero selects manual, event-by-event playback. */
+  speed: 0 | 1 | 24 | 96;
   status: "paused" | "running" | "draining" | "completed";
   preset: "stress" | "historical";
   devices: DeviceState[];

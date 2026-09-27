@@ -186,6 +186,10 @@ export class RunEngine {
       s.status = "paused";
       this.elapsed = 0;
     } else if (action === "start") {
+      if (s.speed === 0)
+        throw new Error(
+          "Use Next event in manual playback, or select a playback speed.",
+        );
       const failures = await this.preflight();
       s.health = failures;
       if (failures.length) {
@@ -196,9 +200,13 @@ export class RunEngine {
       this.lastWall = Date.now();
       this.elapsed = 0;
     } else if (action === "speed") {
-      if (![1, 24, 96].includes(Number(value)))
+      if (typeof value !== "number" || ![0, 1, 24, 96].includes(value))
         throw new Error("Invalid speed");
-      s.speed = Number(value) as 1 | 24 | 96;
+      s.speed = value as RunState["speed"];
+      if (s.speed === 0) {
+        if (s.status !== "completed") s.status = "paused";
+        this.elapsed = 0;
+      }
     } else if (action === "price-cap") {
       if (
         typeof value !== "number" ||
@@ -238,7 +246,35 @@ export class RunEngine {
         `${device.id}: operating preferences updated.`,
       );
     } else if (action === "inject") this.inject(String(value));
-    else if (action === "step") {
+    else if (action === "next-event") {
+      if (s.speed !== 0) throw new Error("Select manual playback first.");
+      if (s.status === "completed") return s;
+      if (s.status !== "paused") throw new Error("Pause before advancing.");
+      const failures = await this.preflight();
+      if (failures.length) throw new Error(failures.join(" "));
+      const sequence = s.log.at(-1)?.seq ?? 0;
+      const phases = () => s.events.map((e) => `${e.id}:${e.phase}`).join("|");
+      const before = phases();
+      const reachedEvent = () =>
+        phases() !== before ||
+        s.log.some(
+          (e) => e.seq > sequence &&
+            /^(event\.|scenario\.|telemetry\.recovered|settlement\.pending|forecast\.unavailable)/.test(e.type),
+        );
+
+      // Finish pending real transactions before moving the virtual clock.
+      await this.reconcile();
+      while (s.minute < 1440 && !reachedEvent()) {
+        if (s.events.some((e) => ["scheduled", "committing"].includes(e.phase) && !e.error))
+          throw new Error(
+            "Waiting for transaction confirmation. Try Next event again shortly.",
+          );
+        await this.advance();
+        if (reachedEvent()) break;
+        await this.reconcile();
+      }
+      if (s.minute >= 1440) await this.reconcile();
+    } else if (action === "step") {
       if (s.status !== "paused") throw new Error("Pause before stepping.");
       const failures = await this.preflight();
       if (failures.length) throw new Error(failures.join(" "));

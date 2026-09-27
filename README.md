@@ -30,14 +30,13 @@ npm run dev                  # API on :8787 and web on :3000
 
 The web app works without Solana running, but live settlement shows as offline. To run the full flow locally, follow [Running it](docs/solana.md#running-it).
 
-The demo is set in Austin, Texas, where the models are trained. To run them (Python 3.10+), set up once and `npm run dev` also starts the model service on :8000:
+The models use public Austin data. With existing `ml/artifacts/` (including `run/`), install the local runtime once; `npm run dev` also starts the model service on :8000:
 
 ```bash
-npm run intelligence:setup   # Python venv at .venv
-npm run ml:train             # download public ERCOT/ResStock data and train
+npm run intelligence:setup   # runtime + bundle preparation; no training downloads
 ```
 
-Without it, the API uses demo values instead ([Intelligence service](docs/intelligence.md)).
+Only when rebuilding models, use Python 3.10+ (3.12 recommended), run `npm run intelligence:setup -- --training`, then `npm run ml:train`. Docker installs its own runtime: deployed apps need the generated artifacts mounted in `files/models/`, not local setup commands. The shared run requires valid models and a day bundle before it starts ([Intelligence service](docs/intelligence.md)).
 
 Optional settings, all in the root `.env`:
 

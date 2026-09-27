@@ -6,15 +6,19 @@ The dashboard follows a single backend-owned run, with a UTC clock displayed in 
 
 ```sh
 npm run intelligence:setup
-npm run ml:train       # first-time model training, includes run bundle preparation
-npm run run:prepare   # rebuild just the bundle, cached source downloads
 npm run run:setup     # fund dedicated operator on the configured test network
 npm run dev
 ```
 
-For existing valid model artifacts, `run:prepare` is sufficient. The bundle includes 96 quarter-hour observations, 50 ResStock homes, a scaled Travis County ComStock office shape, ERCOT South Central regional load, ERCOT LZ_AEN prices, and Open-Meteo weather reanalysis. Downloads occur during preparation, never during playback. Generated files stay in `ml/artifacts/run` and must be copied with the other model artifacts to the intelligence deployment volume.
+Existing valid `ml/artifacts/`, including `run/`, need no retraining or preparation. To rebuild just the bundle, run `npm run run:prepare`. For first-time training, use Python 3.10+ (3.12 recommended), run `npm run intelligence:setup -- --training`, then `npm run ml:train`; training includes bundle preparation. Default setup installs only runtime and lightweight bundle-preparation dependencies.
 
-The local presenter code is in `.data/presenter-code` (mode 0600). Production requires `PRESENTER_ACCESS_CODE`. Open controls by triple-tapping the header organization label or pressing **Ctrl Shift S**, then unlock. Controls include pause/start, 1×/24×/96×, 15-minute steps, restart, scenario injection, readiness, coverage evidence and pending transactions. Restart preserves prior runs and all blockchain history; it refuses while commitments remain unresolved.
+**Deployment:** Docker installs the runtime itself; do not run local `intelligence:setup` for the deployed app. Copy the complete `ml/artifacts/` contents, including `run/`, into the deployment's `files/models/` volume and restart intelligence after changing them. Training and preparation are offline build steps, needed only when generating or updating those files. A Git deployment does not upload them because they are excluded from Git and Docker build context.
+
+The bundle includes 96 quarter-hour observations, 50 ResStock homes, a scaled Travis County ComStock office shape, ERCOT South Central regional load, ERCOT LZ_AEN prices, and Open-Meteo weather reanalysis. Downloads occur during preparation, never during playback. Generated files stay in `ml/artifacts/run` and must be copied with the other model artifacts to the intelligence deployment volume.
+
+The local presenter code is in `.data/presenter-code` (mode 0600). Production requires `PRESENTER_ACCESS_CODE`. Open controls by triple-tapping the header organization label or pressing **Ctrl Shift S**, then unlock. Controls include pause/start, 1×/24×/96×, manual playback, 15-minute steps, restart, scenario injection, readiness, coverage evidence and pending transactions. Restart preserves prior runs and all blockchain history; it refuses while commitments remain unresolved.
+
+Select **Manual · next event** to pause automatic playback, then close the controls. A floating **Next event** button appears for the unlocked presenter. Each click processes the intervening minutes and stops at the next event transition, scenario, recovery, or service issue; real transactions still require confirmation. The clock remains paused between clicks. At the end of the day, continue resolving outstanding settlements until the button reads **Day complete**. To resume timed playback, select a numeric speed and press Start.
 
 `run:setup` provisions the encrypted managed wallet `run-operator`; it does not replace deployer/verifier keys. The default per-event escrow limit is 100 test USDC and cumulative run reservation limit is 1,000. Set `RUN_EVENT_LIMIT_BASE` / `RUN_SPEND_LIMIT_BASE` in six-decimal token units to change these limits. Setup tops operator and verifier up to 1 test SOL each for persistent account rent as well as fees, using the configured deployer. The default remains devnet in deployment. Mainnet automation is rejected.
 
@@ -55,6 +59,8 @@ node scripts/configure-run-agent.mjs
 
 This updates the configured ElevenLabs agent with a grounded read-only prompt and missing power-plan/what-if client tools. It preserves the previous configuration in `.data/voice-agent-before.json`. Both roles can use voice or text. Tools read the latest run snapshot. What-if calculations accept reserve percentage, price cap, demand change, or an unavailable resource and operate on a copy. The assistant cannot submit transactions or change preferences. Deterministic decision explanations remain visible when the assistant is unavailable.
 
+The floating **Ask GridFlex** button starts voice and shows connecting/listening/speaking state with the audio meter. Tap it again to end. The adjacent chat button opens text without requesting microphone permission. One session persists across dashboard routes and follows the selected area. The SDK connection is asynchronous: context updates and the first question wait for its connected state. Provider quota errors are surfaced; both voice and text require available ElevenLabs credits.
+
 ## Validation and coverage
 
 ```sh
@@ -68,6 +74,7 @@ npm run lint -w web
 npm run build -w web
 npx tsx apps/web/e2e/run.mts
 CHECK_VOICE_TEXT=1 npm run test:run-ui # includes a live assistant answer
+MOCK_VOICE=1 CHECK_VOICE_TEXT=1 CHECK_VOICE_AUDIO=1 npm run test:run-ui # SDK/tools/audio lifecycle without provider credits
 npm run test:run-api   # idle run only; leaves a fresh paused stress day
 node scripts/run-rehearsal.mjs       # full day, real devnet settlement, fast stepping
 RUN_SOAK=1 node scripts/run-rehearsal.mjs  # actual 24-hour clock soak
