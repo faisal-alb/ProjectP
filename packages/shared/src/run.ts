@@ -153,6 +153,8 @@ export interface RunState {
   minute: number;
   /** Zero selects manual, event-by-event playback. */
   speed: 0 | 1 | 24 | 96;
+  /** Resume and repeat automatically unless a presenter explicitly pauses. */
+  autoplay: boolean;
   status: "paused" | "running" | "draining" | "completed";
   preset: "stress" | "historical";
   devices: DeviceState[];

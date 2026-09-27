@@ -64,6 +64,7 @@ export function SimulatorPanel() {
   const [reservePercent, setReservePercent] = useState(20);
   const [priceCap, setPriceCap] = useState(0.6);
   const [preset, setPreset] = useState("stress");
+  const playbackActive = run?.autoplay || run?.status === "running" || run?.status === "draining";
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (open) input.current?.focus();
@@ -163,14 +164,14 @@ export function SimulatorPanel() {
               className={button}
               disabled={busy || run?.speed === 0}
               onClick={() =>
-                void perform(run?.status === "running" ? "pause" : "start")
+                void perform(playbackActive ? "pause" : "start")
               }
             >
-              {run?.status === "running" ? "Pause" : "Start"}
+              {playbackActive ? "Pause" : "Start"}
             </button>
             <button
               className={button}
-              disabled={busy || run?.status !== "paused"}
+              disabled={busy || run?.status !== "paused" || run?.autoplay}
               onClick={() => void perform("step", 15)}
             >
               Step 15 minutes

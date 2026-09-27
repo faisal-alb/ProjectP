@@ -2,6 +2,8 @@
 
 The dashboard follows a single backend-owned run, with a UTC clock displayed in Austin time. Historical inputs are fixed to August 20, 2024; stress scenarios overlay documented changes. Viewers see the same state. Only a presenter can mutate it.
 
+New visitors join an automatically running stress day at 96× speed (nominally 15 minutes per day). The API creates the first run without onboarding or presenter actions, resumes automatic playback after server restarts, and repeats the day after all commitments finish. Completed runs and their transaction history remain available.
+
 ## Prepare and run
 
 ```sh
@@ -22,7 +24,9 @@ Select **Manual · next event** to pause automatic playback, then close the cont
 
 `run:setup` provisions the encrypted managed wallet `run-operator`; it does not replace deployer/verifier keys. The default per-event escrow limit is 100 test USDC and cumulative run reservation limit is 1,000. Set `RUN_EVENT_LIMIT_BASE` / `RUN_SPEND_LIMIT_BASE` in six-decimal token units to change these limits. Setup tops operator and verifier up to 1 test SOL each for persistent account rent as well as fees, using the configured deployer. The default remains devnet in deployment. Mainnet automation is rejected.
 
-The worker starts paused after process restart. Starting requires a valid immutable data bundle, trained artifacts, reachable RPC, test tokens and fee SOL. Pending accounts reconcile by PDA/status before any resubmission. Confirmation can slow the nominal 15-minute playback; it is never fabricated or driven by virtual time. Transaction failures remain visible, with bounded retry backoff. Windows that expire before commitment are canceled and existing obligations are reconciled.
+Automatic startup and each new day require a valid immutable data bundle, trained artifacts, reachable RPC, test tokens and fee SOL. When readiness fails, the API keeps the current state, exposes the readiness errors, and retries every 30 seconds. It does not mint tokens or manufacture settlements. Pending accounts reconcile by PDA/status before any resubmission. Confirmation can slow the nominal 15-minute playback; it is never fabricated or driven by virtual time. Transaction failures remain visible, with bounded retry backoff. Windows that expire before commitment are canceled and existing obligations are reconciled.
+
+Presenter Pause and manual playback disable automatic resume and looping; this preference survives server restarts and creating a new run. Select a numeric speed and press Start to re-enable automatic playback. Existing saved runs migrate automatically: untouched paused days resume, while progressed paused days and manual playback stay paused. Rehearsal scripts use the presenter `start` action with `value: "once"` to finish a single day without looping.
 
 ## Models and physical response
 

@@ -43,6 +43,7 @@ for (const route of ["/runs/control", "/markets", "/faucet"]) {
   });
   assert.equal(r.status, 401, route + " allows unauthenticated mutation");
 }
+await control("pause");
 await control("restart", "historical");
 const before = await snapshot();
 const analysis = await fetch(base + "/runs/what-if", {

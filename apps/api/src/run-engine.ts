@@ -27,6 +27,8 @@ export class RunEngine {
   private busy = false;
   private ticking = false;
   private controlling = false;
+  private working = false;
+  private retryAutomaticAt = 0;
   private timer?: ReturnType<typeof setInterval>;
   private elapsed = 0;
   private lastWall = Date.now();
@@ -37,7 +39,12 @@ export class RunEngine {
   ) {
     this.state = store.current();
     if (this.state) {
-      this.state.status = "paused";
+      // Older untouched runs started paused by default; preserve other legacy pauses.
+      this.state.autoplay ??= this.state.speed !== 0 &&
+        (this.state.status !== "paused" ||
+          (this.state.minute === 0 && this.state.events.length === 0));
+      if (this.state.speed === 0) this.state.autoplay = false;
+      if (this.state.status !== "completed") this.state.status = "paused";
       this.save();
     }
   }
@@ -66,11 +73,11 @@ export class RunEngine {
       }
     }
   }
-  async preflight() {
+  async preflight(checkCurrentBundle = true) {
     const errors = await this.services.preflight();
     try {
       const bundle = await this.services.bundle();
-      if (this.state && this.state.bundleVersion !== bundle.version)
+      if (checkCurrentBundle && this.state && this.state.bundleVersion !== bundle.version)
         errors.push("Dataset changed: restart with the new bundle.");
       if (bundle.points.length < 96 || !bundle.sources.length)
         errors.push("Dataset does not cover a full day.");
@@ -82,7 +89,7 @@ export class RunEngine {
     }
     return errors;
   }
-  async restart(preset: "stress" | "historical" = "stress", seed = 7) {
+  async restart(preset: "stress" | "historical" = "stress", seed = 7, autoplay = false) {
     if (this.busy || this.ticking)
       throw new Error("Wait for the current operation to finish.");
     if (
@@ -100,6 +107,7 @@ export class RunEngine {
       start: this.bundle.start,
       minute: 0,
       speed: 96,
+      autoplay,
       status: "paused",
       preset,
       devices: createDevices(seed),
@@ -170,7 +178,7 @@ export class RunEngine {
       throw new Error("Another control operation is in progress.");
     this.controlling = true;
     try {
-      while (this.busy || this.ticking)
+      while (this.busy || this.ticking || this.working)
         await new Promise((resolve) => setTimeout(resolve, 25));
       return await this.applyControl(action, value);
     } finally {
@@ -178,11 +186,19 @@ export class RunEngine {
     }
   }
   private async applyControl(action: string, value?: unknown) {
-    if (action === "restart")
-      return this.restart(value === "historical" ? "historical" : "stress");
+    if (action === "restart") {
+      const autoplay = this.state?.autoplay ?? true;
+      const speed = this.state?.speed ?? 96;
+      await this.restart(value === "historical" ? "historical" : "stress", 7, autoplay);
+      this.state!.speed = speed;
+      this.retryAutomaticAt = 0;
+      this.save();
+      return this.state;
+    }
     if (!this.state) await this.restart();
     const s = this.state!;
     if (action === "pause") {
+      s.autoplay = false;
       s.status = "paused";
       this.elapsed = 0;
     } else if (action === "start") {
@@ -190,9 +206,13 @@ export class RunEngine {
         throw new Error(
           "Use Next event in manual playback, or select a playback speed.",
         );
+      // A single-day rehearsal can opt out of repeating without changing the UI default.
+      s.autoplay = value !== "once";
       const failures = await this.preflight();
       s.health = failures;
       if (failures.length) {
+        s.status = "paused";
+        this.retryAutomaticAt = Date.now() + 30_000;
         this.save();
         throw new Error(failures.join(" "));
       }
@@ -204,6 +224,7 @@ export class RunEngine {
         throw new Error("Invalid speed");
       s.speed = value as RunState["speed"];
       if (s.speed === 0) {
+        s.autoplay = false;
         if (s.status !== "completed") s.status = "paused";
         this.elapsed = 0;
       }
@@ -681,40 +702,81 @@ export class RunEngine {
       this.busy = false;
     }
   }
-  startWorker() {
-    this.timer = setInterval(() => {
-      const now = Date.now();
-      const dt = Math.min(2000, now - this.lastWall);
-      this.lastWall = now;
-      if (!this.state || this.controlling) return;
-      if (
-        this.state.status === "running" &&
-        this.state.events.some(
-          (e) => ["scheduled", "committing"].includes(e.phase) && !e.error,
-        )
-      ) {
+  private async automaticPlayback(now: number) {
+    if (now < this.retryAutomaticAt) return;
+    this.retryAutomaticAt = now + 30_000;
+    if (!this.state) await this.restart("stress", 7, true);
+    const previous = this.state!;
+    const failures = await this.preflight(previous.status !== "completed");
+    previous.health = failures;
+    if (failures.length) {
+      this.save();
+      return;
+    }
+    if (previous.status === "completed") {
+      this.save();
+      await this.restart(previous.preset, previous.seed, true);
+      this.state!.speed = previous.speed;
+      this.state!.priceCapPerKwh = previous.priceCapPerKwh;
+    }
+    this.state!.status = this.state!.minute >= 1440 ? "draining" : "running";
+    this.elapsed = 0;
+    this.lastWall = Date.now();
+    this.retryAutomaticAt = 0;
+    this.save();
+  }
+
+  /** One serialized worker pass; also used by deterministic lifecycle checks. */
+  async tick(now = Date.now()) {
+    const dt = Math.max(0, Math.min(2000, now - this.lastWall));
+    this.lastWall = now;
+    if (this.controlling || this.working) return;
+    this.working = true;
+    try {
+      if (!this.state || (this.state.autoplay &&
+          ["paused", "completed"].includes(this.state.status))) {
+        await this.automaticPlayback(now);
+        return;
+      }
+      if (this.state.status === "running" &&
+          this.state.events.some((e) =>
+            ["scheduled", "committing"].includes(e.phase) && !e.error)) {
         // Real transaction confirmation is a barrier, not simulated elapsed time.
-        void this.reconcile();
+        await this.reconcile();
         return;
       }
       if (this.state.status === "running") {
         this.elapsed += dt * this.state.speed;
-        if (this.ticking) return;
         if (this.elapsed >= 60_000) {
           this.elapsed -= 60_000;
-          void this.advance().catch((err) => {
-            this.state!.status = "paused";
-            this.log("run.error", String(err));
-            this.save();
-          });
+          await this.advance();
         }
       }
       if (["running", "draining"].includes(this.state.status))
-        void this.reconcile();
-    }, 250);
+        await this.reconcile();
+    } catch (error) {
+      this.retryAutomaticAt = now + 30_000;
+      if (this.state) {
+        this.state.status = "paused";
+        this.state.health = [error instanceof Error ? error.message : String(error)];
+        this.log("run.error", this.state.health[0]);
+        this.save();
+      } else {
+        console.error("Automatic run initialization failed; retrying in 30 seconds.", error);
+      }
+    } finally {
+      this.working = false;
+    }
+  }
+
+  startWorker() {
+    if (this.timer) return;
+    void this.tick();
+    this.timer = setInterval(() => void this.tick(), 250);
     this.timer.unref();
   }
   stopWorker() {
     if (this.timer) clearInterval(this.timer);
+    this.timer = undefined;
   }
 }

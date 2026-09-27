@@ -72,6 +72,202 @@ const services: RunServices = {
   },
 };
 
+test("automatic startup creates a shared stress day and resumes it after restart", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gridflex-auto-start-"));
+  const store = new RunStore(dir);
+  try {
+    const engine = new RunEngine(store, services);
+    await engine.tick();
+    assert.equal(engine.state!.preset, "stress");
+    assert.equal(engine.state!.speed, 96);
+    assert.equal(engine.state!.status, "running");
+    assert.equal(engine.state!.autoplay, true);
+    await engine.tick(Date.now() + 1000);
+    assert.equal(engine.state!.minute, 1);
+    const { id, minute } = engine.state!;
+    const restored = new RunEngine(store, services);
+    await restored.tick();
+    assert.equal(restored.state!.status, "running");
+    assert.equal(restored.state!.id, id);
+    assert.equal(restored.state!.minute, minute);
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("presenter pause and manual playback survive restarts and new runs", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gridflex-auto-override-"));
+  const store = new RunStore(dir);
+  try {
+    let engine = new RunEngine(store, services);
+    await engine.tick();
+    await engine.control("pause");
+    engine = new RunEngine(store, services);
+    await engine.tick(Date.now() + 60_000);
+    assert.equal(engine.state!.status, "paused");
+    assert.equal(engine.state!.autoplay, false);
+    await engine.control("start");
+    assert.equal(engine.state!.autoplay, true);
+    await engine.control("speed", 0);
+    engine = new RunEngine(store, services);
+    await engine.tick();
+    await engine.control("restart", "historical");
+    await engine.tick();
+    assert.equal(engine.state!.speed, 0);
+    assert.equal(engine.state!.status, "paused");
+    assert.equal(engine.state!.autoplay, false);
+    await engine.control("speed", 24);
+    await engine.tick();
+    assert.equal(engine.state!.status, "paused");
+    await engine.control("start");
+    assert.equal(engine.state!.status, "running");
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("automatic playback retries unavailable services with backoff", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gridflex-auto-retry-"));
+  const store = new RunStore(dir);
+  let checks = 0;
+  let ready = false;
+  try {
+    const engine = new RunEngine(store, {
+      ...services,
+      preflight: async () => { checks++; return ready ? [] : ["RPC unavailable"]; },
+    });
+    const now = Date.now();
+    await engine.tick(now);
+    assert.equal(engine.state!.status, "paused");
+    assert.equal(engine.state!.autoplay, true);
+    assert.deepEqual(engine.state!.health, ["RPC unavailable"]);
+    await engine.tick(now + 1000);
+    assert.equal(checks, 1);
+    ready = true;
+    await engine.tick(now + 30_000);
+    assert.equal(checks, 2);
+    assert.equal(engine.state!.status, "running");
+    assert.deepEqual(engine.state!.health, []);
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("automatic looping waits for settlement and retains the completed day", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gridflex-auto-loop-"));
+  const store = new RunStore(dir);
+  let settled = false;
+  let ready = true;
+  try {
+    const engine = new RunEngine(store, {
+      ...services,
+      preflight: async () => ready ? [] : ["Fund the run operator"],
+      settle: async (s, e) => {
+        if (!settled) throw new Error("Payout confirmation pending.");
+        await services.settle(s, e, () => {});
+      },
+    });
+    await engine.tick();
+    await engine.control("speed", 24);
+    await engine.control("price-cap", 0.4);
+    await engine.advance();
+    const s = engine.state!;
+    const id = s.id;
+    s.minute = 1440;
+    s.status = "draining";
+    s.events.forEach((e) => { e.phase = "verifying"; });
+    await engine.tick();
+    assert.equal(engine.state!.id, id);
+    assert.equal(engine.state!.status, "draining");
+    settled = true;
+    s.events.forEach((e) => { e.retryAt = undefined; });
+    await engine.tick();
+    assert.equal(engine.state!.status, "completed");
+    ready = false;
+    const now = Date.now();
+    await engine.tick(now);
+    assert.equal(engine.state!.id, id);
+    assert.equal(engine.state!.status, "completed");
+    assert.deepEqual(engine.state!.health, ["Fund the run operator"]);
+    ready = true;
+    await engine.tick(now + 30_000);
+    assert.notEqual(engine.state!.id, id);
+    assert.equal(engine.state!.status, "running");
+    assert.equal(engine.state!.minute, 0);
+    assert.equal(engine.state!.speed, 24);
+    assert.equal(engine.state!.priceCapPerKwh, 0.4);
+    assert.equal(engine.state!.events.length, 0);
+    const row = store.db.prepare("SELECT state FROM runs WHERE id=?").get(id) as { state: string };
+    assert.equal(JSON.parse(row.state).status, "completed");
+    await engine.control("start", "once");
+    engine.state!.minute = 1440;
+    engine.state!.status = "completed";
+    const onceId = engine.state!.id;
+    await engine.tick();
+    assert.equal(engine.state!.id, onceId);
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("legacy playback migration preserves deliberate pauses and manual mode", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gridflex-auto-migration-"));
+  const store = new RunStore(dir);
+  try {
+    const engine = new RunEngine(store, services);
+    await engine.restart();
+    const legacy = structuredClone(engine.state!);
+    delete (legacy as { autoplay?: boolean }).autoplay;
+    store.save(legacy);
+    let restored = new RunEngine(store, services);
+    await restored.tick();
+    assert.equal(restored.state!.status, "running");
+    legacy.minute = 10;
+    store.save(legacy);
+    restored = new RunEngine(store, services);
+    await restored.tick();
+    assert.equal(restored.state!.status, "paused");
+    assert.equal(restored.state!.autoplay, false);
+    legacy.minute = 0;
+    legacy.speed = 0;
+    store.save(legacy);
+    restored = new RunEngine(store, services);
+    await restored.tick();
+    assert.equal(restored.state!.status, "paused");
+    assert.equal(restored.state!.autoplay, false);
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("presenter pause wins over automatic startup already in flight", async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "gridflex-auto-race-"));
+  const store = new RunStore(dir);
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  try {
+    const engine = new RunEngine(store, {
+      ...services,
+      preflight: async () => { await gate; return []; },
+    });
+    const startup = engine.tick();
+    const pause = engine.control("pause");
+    release();
+    await Promise.all([startup, pause]);
+    await engine.tick();
+    assert.equal(engine.state!.status, "paused");
+    assert.equal(engine.state!.autoplay, false);
+  } finally {
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("manual playback pauses and stops at each event transition without skipping delivery", async () => {
   const dir = mkdtempSync(path.join(tmpdir(), "gridflex-manual-"));
   const store = new RunStore(dir);

@@ -36,7 +36,7 @@ let run =
 const began = Date.now();
 if (process.env.RUN_SOAK === "1") {
   await action("speed", 1);
-  await action("start");
+  await action("start", "once");
 }
 while (run.minute < 1440) {
   if (process.env.RUN_SOAK === "1") {
@@ -53,7 +53,7 @@ while (run.minute < 1440) {
     }),
   );
 }
-if (run.status !== "completed") await action("start");
+if (run.status !== "completed") await action("start", "once");
 const deadline = Date.now() + 10 * 60_000;
 while (run.status !== "completed" && Date.now() < deadline) {
   await new Promise((r) => setTimeout(r, 1000));
